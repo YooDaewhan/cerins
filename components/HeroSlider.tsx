@@ -41,7 +41,6 @@ const INTERVAL = 5500;
 
 export default function HeroSlider() {
   const [current, setCurrent] = useState(0);
-  const [paused, setPaused] = useState(false);
   const [progress, setProgress] = useState(0);
   const rafRef = useRef<number | null>(null);
   const startRef = useRef<number>(0);
@@ -52,12 +51,20 @@ export default function HeroSlider() {
     startRef.current = performance.now();
   }, []);
 
-  const prev = useCallback(() => goTo(current - 1), [current, goTo]);
-  const next = useCallback(() => goTo(current + 1), [current, goTo]);
+  const prev = useCallback(() => {
+    setCurrent((slide) => (slide - 1 + slides.length) % slides.length);
+    setProgress(0);
+    startRef.current = performance.now();
+  }, []);
+
+  const next = useCallback(() => {
+    setCurrent((slide) => (slide + 1) % slides.length);
+    setProgress(0);
+    startRef.current = performance.now();
+  }, []);
 
   // requestAnimationFrame-driven progress + auto-advance
   useEffect(() => {
-    if (paused) return;
     startRef.current = performance.now();
 
     const tick = (now: number) => {
@@ -75,7 +82,7 @@ export default function HeroSlider() {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [current, paused]);
+  }, [current]);
 
   // keyboard support
   useEffect(() => {
@@ -91,8 +98,6 @@ export default function HeroSlider() {
     <section
       className="relative overflow-hidden select-none"
       style={{ height: "78vh", minHeight: "540px" }}
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
     >
       {/* 슬라이드 스택 (cross-fade + ken burns) */}
       {slides.map((s, i) => (
@@ -226,7 +231,7 @@ export default function HeroSlider() {
                   className="absolute inset-y-0 left-0 bg-[#B4123A]"
                   style={{
                     width: `${progress * 100}%`,
-                    transition: paused ? "none" : "width 0.05s linear",
+                    transition: "width 0.05s linear",
                   }}
                 />
               )}

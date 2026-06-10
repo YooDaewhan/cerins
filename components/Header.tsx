@@ -44,13 +44,27 @@ export default function Header() {
       if (e.key === "Escape") setOpenMenu(null);
     }
     if (openMenu) {
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
       document.body.style.overflow = "hidden";
+      // fixed 헤더도 스크롤바 너비만큼 오른쪽을 보정
+      if (headerRef.current) {
+        headerRef.current.style.paddingRight = `${scrollbarWidth}px`;
+      }
       document.addEventListener("keydown", onKey);
     } else {
       document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+      if (headerRef.current) {
+        headerRef.current.style.paddingRight = "";
+      }
     }
     return () => {
       document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+      if (headerRef.current) {
+        headerRef.current.style.paddingRight = "";
+      }
       document.removeEventListener("keydown", onKey);
     };
   }, [openMenu]);
@@ -64,7 +78,7 @@ export default function Header() {
     <>
       <header
         ref={headerRef}
-        className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-[100] transition-shadow duration-300 ${
           scrolled || openMenu
             ? "bg-white shadow-[0_2px_20px_rgba(10,31,68,0.08)]"
             : "bg-white"
@@ -136,44 +150,29 @@ export default function Header() {
                 );
               })}
 
-              {/* 우측: 언어 또는 닫기 X */}
-              <div className="ml-3">
-                {openMenu ? (
-                  <button
-                    type="button"
-                    aria-label="Close menu"
-                    onClick={() => setOpenMenu(null)}
-                    className="w-10 h-10 flex items-center justify-center rounded-full text-gray-700 hover:bg-[#B4123A] hover:text-white transition-all duration-200"
+              {/* 우측: 언어 선택 */}
+              <div className="ml-3 relative">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLangOpen((v) => !v);
+                  }}
+                  className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-gray-700 hover:text-[#B4123A] border border-gray-300 rounded-full hover:border-[#B4123A] transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18" />
+                  </svg>
+                  KOR
+                </button>
+                {langOpen && (
+                  <div
+                    className="absolute right-0 mt-2 w-32 bg-white border border-gray-100 rounded-lg shadow-xl py-1"
+                    style={{ zIndex: 200 }}
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                ) : (
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setLangOpen((v) => !v);
-                      }}
-                      className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-gray-700 hover:text-[#B4123A] border border-gray-300 rounded-full hover:border-[#B4123A] transition-colors"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18" />
-                      </svg>
-                      KOR
-                    </button>
-                    {langOpen && (
-                      <div
-                        className="absolute right-0 mt-2 w-32 bg-white border border-gray-100 rounded-lg shadow-xl py-1"
-                        style={{ zIndex: 200 }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <button className="w-full text-left px-4 py-2 text-sm font-semibold text-[#B4123A] bg-[#fff5f6]" onClick={() => setLangOpen(false)}>Korean</button>
-                        <button className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50" onClick={() => setLangOpen(false)}>English</button>
-                      </div>
-                    )}
+                    <button className="w-full text-left px-4 py-2 text-sm font-semibold text-[#B4123A] bg-[#fff5f6]" onClick={() => setLangOpen(false)}>Korean</button>
+                    <button className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50" onClick={() => setLangOpen(false)}>English</button>
                   </div>
                 )}
               </div>

@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "CERINS ??Global Certification & Inspection Partner",
+  title: "CERINS — Global Certification & Inspection Partner",
   description:
     "CERINS provides professional certification, inspection, documentation, project management and customs brokerage services for companies entering global markets.",
 };
