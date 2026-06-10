@@ -19,10 +19,10 @@ export default function ContactPage() {
           <div className="space-y-8">
             <div>
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-6 h-0.5 bg-[var(--brand)]" />
-                <span className="text-xs font-bold text-[var(--brand)] uppercase tracking-widest">Get In Touch</span>
+                <div className="w-6 h-0.5 bg-(--brand)" />
+                <span className="text-xs font-bold text-(--brand) uppercase tracking-widest">Get In Touch</span>
               </div>
-              <h2 className="text-2xl font-bold text-[var(--brand)] mb-3">We&apos;d love to hear from you</h2>
+              <h2 className="text-2xl font-bold text-(--brand) mb-3">We&apos;d love to hear from you</h2>
               <p className="text-sm text-gray-500 leading-relaxed">
                 Whether you need a certification quote, have a compliance question, or want to schedule an inspection ??our team is ready to assist.
               </p>
@@ -55,11 +55,11 @@ export default function ContactPage() {
             <div className="border-t border-gray-100 pt-6 space-y-4">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Regional Offices</p>
               <div>
-                <p className="text-sm font-semibold text-[var(--brand)]">Moscow, Russia</p>
+                <p className="text-sm font-semibold text-(--brand)">Moscow, Russia</p>
                 <p className="text-xs text-gray-500">45 Tverskaya Street, Moscow 125009</p>
               </div>
               <div>
-                <p className="text-sm font-semibold text-[var(--brand)]">Ho Chi Minh City, Vietnam</p>
+                <p className="text-sm font-semibold text-(--brand)">Ho Chi Minh City, Vietnam</p>
                 <p className="text-xs text-gray-500">88 Nguyen Hue Boulevard, District 1</p>
               </div>
             </div>
@@ -68,7 +68,7 @@ export default function ContactPage() {
           {/* Right: form */}
           <div className="lg:col-span-2 bg-white border border-gray-100 shadow-sm rounded-xl p-8">
             <div className="mb-6">
-              <h3 className="text-lg font-bold text-[var(--brand)]">Send a Message</h3>
+              <h3 className="text-lg font-bold text-(--brand)">Send a Message</h3>
               <p className="text-sm text-gray-400 mt-1">We typically respond within 1 business day.</p>
             </div>
             <ContactForm />
@@ -106,7 +106,7 @@ function ContactInfoItem({ icon, label, lines }: { icon: string; label: string; 
 
   return (
     <div className="flex gap-3">
-      <div className="text-[var(--brand)] flex-shrink-0 mt-0.5">{iconMap[icon]}</div>
+      <div className="text-(--brand) flex-shrink-0 mt-0.5">{iconMap[icon]}</div>
       <div>
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-0.5">{label}</p>
         {lines.map((line, i) => (

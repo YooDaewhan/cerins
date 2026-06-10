@@ -22,15 +22,15 @@ export default function PageHero({ title, subtitle, breadcrumb, image }: PageHer
         style={{ backgroundImage: `url('${bg}')` }}
       />
       {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[var(--brand)]/90 via-[var(--brand)]/75 to-[var(--brand)]/50" />
+      <div className="absolute inset-0 bg-gradient-to-r from-(--brand)/90 via-(--brand)/75 to-(--brand)/50" />
       {/* Left red accent bar */}
-      <div className="absolute left-0 top-0 bottom-0 w-1 bg-[var(--brand)]" />
+      <div className="absolute left-0 top-0 bottom-0 w-1 bg-(--brand)" />
 
       {/* Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         {breadcrumb && (
-          <p className="text-xs text-[var(--brand)] tracking-widest uppercase font-bold mb-2 flex items-center gap-2">
-            <span className="w-5 h-0.5 bg-[var(--brand)] inline-block" />
+          <p className="text-xs text-(--brand) tracking-widest uppercase font-bold mb-2 flex items-center gap-2">
+            <span className="w-5 h-0.5 bg-(--brand) inline-block" />
             {breadcrumb}
           </p>
         )}

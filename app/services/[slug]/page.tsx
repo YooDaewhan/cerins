@@ -17,7 +17,7 @@ export default async function ServicesPage({ params }: Props) {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {page.content.map((block) => (
           <div key={block.heading} className="mb-10">
-            <h2 className="text-xl font-bold text-[var(--brand)] mb-3 flex items-center gap-3">
+            <h2 className="text-xl font-bold text-(--brand) mb-3 flex items-center gap-3">
               <span className="w-1 h-5 bg-[#c9a84c] rounded block" />
               {block.heading}
             </h2>

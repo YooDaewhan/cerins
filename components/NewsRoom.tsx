@@ -10,14 +10,14 @@ export default function NewsRoom() {
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-10 gap-4">
           <div>
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-0.5 bg-[var(--brand)]" />
-              <span className="text-xs font-semibold tracking-widest text-[var(--brand)] uppercase">Latest</span>
+              <div className="w-8 h-0.5 bg-(--brand)" />
+              <span className="text-xs font-semibold tracking-widest text-(--brand) uppercase">Latest</span>
             </div>
-            <h2 className="text-3xl font-bold text-[var(--brand)]">News Room</h2>
+            <h2 className="text-3xl font-bold text-(--brand)">News Room</h2>
           </div>
           <Link
             href="/news"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--brand)] border border-[var(--brand)] rounded px-4 py-2 hover:bg-[var(--brand)] hover:text-white transition"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-(--brand) border border-(--brand) rounded px-4 py-2 hover:bg-(--brand) hover:text-white transition"
           >
             View More
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -34,7 +34,7 @@ export default function NewsRoom() {
               className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-5 group"
             >
               <div>
-                <h3 className="text-sm font-semibold text-[var(--brand)] group-hover:text-[var(--brand)] transition-colors">
+                <h3 className="text-sm font-semibold text-(--brand) group-hover:text-(--brand) transition-colors">
                   {item.title}
                 </h3>
                 <p className="text-xs text-gray-400 mt-1">{item.author}</p>

@@ -30,7 +30,7 @@ export default async function AboutPage({ params }: Props) {
           {/* Sidebar */}
           <aside className="lg:w-56 flex-shrink-0">
             <div className="bg-[#f8f9fc] border border-gray-100 rounded-lg overflow-hidden">
-              <div className="px-4 py-3 bg-[var(--brand)]">
+              <div className="px-4 py-3 bg-(--brand)">
                 <span className="text-xs font-bold text-white uppercase tracking-wider">About</span>
               </div>
               <nav className="py-2">
@@ -40,8 +40,8 @@ export default async function AboutPage({ params }: Props) {
                     href={`/about/${item.slug}`}
                     className={`block px-4 py-2.5 text-sm transition-colors border-l-2 ${
                       item.slug === slug
-                        ? "border-[#c9a84c] text-[var(--brand)] font-semibold bg-white"
-                        : "border-transparent text-gray-500 hover:text-[var(--brand)] hover:bg-white"
+                        ? "border-[#c9a84c] text-(--brand) font-semibold bg-white"
+                        : "border-transparent text-gray-500 hover:text-(--brand) hover:bg-white"
                     }`}
                   >
                     {item.label}
@@ -58,7 +58,7 @@ export default async function AboutPage({ params }: Props) {
                 <div key={i}>
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-1 h-6 bg-[#c9a84c] rounded" />
-                    <h2 className="text-xl font-bold text-[var(--brand)]">{block.heading}</h2>
+                    <h2 className="text-xl font-bold text-(--brand)">{block.heading}</h2>
                   </div>
                   <p className="text-gray-600 leading-relaxed whitespace-pre-line pl-4">{block.body}</p>
                 </div>
@@ -67,13 +67,13 @@ export default async function AboutPage({ params }: Props) {
 
             {/* Bottom nav */}
             <div className="mt-14 pt-6 border-t border-gray-100 flex items-center justify-between">
-              <Link href="/about" className="text-sm text-gray-400 hover:text-[var(--brand)] transition flex items-center gap-1">
+              <Link href="/about" className="text-sm text-gray-400 hover:text-(--brand) transition flex items-center gap-1">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
                 Back to About
               </Link>
-              <Link href="/contact" className="text-sm font-semibold text-white bg-[var(--brand)] px-5 py-2 rounded hover:bg-[#0d2a5a] transition">
+              <Link href="/contact" className="text-sm font-semibold text-white bg-(--brand) px-5 py-2 rounded hover:bg-[#0d2a5a] transition">
                 Contact Us
               </Link>
             </div>

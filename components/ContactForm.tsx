@@ -40,7 +40,7 @@ export default function ContactForm() {
   };
 
   const inputClass =
-    "w-full border border-gray-200 rounded px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[var(--brand)] transition";
+    "w-full border border-gray-200 rounded px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-(--brand) transition";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -135,7 +135,7 @@ export default function ContactForm() {
 
       <button
         type="submit"
-        className="w-full sm:w-auto px-8 py-3 bg-[var(--brand)] text-white text-sm font-semibold rounded hover:bg-[#0d2a5a] transition"
+        className="w-full sm:w-auto px-8 py-3 bg-(--brand) text-white text-sm font-semibold rounded hover:bg-[#0d2a5a] transition"
       >
         Send Message
       </button>
