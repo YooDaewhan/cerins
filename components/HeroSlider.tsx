@@ -131,7 +131,7 @@ export default function HeroSlider() {
       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent z-[2]" />
 
       {/* 좌측 빨간 accent bar */}
-      <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-[#B4123A] via-[#d6325a] to-[#B4123A] z-[3]" />
+      <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-[var(--brand)] via-[#d6325a] to-[var(--brand)] z-[3]" />
 
       {/* 우측 데코 라인 */}
       <div className="hidden lg:block absolute right-12 top-1/2 -translate-y-1/2 z-[3] text-right">
@@ -156,8 +156,8 @@ export default function HeroSlider() {
                 animation: "slideUp 0.7s cubic-bezier(.2,.7,.2,1) both",
               }}
             >
-              <div className="w-10 h-px bg-[#B4123A]" />
-              <span className="text-xs font-bold tracking-[0.3em] text-[#B4123A] uppercase">
+              <div className="w-10 h-px bg-[var(--brand)]" />
+              <span className="text-xs font-bold tracking-[0.3em] text-[var(--brand)] uppercase">
                 {slides[current].eyebrow}
               </span>
             </div>
@@ -188,7 +188,7 @@ export default function HeroSlider() {
             >
               <a
                 href="/contact"
-                className="group inline-flex items-center gap-2 px-7 py-3.5 bg-[#B4123A] text-white text-sm font-semibold rounded-full hover:bg-[#9b0f32] transition-all duration-300 shadow-[0_8px_24px_rgba(180,18,58,0.35)] hover:shadow-[0_12px_28px_rgba(180,18,58,0.45)] hover:-translate-y-0.5"
+                className="group inline-flex items-center gap-2 px-7 py-3.5 bg-[var(--brand)] text-white text-sm font-semibold rounded-full hover:bg-[var(--brand-dark)] transition-all duration-300 shadow-[0_8px_24px_rgba(180,18,58,0.35)] hover:shadow-[0_12px_28px_rgba(180,18,58,0.45)] hover:-translate-y-0.5"
               >
                 Get a Quote
                 <svg
@@ -207,7 +207,7 @@ export default function HeroSlider() {
               </a>
               <a
                 href="/certification"
-                className="inline-flex items-center gap-2 px-7 py-3.5 border border-white/50 text-white text-sm font-semibold rounded-full hover:bg-white hover:text-[#0a1f44] hover:border-white transition-all duration-300"
+                className="inline-flex items-center gap-2 px-7 py-3.5 border border-white/50 text-white text-sm font-semibold rounded-full hover:bg-white hover:text-[var(--brand)] hover:border-white transition-all duration-300"
               >
                 Our Services
               </a>
@@ -220,7 +220,7 @@ export default function HeroSlider() {
       <button
         type="button"
         onClick={prev}
-        className="group absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-[10] w-12 h-12 flex items-center justify-center rounded-full border border-white/30 text-white bg-white/5 backdrop-blur-sm hover:bg-white hover:text-[#0a1f44] hover:border-white transition-all duration-300 hover:scale-110"
+        className="group absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-[10] w-12 h-12 flex items-center justify-center rounded-full border border-white/30 text-white bg-white/5 backdrop-blur-sm hover:bg-white hover:text-[var(--brand)] hover:border-white transition-all duration-300 hover:scale-110"
         aria-label="Previous slide"
       >
         <svg
@@ -242,7 +242,7 @@ export default function HeroSlider() {
       <button
         type="button"
         onClick={next}
-        className="group absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-[10] w-12 h-12 flex items-center justify-center rounded-full border border-white/30 text-white bg-white/5 backdrop-blur-sm hover:bg-white hover:text-[#0a1f44] hover:border-white transition-all duration-300 hover:scale-110"
+        className="group absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-[10] w-12 h-12 flex items-center justify-center rounded-full border border-white/30 text-white bg-white/5 backdrop-blur-sm hover:bg-white hover:text-[var(--brand)] hover:border-white transition-all duration-300 hover:scale-110"
         aria-label="Next slide"
       >
         <svg
@@ -275,7 +275,7 @@ export default function HeroSlider() {
             >
               {isCurrent && (
                 <span
-                  className="absolute inset-y-0 left-0 bg-[#B4123A]"
+                  className="absolute inset-y-0 left-0 bg-[var(--brand)]"
                   style={{
                     width: `${progress * 100}%`,
                     transition: "width 0.05s linear",

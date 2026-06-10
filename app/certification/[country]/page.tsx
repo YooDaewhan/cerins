@@ -34,7 +34,7 @@ export default async function CertificationPage({ params }: Props) {
           {/* Sidebar */}
           <aside className="lg:w-56 flex-shrink-0">
             <div className="bg-[#f8f9fc] border border-gray-100 rounded-lg overflow-hidden">
-              <div className="px-4 py-3 bg-[#0a1f44]">
+              <div className="px-4 py-3 bg-[var(--brand)]">
                 <span className="text-xs font-bold text-white uppercase tracking-wider">Certification</span>
               </div>
               <nav className="py-2">
@@ -44,8 +44,8 @@ export default async function CertificationPage({ params }: Props) {
                     href={`/certification/${item.slug}`}
                     className={`block px-4 py-2.5 text-sm transition-colors border-l-2 ${
                       item.slug === country
-                        ? "border-[#c9a84c] text-[#0a1f44] font-semibold bg-white"
-                        : "border-transparent text-gray-500 hover:text-[#0a1f44] hover:bg-white"
+                        ? "border-[#c9a84c] text-[var(--brand)] font-semibold bg-white"
+                        : "border-transparent text-gray-500 hover:text-[var(--brand)] hover:bg-white"
                     }`}
                   >
                     {item.label}
@@ -59,7 +59,7 @@ export default async function CertificationPage({ params }: Props) {
           <div className="flex-1 min-w-0">
             {/* Highlight box */}
             <div className="bg-[#f0f4fa] border-l-4 border-[#c9a84c] rounded-r-lg px-5 py-4 mb-8">
-              <p className="text-sm text-[#0a1f44] font-medium">
+              <p className="text-sm text-[var(--brand)] font-medium">
                 CERINS provides end-to-end certification support for the <strong>{page.title}</strong> — from documentation preparation to certificate issuance.
               </p>
             </div>
@@ -69,7 +69,7 @@ export default async function CertificationPage({ params }: Props) {
                 <div key={i}>
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-1 h-6 bg-[#c9a84c] rounded" />
-                    <h2 className="text-xl font-bold text-[#0a1f44]">{block.heading}</h2>
+                    <h2 className="text-xl font-bold text-[var(--brand)]">{block.heading}</h2>
                   </div>
                   <p className="text-gray-600 leading-relaxed pl-4">{block.body}</p>
                 </div>
@@ -77,21 +77,21 @@ export default async function CertificationPage({ params }: Props) {
             </div>
 
             {/* CTA */}
-            <div className="mt-12 bg-[#0a1f44] rounded-lg p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="mt-12 bg-[var(--brand)] rounded-lg p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <p className="text-white font-semibold text-base mb-1">Need a certification quote?</p>
                 <p className="text-gray-400 text-sm">Our experts will review your product and provide a detailed proposal.</p>
               </div>
               <Link
                 href="/contact"
-                className="flex-shrink-0 px-6 py-2.5 bg-[#c9a84c] text-[#0a1f44] font-semibold text-sm rounded hover:bg-[#b8973b] transition"
+                className="flex-shrink-0 px-6 py-2.5 bg-[#c9a84c] text-[var(--brand)] font-semibold text-sm rounded hover:bg-[#b8973b] transition"
               >
                 Request a Quote
               </Link>
             </div>
 
             <div className="mt-8 pt-6 border-t border-gray-100">
-              <Link href="/certification" className="text-sm text-gray-400 hover:text-[#0a1f44] transition flex items-center gap-1">
+              <Link href="/certification" className="text-sm text-gray-400 hover:text-[var(--brand)] transition flex items-center gap-1">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>

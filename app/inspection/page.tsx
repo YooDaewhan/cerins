@@ -51,22 +51,22 @@ export default function InspectionIndexPage() {
             <Link
               key={svc.slug}
               href={`/inspection/${svc.slug}`}
-              className="group flex items-start gap-5 border border-gray-200 rounded-lg p-6 hover:border-[#0a1f44] hover:shadow-md transition-all"
+              className="group flex items-start gap-5 border border-gray-200 rounded-lg p-6 hover:border-[var(--brand)] hover:shadow-md transition-all"
             >
-              <div className="flex-shrink-0 w-14 h-14 bg-[#f0f4fa] rounded-lg flex items-center justify-center group-hover:bg-[#0a1f44] transition-colors">
-                <span className="text-xs font-bold text-[#0a1f44] group-hover:text-white transition-colors">
+              <div className="flex-shrink-0 w-14 h-14 bg-[#f0f4fa] rounded-lg flex items-center justify-center group-hover:bg-[var(--brand)] transition-colors">
+                <span className="text-xs font-bold text-[var(--brand)] group-hover:text-white transition-colors">
                   {svc.tag}
                 </span>
               </div>
               <div className="flex-1">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h2 className="text-base font-bold text-[#0a1f44] mb-1 group-hover:text-[#B4123A] transition-colors">
+                    <h2 className="text-base font-bold text-[var(--brand)] mb-1 group-hover:text-[var(--brand)] transition-colors">
                       {svc.title}
                     </h2>
                     <p className="text-sm text-gray-500 leading-relaxed">{svc.desc}</p>
                   </div>
-                  <svg className="w-5 h-5 text-gray-300 flex-shrink-0 mt-0.5 group-hover:text-[#0a1f44] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-5 h-5 text-gray-300 flex-shrink-0 mt-0.5 group-hover:text-[var(--brand)] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </div>

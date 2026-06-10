@@ -30,7 +30,7 @@ export default async function InspectionPage({ params }: Props) {
           {/* Sidebar */}
           <aside className="lg:w-56 flex-shrink-0">
             <div className="bg-[#f8f9fc] border border-gray-100 rounded-lg overflow-hidden">
-              <div className="px-4 py-3 bg-[#0a1f44]">
+              <div className="px-4 py-3 bg-[var(--brand)]">
                 <span className="text-xs font-bold text-white uppercase tracking-wider">Inspection</span>
               </div>
               <nav className="py-2">
@@ -40,8 +40,8 @@ export default async function InspectionPage({ params }: Props) {
                     href={`/inspection/${item.slug}`}
                     className={`block px-4 py-2.5 text-sm transition-colors border-l-2 ${
                       item.slug === slug
-                        ? "border-[#c9a84c] text-[#0a1f44] font-semibold bg-white"
-                        : "border-transparent text-gray-500 hover:text-[#0a1f44] hover:bg-white"
+                        ? "border-[#c9a84c] text-[var(--brand)] font-semibold bg-white"
+                        : "border-transparent text-gray-500 hover:text-[var(--brand)] hover:bg-white"
                     }`}
                   >
                     {item.label}
@@ -56,7 +56,7 @@ export default async function InspectionPage({ params }: Props) {
               <p className="text-sm text-gray-600 mb-3">Have a project in mind? Reach out to our inspection team.</p>
               <Link
                 href="/contact"
-                className="block text-center text-xs font-semibold text-white bg-[#0a1f44] px-4 py-2 rounded hover:bg-[#0d2a5a] transition"
+                className="block text-center text-xs font-semibold text-white bg-[var(--brand)] px-4 py-2 rounded hover:bg-[#0d2a5a] transition"
               >
                 Contact Us
               </Link>
@@ -70,7 +70,7 @@ export default async function InspectionPage({ params }: Props) {
                 <div key={i} className="border-b border-gray-100 pb-8 last:border-0">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-1 h-6 bg-[#c9a84c] rounded" />
-                    <h2 className="text-xl font-bold text-[#0a1f44]">{block.heading}</h2>
+                    <h2 className="text-xl font-bold text-[var(--brand)]">{block.heading}</h2>
                   </div>
                   <p className="text-gray-600 leading-relaxed pl-4">{block.body}</p>
                 </div>
@@ -78,7 +78,7 @@ export default async function InspectionPage({ params }: Props) {
             </div>
 
             <div className="mt-8 pt-6 border-t border-gray-100">
-              <Link href="/inspection" className="text-sm text-gray-400 hover:text-[#0a1f44] transition flex items-center gap-1">
+              <Link href="/inspection" className="text-sm text-gray-400 hover:text-[var(--brand)] transition flex items-center gap-1">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>

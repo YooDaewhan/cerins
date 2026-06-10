@@ -27,7 +27,7 @@ export default function NewsPage() {
         {/* Total count */}
         <div className="flex items-center justify-between mb-6">
           <p className="text-sm text-gray-500">
-            Total <span className="font-semibold text-[#0a1f44]">{news.length}</span> articles
+            Total <span className="font-semibold text-[var(--brand)]">{news.length}</span> articles
           </p>
           <p className="text-sm text-gray-400">
             Page {page} of {totalPages}
@@ -37,7 +37,7 @@ export default function NewsPage() {
         {/* Table */}
         <div className="border border-gray-200 rounded-lg overflow-hidden">
           {/* Header row */}
-          <div className="hidden sm:grid grid-cols-[60px_1fr_140px_110px] bg-[#0a1f44] text-xs font-semibold text-gray-300 uppercase tracking-wider px-4 py-3">
+          <div className="hidden sm:grid grid-cols-[60px_1fr_140px_110px] bg-[var(--brand)] text-xs font-semibold text-gray-300 uppercase tracking-wider px-4 py-3">
             <span>No.</span>
             <span>Title</span>
             <span>Author</span>
@@ -60,7 +60,7 @@ export default function NewsPage() {
                 <div>
                   <Link
                     href={`/news/${item.id}`}
-                    className="text-sm font-semibold text-[#0a1f44] hover:text-[#B4123A] transition-colors leading-snug"
+                    className="text-sm font-semibold text-[var(--brand)] hover:text-[var(--brand)] transition-colors leading-snug"
                   >
                     {item.title}
                   </Link>

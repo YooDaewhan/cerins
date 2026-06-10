@@ -92,9 +92,9 @@ export default function Header() {
               className="group relative text-2xl font-bold tracking-widest"
               onClick={() => setOpenMenu(null)}
             >
-              <span style={{ color: "#0a1f44" }}>CER</span>
-              <span style={{ color: "#B4123A" }}>INS</span>
-              <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-[#B4123A] transition-all duration-300 group-hover:w-full" />
+              <span style={{ color: "var(--brand)" }}>CER</span>
+              <span style={{ color: "var(--brand)" }}>INS</span>
+              <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-[var(--brand)] transition-all duration-300 group-hover:w-full" />
             </Link>
 
             {/* 데스크톱 네비 */}
@@ -110,14 +110,14 @@ export default function Header() {
                       href={item.path}
                       className={`relative px-5 py-5 text-sm font-bold tracking-wider uppercase transition-colors ${
                         active
-                          ? "text-[#B4123A]"
-                          : "text-gray-700 hover:text-[#B4123A]"
+                          ? "text-[var(--brand)]"
+                          : "text-gray-700 hover:text-[var(--brand)]"
                       }`}
                       onClick={() => setOpenMenu(null)}
                     >
                       {item.label}
                       <span
-                        className={`pointer-events-none absolute left-5 right-5 bottom-3 h-0.5 bg-[#B4123A] origin-left transition-transform duration-300 ${
+                        className={`pointer-events-none absolute left-5 right-5 bottom-3 h-0.5 bg-[var(--brand)] origin-left transition-transform duration-300 ${
                           active ? "scale-x-100" : "scale-x-0"
                         }`}
                       />
@@ -136,13 +136,13 @@ export default function Header() {
                     }}
                     className={`relative px-5 py-5 text-sm font-bold tracking-wider uppercase transition-colors ${
                       isOpen || active
-                        ? "text-[#B4123A]"
-                        : "text-gray-700 hover:text-[#B4123A]"
+                        ? "text-[var(--brand)]"
+                        : "text-gray-700 hover:text-[var(--brand)]"
                     }`}
                   >
                     {item.label}
                     <span
-                      className={`pointer-events-none absolute left-5 right-5 bottom-3 h-0.5 bg-[#B4123A] origin-left transition-transform duration-300 ${
+                      className={`pointer-events-none absolute left-5 right-5 bottom-3 h-0.5 bg-[var(--brand)] origin-left transition-transform duration-300 ${
                         isOpen || active ? "scale-x-100" : "scale-x-0"
                       }`}
                     />
@@ -158,7 +158,7 @@ export default function Header() {
                     e.stopPropagation();
                     setLangOpen((v) => !v);
                   }}
-                  className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-gray-700 hover:text-[#B4123A] border border-gray-300 rounded-full hover:border-[#B4123A] transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-gray-700 hover:text-[var(--brand)] border border-gray-300 rounded-full hover:border-[var(--brand)] transition-colors"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18" />
@@ -171,7 +171,7 @@ export default function Header() {
                     style={{ zIndex: 200 }}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <button className="w-full text-left px-4 py-2 text-sm font-semibold text-[#B4123A] bg-[#fff5f6]" onClick={() => setLangOpen(false)}>Korean</button>
+                    <button className="w-full text-left px-4 py-2 text-sm font-semibold text-[var(--brand)] bg-[#fff5f6]" onClick={() => setLangOpen(false)}>Korean</button>
                     <button className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50" onClick={() => setLangOpen(false)}>English</button>
                   </div>
                 )}
@@ -181,7 +181,7 @@ export default function Header() {
             {/* 모바일 햄버거 */}
             <button
               type="button"
-              className="lg:hidden relative w-9 h-9 flex items-center justify-center text-gray-700 hover:text-[#B4123A] transition-colors"
+              className="lg:hidden relative w-9 h-9 flex items-center justify-center text-gray-700 hover:text-[var(--brand)] transition-colors"
               aria-label="Toggle menu"
               onClick={() => setMobileOpen((v) => !v)}
             >
@@ -202,7 +202,7 @@ export default function Header() {
                     <button
                       type="button"
                       className={`flex-1 text-left px-5 py-4 text-sm font-bold uppercase tracking-wider transition-colors ${
-                        mobileExpanded === item.label ? "text-[#B4123A]" : "text-[#0a1f44] hover:text-[#B4123A]"
+                        mobileExpanded === item.label ? "text-[var(--brand)]" : "text-[var(--brand)]"
                       }`}
                       onClick={() => setMobileExpanded((v) => (v === item.label ? null : item.label))}
                     >
@@ -212,7 +212,7 @@ export default function Header() {
                     <Link
                       href={item.path}
                       className={`flex-1 px-5 py-4 text-sm font-bold uppercase tracking-wider transition-colors ${
-                        isActive(item.path) ? "text-[#B4123A]" : "text-[#0a1f44] hover:text-[#B4123A]"
+                        isActive(item.path) ? "text-[var(--brand)]" : "text-[var(--brand)]"
                       }`}
                       onClick={() => setMobileOpen(false)}
                     >
@@ -220,7 +220,7 @@ export default function Header() {
                     </Link>
                   )}
                   {item.children && (
-                    <svg className={`w-4 h-4 mr-5 text-gray-400 transition-transform duration-300 ${mobileExpanded === item.label ? "rotate-180 text-[#B4123A]" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className={`w-4 h-4 mr-5 text-gray-400 transition-transform duration-300 ${mobileExpanded === item.label ? "rotate-180 text-[var(--brand)]" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   )}
@@ -231,10 +231,10 @@ export default function Header() {
                       <Link
                         key={child.path}
                         href={child.path}
-                        className="flex items-center gap-2.5 pl-8 pr-5 py-3 text-sm text-gray-600 hover:text-[#B4123A] border-b border-gray-100 last:border-0 transition-colors"
+                        className="flex items-center gap-2.5 pl-8 pr-5 py-3 text-sm text-gray-600 hover:text-[var(--brand)] border-b border-gray-100 last:border-0 transition-colors"
                         onClick={() => setMobileOpen(false)}
                       >
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#B4123A]" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--brand)]" />
                         {child.label}
                       </Link>
                     ))}
@@ -243,7 +243,7 @@ export default function Header() {
               </div>
             ))}
             <div className="px-5 py-4 flex items-center gap-3 bg-gray-50">
-              <button className="text-sm font-semibold text-[#B4123A]">KOR</button>
+              <button className="text-sm font-semibold text-[var(--brand)]">KOR</button>
               <span className="text-gray-300 text-xs">|</span>
               <button className="text-sm text-gray-500">ENG</button>
             </div>
@@ -280,8 +280,8 @@ export default function Header() {
             {/* 좌하단 데코 */}
             <div className="absolute bottom-10 left-10 z-10 text-white/80">
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-px bg-[#B4123A]" />
-                <span className="text-[10px] tracking-[0.3em] font-semibold uppercase text-[#B4123A]">
+                <div className="w-10 h-px bg-[var(--brand)]" />
+                <span className="text-[10px] tracking-[0.3em] font-semibold uppercase text-[var(--brand)]">
                   CERINS
                 </span>
               </div>
@@ -303,12 +303,12 @@ export default function Header() {
               }}
             >
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-0.5 bg-[#B4123A]" />
-                <span className="text-[10px] tracking-[0.4em] font-bold uppercase text-[#B4123A]">
+                <div className="w-8 h-0.5 bg-[var(--brand)]" />
+                <span className="text-[10px] tracking-[0.4em] font-bold uppercase text-[var(--brand)]">
                   Menu
                 </span>
               </div>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#B4123A] tracking-tight uppercase">
+              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[var(--brand)] tracking-tight uppercase">
                 {openMenu}
               </h2>
             </div>
@@ -327,16 +327,16 @@ export default function Header() {
                   <Link
                     href={child.path}
                     onClick={() => setOpenMenu(null)}
-                    className="group flex items-center gap-4 py-3 border-b border-white/10 text-white hover:text-[#B4123A] transition-colors"
+                    className="group flex items-center gap-4 py-3 border-b border-white/10 text-white hover:text-[var(--brand)] transition-colors"
                   >
-                    <span className="text-[10px] font-mono text-white/30 group-hover:text-[#B4123A] transition-colors w-6">
+                    <span className="text-[10px] font-mono text-white/30 group-hover:text-[var(--brand)] transition-colors w-6">
                       {String(idx + 1).padStart(2, "0")}
                     </span>
                     <span className="text-base sm:text-lg font-semibold tracking-wide uppercase flex-1">
                       {child.label}
                     </span>
                     <svg
-                      className="w-5 h-5 text-white/30 -translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-[#B4123A] transition-all duration-300"
+                      className="w-5 h-5 text-white/30 -translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-[var(--brand)] transition-all duration-300"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -359,7 +359,7 @@ export default function Header() {
             >
               <a
                 href="/contact"
-                className="group flex items-center justify-between gap-4 px-6 py-4 bg-[#B4123A] hover:bg-[#9b0f32] text-white text-sm font-bold tracking-wider uppercase transition-colors"
+                className="group flex items-center justify-between gap-4 px-6 py-4 bg-[var(--brand)] hover:bg-[var(--brand-dark)] text-white text-sm font-bold tracking-wider uppercase transition-colors"
               >
                 CERINS Brochure
                 <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -368,7 +368,7 @@ export default function Header() {
               </a>
               <a
                 href="/contact"
-                className="group flex items-center justify-between gap-4 px-6 py-4 bg-[#B4123A] hover:bg-[#9b0f32] text-white text-sm font-bold tracking-wider uppercase transition-colors"
+                className="group flex items-center justify-between gap-4 px-6 py-4 bg-[var(--brand)] hover:bg-[var(--brand-dark)] text-white text-sm font-bold tracking-wider uppercase transition-colors"
               >
                 Terms & Conditions
                 <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -30,17 +30,17 @@ export default function CertificationIndexPage() {
             <Link
               key={c.slug}
               href={`/certification/${c.slug}`}
-              className="group flex flex-col border border-gray-200 rounded-lg overflow-hidden hover:border-[#0a1f44] hover:shadow-md transition-all"
+              className="group flex flex-col border border-gray-200 rounded-lg overflow-hidden hover:border-[var(--brand)] hover:shadow-md transition-all"
             >
               {/* Color band */}
-              <div className="h-1.5 bg-[#0a1f44] group-hover:bg-[#B4123A] transition-colors" />
+              <div className="h-1.5 bg-[var(--brand)] group-hover:bg-[var(--brand)] transition-colors" />
               <div className="p-5 flex-1">
-                <h2 className="text-base font-bold text-[#0a1f44] mb-2 group-hover:text-[#B4123A] transition-colors">
+                <h2 className="text-base font-bold text-[var(--brand)] mb-2 group-hover:text-[var(--brand)] transition-colors">
                   {c.label}
                 </h2>
                 <p className="text-sm text-gray-500 leading-relaxed">{c.desc}</p>
               </div>
-              <div className="px-5 pb-4 flex items-center gap-1 text-xs font-semibold text-[#0a1f44]">
+              <div className="px-5 pb-4 flex items-center gap-1 text-xs font-semibold text-[var(--brand)]">
                 View details
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

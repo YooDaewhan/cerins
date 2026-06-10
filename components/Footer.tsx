@@ -1,28 +1,28 @@
 import Link from "next/link";
 import { navigation } from "@/data/navigation";
+import ThemeToggle from "./ThemeToggle";
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0a1f44] text-white relative">
-      {/* 상단 빨간 그라데이션 라인 */}
-      <div className="h-1 bg-gradient-to-r from-[#B4123A] via-[#d6325a] to-[#B4123A]" />
+    <footer className="bg-[var(--brand)] text-white relative">
+      <div className="h-1 bg-gradient-to-r from-[var(--on-brand)] via-[var(--on-brand)]/50 to-[var(--on-brand)]" />
 
       {/* CTA 밴드 */}
       <div className="border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-0.5 bg-[#B4123A]" />
-            <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-[#B4123A]">
+            <div className="w-8 h-0.5 bg-[var(--on-brand)]" />
+            <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-[var(--on-brand)]">
               Ready to start?
             </span>
           </div>
           <h3 className="text-xl sm:text-2xl font-bold text-white text-center">
             Bring your products to global markets with{" "}
-            <span className="text-[#B4123A]">CERINS</span>
+            <span className="text-[var(--on-brand)]">CERINS</span>
           </h3>
           <Link
             href="/contact"
-            className="group inline-flex items-center gap-2 px-6 py-3 bg-[#B4123A] hover:bg-[#9b0f32] text-white text-sm font-bold tracking-wider uppercase rounded-full transition-colors shadow-[0_8px_24px_rgba(180,18,58,0.35)]"
+            className="group inline-flex items-center gap-2 px-6 py-3 bg-[var(--on-brand)] hover:opacity-90 text-white text-sm font-bold tracking-wider uppercase rounded-full transition-opacity"
           >
             Get a Quote
             <svg
@@ -48,7 +48,7 @@ export default function Footer() {
           <div className="md:col-span-1">
             <div className="text-2xl font-bold tracking-widest mb-3">
               <span className="text-white">CER</span>
-              <span className="text-[#B4123A]">INS</span>
+              <span className="text-[var(--on-brand)]">INS</span>
             </div>
             <p className="text-gray-400 text-sm leading-relaxed mb-6">
               Global Certification & Inspection Partner. Connecting Standards,
@@ -59,7 +59,7 @@ export default function Footer() {
                 <a
                   key={c}
                   href="#"
-                  className="w-9 h-9 flex items-center justify-center rounded-full border border-white/20 text-white/70 text-xs font-bold hover:bg-[#B4123A] hover:border-[#B4123A] hover:text-white transition-colors"
+                  className="w-9 h-9 flex items-center justify-center rounded-full border border-white/20 text-white/70 text-xs font-bold hover:bg-[var(--on-brand)] hover:border-[var(--on-brand)] hover:text-white transition-colors"
                   aria-label={`Social ${c}`}
                 >
                   {c}
@@ -72,7 +72,7 @@ export default function Footer() {
           {navigation.slice(0, 3).map((item) => (
             <div key={item.label}>
               <h4 className="text-xs font-bold text-white uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                <span className="w-4 h-0.5 bg-[#B4123A]" />
+                <span className="w-4 h-0.5 bg-[var(--on-brand)]" />
                 {item.label}
               </h4>
               <ul className="space-y-2.5">
@@ -81,9 +81,9 @@ export default function Footer() {
                     <li key={child.path}>
                       <Link
                         href={child.path}
-                        className="group inline-flex items-center gap-2 text-sm text-gray-400 hover:text-[#B4123A] transition-colors"
+                        className="group inline-flex items-center gap-2 text-sm text-gray-400 hover:text-[var(--on-brand)] transition-colors"
                       >
-                        <span className="w-0 group-hover:w-3 h-px bg-[#B4123A] transition-all duration-300" />
+                        <span className="w-0 group-hover:w-3 h-px bg-[var(--on-brand)] transition-all duration-300" />
                         {child.label}
                       </Link>
                     </li>
@@ -97,54 +97,41 @@ export default function Footer() {
         {/* 연락처 라인 */}
         <div className="mt-12 pt-8 border-t border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm">
           <div>
-            <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#B4123A] mb-2">
+            <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-[var(--on-brand)] mb-2">
               Headquarters
             </div>
-            <p className="text-gray-300 leading-relaxed">
-              Seoul, Republic of Korea
-            </p>
+            <p className="text-gray-300 leading-relaxed">Seoul, Republic of Korea</p>
           </div>
           <div>
-            <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#B4123A] mb-2">
+            <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-[var(--on-brand)] mb-2">
               Email
             </div>
-            <a
-              href="mailto:info@cerins.com"
-              className="text-gray-300 hover:text-white transition-colors"
-            >
+            <a href="mailto:info@cerins.com" className="text-gray-300 hover:text-white transition-colors">
               info@cerins.com
             </a>
           </div>
           <div>
-            <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-[#B4123A] mb-2">
+            <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-[var(--on-brand)] mb-2">
               Global Offices
             </div>
-            <p className="text-gray-300 leading-relaxed">
-              Seoul · Moscow · Ho Chi Minh
-            </p>
+            <p className="text-gray-300 leading-relaxed">Seoul · Moscow · Ho Chi Minh</p>
           </div>
         </div>
       </div>
 
       {/* 카피라이트 */}
       <div className="border-t border-white/10 bg-black/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-gray-500">
             © {new Date().getFullYear()}{" "}
-            <span className="text-[#B4123A] font-semibold">CERINS</span>. All
-            rights reserved.
+            <span className="text-[var(--on-brand)] font-semibold">CERINS</span>. All rights reserved.
           </p>
+          <ThemeToggle />
           <div className="flex gap-5">
-            <Link
-              href="/contact"
-              className="text-xs text-gray-500 hover:text-[#B4123A] transition-colors"
-            >
+            <Link href="/contact" className="text-xs text-gray-500 hover:text-[var(--on-brand)] transition-colors">
               Contact
             </Link>
-            <Link
-              href="/news"
-              className="text-xs text-gray-500 hover:text-[#B4123A] transition-colors"
-            >
+            <Link href="/news" className="text-xs text-gray-500 hover:text-[var(--on-brand)] transition-colors">
               News
             </Link>
             <span className="text-xs text-gray-500">Privacy</span>

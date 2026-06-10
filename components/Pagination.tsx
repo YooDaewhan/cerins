@@ -16,7 +16,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="w-9 h-9 flex items-center justify-center rounded border border-gray-200 text-gray-500 disabled:opacity-30 hover:border-[#0a1f44] hover:text-[#0a1f44] transition"
+        className="w-9 h-9 flex items-center justify-center rounded border border-gray-200 text-gray-500 disabled:opacity-30 hover:border-[var(--brand)] hover:text-[var(--brand)] transition"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -29,8 +29,8 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
           onClick={() => onPageChange(p)}
           className={`w-9 h-9 flex items-center justify-center rounded border text-sm font-medium transition ${
             p === currentPage
-              ? "border-[#0a1f44] bg-[#0a1f44] text-white"
-              : "border-gray-200 text-gray-600 hover:border-[#0a1f44] hover:text-[#0a1f44]"
+              ? "border-[var(--brand)] bg-[var(--brand)] text-white"
+              : "border-gray-200 text-gray-600 hover:border-[var(--brand)] hover:text-[var(--brand)]"
           }`}
         >
           {p}
@@ -40,7 +40,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="w-9 h-9 flex items-center justify-center rounded border border-gray-200 text-gray-500 disabled:opacity-30 hover:border-[#0a1f44] hover:text-[#0a1f44] transition"
+        className="w-9 h-9 flex items-center justify-center rounded border border-gray-200 text-gray-500 disabled:opacity-30 hover:border-[var(--brand)] hover:text-[var(--brand)] transition"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
