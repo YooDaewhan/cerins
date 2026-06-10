@@ -14,14 +14,14 @@ export function useTheme() {
 }
 
 export default function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("navy");
+  const [theme, setTheme] = useState<Theme>("red");
 
   useEffect(() => {
     const saved = localStorage.getItem("cerins-theme") as Theme | null;
-    const initial = saved ?? "navy";
+    const initial = saved ?? "red";
     setTheme(initial);
-    if (initial === "red") {
-      document.documentElement.setAttribute("data-theme", "red");
+    if (initial === "navy") {
+      document.documentElement.setAttribute("data-theme", "navy");
     }
   }, []);
 
@@ -29,8 +29,8 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
     const next: Theme = theme === "navy" ? "red" : "navy";
     setTheme(next);
     localStorage.setItem("cerins-theme", next);
-    if (next === "red") {
-      document.documentElement.setAttribute("data-theme", "red");
+    if (next === "navy") {
+      document.documentElement.setAttribute("data-theme", "navy");
     } else {
       document.documentElement.removeAttribute("data-theme");
     }

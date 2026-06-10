@@ -3,16 +3,16 @@
 :root {
   --background: #ffffff;
   --foreground: #1a1a2e;
-  --brand: #0a1f44;
-  --brand-dark: #071530;
-  --on-brand: #B4123A;
-  --gold: #c9a84c;
-}
-
-[data-theme="red"] {
   --brand: #B4123A;
   --brand-dark: #9b0f32;
   --on-brand: #0a1f44;
+  --gold: #c9a84c;
+}
+
+[data-theme="navy"] {
+  --brand: #0a1f44;
+  --brand-dark: #071530;
+  --on-brand: #B4123A;
 }
 
 @theme inline {

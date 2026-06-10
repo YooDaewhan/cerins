@@ -220,7 +220,7 @@ export default function HeroSlider() {
       <button
         type="button"
         onClick={prev}
-        className="group absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-[10] w-12 h-12 flex items-center justify-center rounded-full border border-white/30 text-white bg-white/5 backdrop-blur-sm hover:bg-white hover:text-(--brand) hover:border-white transition-all duration-300 hover:scale-110"
+        className="group absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-[10] w-12 h-12 hidden sm:flex items-center justify-center rounded-full border border-white/30 text-white bg-white/5 backdrop-blur-sm hover:bg-white hover:text-(--brand) hover:border-white transition-all duration-300 hover:scale-110"
         aria-label="Previous slide"
       >
         <svg
@@ -242,7 +242,7 @@ export default function HeroSlider() {
       <button
         type="button"
         onClick={next}
-        className="group absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-[10] w-12 h-12 flex items-center justify-center rounded-full border border-white/30 text-white bg-white/5 backdrop-blur-sm hover:bg-white hover:text-(--brand) hover:border-white transition-all duration-300 hover:scale-110"
+        className="group absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-[10] w-12 h-12 hidden sm:flex items-center justify-center rounded-full border border-white/30 text-white bg-white/5 backdrop-blur-sm hover:bg-white hover:text-(--brand) hover:border-white transition-all duration-300 hover:scale-110"
         aria-label="Next slide"
       >
         <svg
