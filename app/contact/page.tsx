@@ -16,7 +16,7 @@ export default function ContactPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
 
           {/* Left: info */}
-          <div className="space-y-8">
+          <div className="bg-white border border-gray-300 shadow-md rounded-xl p-8 space-y-8">
             <div>
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-6 h-0.5 bg-(--brand)" />
@@ -66,7 +66,7 @@ export default function ContactPage() {
           </div>
 
           {/* Right: form */}
-          <div className="lg:col-span-2 bg-white border border-gray-100 shadow-sm rounded-xl p-8">
+          <div className="lg:col-span-2 bg-white border border-gray-300 shadow-md rounded-xl p-8">
             <div className="mb-6">
               <h3 className="text-lg font-bold text-(--brand)">Send a Message</h3>
               <p className="text-sm text-gray-400 mt-1">We typically respond within 1 business day.</p>
