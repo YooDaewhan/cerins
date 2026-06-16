@@ -56,6 +56,7 @@ export default async function NewsListPage({ params }: Props) {
         title={root.translation.title}
         subtitle={root.translation.subtitle}
         breadcrumb="News"
+        image={root.translation.hero_image}
       />
       <NewsListClient rows={rows} locale={code} />
     </>

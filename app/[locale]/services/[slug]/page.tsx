@@ -51,6 +51,7 @@ export default async function ServicesPage({ params }: Props) {
         title={page.translation.title}
         subtitle={page.translation.subtitle}
         breadcrumb="Services"
+        image={page.translation.hero_image}
       />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         {page.translation.content.map((block) => (

@@ -49,6 +49,7 @@ export default async function CertificationIndexPage({ params }: Props) {
         title={root.translation.title}
         subtitle={root.translation.subtitle}
         breadcrumb="Certification"
+        image={root.translation.hero_image}
       />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <p className="text-gray-500 text-sm max-w-2xl mb-10">

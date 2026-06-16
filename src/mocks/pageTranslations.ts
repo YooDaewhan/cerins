@@ -79,7 +79,7 @@ export const pageTranslations: PageTranslation[] = [
     id: 10, page_id: 10, locale: "en",
     title: "About CERINS",
     subtitle: "Who We Are",
-    hero_image: "/images/hero-about.jpg",
+    hero_image: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "Company Overview", body: "CERINS is a global certification and inspection consulting firm headquartered in Seoul, Korea. We specialize in helping manufacturers and exporters navigate international regulatory requirements with confidence and efficiency." },
       { heading: "Our Expertise",   body: "With more than 15 years of hands-on experience, our team provides end-to-end solutions covering certification, pre-shipment inspection, documentation, and customs brokerage across key global markets including Russia, the CIS region, Europe, and Southeast Asia." },
@@ -93,7 +93,7 @@ export const pageTranslations: PageTranslation[] = [
     id: 11, page_id: 11, locale: "en",
     title: "Vision",
     subtitle: "Our Direction",
-    hero_image: "/images/hero-vision.jpg",
+    hero_image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "Our Vision",  body: "To be the most trusted bridge between global markets ??enabling companies to expand internationally without friction, risk, or compliance uncertainty." },
       { heading: "Our Mission", body: "We exist to simplify the complexity of international trade compliance. Through expert guidance, transparent processes, and reliable partnerships, we help our clients reach new markets faster and with greater confidence." },
@@ -107,7 +107,7 @@ export const pageTranslations: PageTranslation[] = [
     id: 12, page_id: 12, locale: "en",
     title: "Business Ethics and Compliance",
     subtitle: "Our Standards",
-    hero_image: "/images/hero-ethics.jpg",
+    hero_image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "Commitment to Integrity", body: "CERINS holds itself to the highest standards of professional conduct. We operate with full transparency and comply with all applicable local and international regulations in every jurisdiction we serve." },
       { heading: "Anti-Corruption Policy",  body: "We maintain a zero-tolerance policy toward bribery, corruption, and any form of unethical facilitation. All CERINS employees and partners are required to adhere to our Code of Conduct." },
@@ -121,7 +121,7 @@ export const pageTranslations: PageTranslation[] = [
     id: 13, page_id: 13, locale: "en",
     title: "Certification and Accreditations",
     subtitle: "Our Credentials",
-    hero_image: "/images/hero-accreditations.jpg",
+    hero_image: "https://images.unsplash.com/photo-1517842645767-c639042777db?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "Recognized Accreditations", body: "CERINS works exclusively with accredited certification bodies and testing laboratories recognized by the regulatory authorities of target markets. Our partnerships ensure that every certificate we facilitate carries full legal validity." },
       { heading: "Partner Bodies",            body: "Our network includes ISO/IEC 17065 accredited conformity assessment bodies, Rosstandart-approved organizations in Russia, and CE notified bodies in Europe, among others." },
@@ -135,7 +135,7 @@ export const pageTranslations: PageTranslation[] = [
     id: 14, page_id: 14, locale: "en",
     title: "Location",
     subtitle: "Find Us",
-    hero_image: "/images/hero-location.jpg",
+    hero_image: "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "Head Office ??Seoul, Korea",                body: "123 Teheran-ro, Gangnam-gu, Seoul 06234, Republic of Korea\nTel: +82-2-1234-5678\nEmail: info@cerins.com" },
       { heading: "Regional Office ??Moscow, Russia",          body: "45 Tverskaya Street, Moscow 125009, Russia\nTel: +7-495-123-4567" },
@@ -149,7 +149,7 @@ export const pageTranslations: PageTranslation[] = [
   // ?? Certification detail ?????????????????????????????????????????????????
   {
     id: 20, page_id: 20, locale: "en",
-    title: "Russia Certification", subtitle: "EAC & GOST-R", hero_image: "/images/cert-russia.jpg",
+    title: "Russia Certification", subtitle: "EAC & GOST-R", hero_image: "https://images.unsplash.com/photo-1547448415-e9f5b28e570d?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "Overview",        body: "Russia requires a range of mandatory certifications for imported goods, including EAC (Eurasian Conformity) marking and GOST-R certificates. CERINS provides full support from documentation preparation to certificate issuance." },
       { heading: "Service Scope",   body: "EAC Declaration of Conformity, EAC Certificate of Conformity, GOST-R Certification, Fire Safety Certificate, and Metrological Approval." },
@@ -161,7 +161,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 21, page_id: 21, locale: "en",
-    title: "Kazakhstan Certification", subtitle: "EAC & National Standards", hero_image: "/images/cert-kazakhstan.jpg",
+    title: "Kazakhstan Certification", subtitle: "EAC & National Standards", hero_image: "https://images.unsplash.com/photo-1601999453144-21bc97ca8a3a?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "Overview",       body: "As a member of the Eurasian Economic Union, Kazakhstan accepts EAC-marked products. However, certain product categories require additional national approvals from Kazakh regulatory authorities." },
       { heading: "Service Scope",  body: "EAC Certification, ST KZ National Standard Certificates, Sanitary-Epidemiological Conclusion, and Veterinary Certificates." },
@@ -173,7 +173,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 22, page_id: 22, locale: "en",
-    title: "Belarus Certification", subtitle: "EAC & BY Standards", hero_image: "/images/cert-belarus.jpg",
+    title: "Belarus Certification", subtitle: "EAC & BY Standards", hero_image: "https://images.unsplash.com/photo-1505159940484-eb2b9f2588e2?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "Overview",       body: "Belarus is part of the Eurasian Economic Union (EAEU), meaning EAC certification applies across the board. Belarus also maintains specific national regulatory requirements for certain sectors." },
       { heading: "Service Scope",  body: "EAC Conformity Certificates, Belarus Hygiene Certificates, BY National Standards Certificates, and Import Registration for Controlled Goods." },
@@ -185,7 +185,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 23, page_id: 23, locale: "en",
-    title: "Uzbekistan Certification", subtitle: "O'zstandart Approval", hero_image: "/images/cert-uzbekistan.jpg",
+    title: "Uzbekistan Certification", subtitle: "O'zstandart Approval", hero_image: "https://images.unsplash.com/photo-1568454537842-d933259bb258?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "Overview",      body: "Uzbekistan has its own national standardization system governed by O'zstandart. Certain products require mandatory conformity assessment before market entry." },
       { heading: "Service Scope", body: "O'zstandart Certificate of Conformity, Hygiene & Sanitary Registration, Metrological Approval, and Import License Support." },
@@ -197,7 +197,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 24, page_id: 24, locale: "en",
-    title: "Ukraine Certification", subtitle: "UkrSEPRO & Technical Regulations", hero_image: "/images/cert-ukraine.jpg",
+    title: "Ukraine Certification", subtitle: "UkrSEPRO & Technical Regulations", hero_image: "https://images.unsplash.com/photo-1517036638908-93a18147d2fb?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "Overview",       body: "Ukraine operates its own conformity assessment system (UkrSEPRO) and has adopted a set of technical regulations aligned with EU directives. Both national and EU-aligned certification may be required." },
       { heading: "Service Scope",  body: "UkrSEPRO Certificate, Technical Regulation Compliance (TR CU aligned), State Sanitary-Hygienic Expertise, and Product Registration." },
@@ -209,7 +209,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 25, page_id: 25, locale: "en",
-    title: "Turkmenistan Certification", subtitle: "National Conformity Requirements", hero_image: "/images/cert-turkmenistan.jpg",
+    title: "Turkmenistan Certification", subtitle: "National Conformity Requirements", hero_image: "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "Overview",      body: "Turkmenistan maintains its own regulatory framework separate from the EAEU. Import certification is coordinated through the Turkmenstandartlary agency." },
       { heading: "Service Scope", body: "Mandatory Certification of Conformity, Hygiene Certificate, and Import Permit Support for controlled categories." },
@@ -221,7 +221,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 26, page_id: 26, locale: "en",
-    title: "Azerbaijan Certification", subtitle: "Azstandart Certification", hero_image: "/images/cert-azerbaijan.jpg",
+    title: "Azerbaijan Certification", subtitle: "Azstandart Certification", hero_image: "https://images.unsplash.com/photo-1566996694010-c0c7e62a5cf0?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "Overview",      body: "Azerbaijan's national standardization body, Azstandart, oversees mandatory product certification. The country is gradually harmonizing its standards with international norms." },
       { heading: "Service Scope", body: "AZ Certificate of Conformity, Sanitary-Hygienic Assessment, Metrological Type Approval, and Product Registration." },
@@ -233,7 +233,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 27, page_id: 27, locale: "en",
-    title: "Vietnam Certification", subtitle: "CR, CR-BR & Sector-Specific Approvals", hero_image: "/images/cert-vietnam.jpg",
+    title: "Vietnam Certification", subtitle: "CR, CR-BR & Sector-Specific Approvals", hero_image: "https://images.unsplash.com/photo-1528127269322-539801943592?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "Overview",          body: "Vietnam requires conformity registration (CR) or conformity announcement (CB) for many imported products under the Ministry of Science and Technology (MOST) and sector-specific ministries." },
       { heading: "Service Scope",     body: "Conformity Registration (CR), Conformity Announcement (CB), Ministry of Industry and Trade approvals, and Import License Support." },
@@ -245,7 +245,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 28, page_id: 28, locale: "en",
-    title: "Europe Certification", subtitle: "CE Marking & EU Directives", hero_image: "/images/cert-europe.jpg",
+    title: "Europe Certification", subtitle: "CE Marking & EU Directives", hero_image: "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "Overview",      body: "The CE marking is mandatory for products sold in the European Economic Area (EEA). It demonstrates compliance with relevant EU directives and regulations covering safety, health, and environmental protection." },
       { heading: "Service Scope", body: "CE Marking Consultancy, Technical File Preparation, Declaration of Conformity, Notified Body Coordination, REACH & RoHS Compliance, and UKCA Marking (UK)." },
@@ -259,7 +259,7 @@ export const pageTranslations: PageTranslation[] = [
   // ?? Inspection detail ????????????????????????????????????????????????????
   {
     id: 30, page_id: 30, locale: "en",
-    title: "Pre-Shipment Inspection", subtitle: "Quality Assurance Before Dispatch", hero_image: "/images/insp-psi.jpg",
+    title: "Pre-Shipment Inspection", subtitle: "Quality Assurance Before Dispatch", hero_image: "https://images.unsplash.com/photo-1565793298595-6a879b1d9492?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "Overview",        body: "Pre-Shipment Inspection (PSI) verifies that goods conform to agreed specifications, quantity, and quality standards before they leave the exporter's premises or port of loading." },
       { heading: "What We Inspect", body: "Quantity verification, visual quality check, packaging and labeling review, functionality testing, and documentation review against purchase order or letter of credit terms." },
@@ -271,7 +271,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 31, page_id: 31, locale: "en",
-    title: "India VOC", subtitle: "Voluntary Overseas Certification", hero_image: "/images/insp-india.jpg",
+    title: "India VOC", subtitle: "Voluntary Overseas Certification", hero_image: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "Overview",            body: "India's Voluntary Overseas Certification scheme, administered by the Bureau of Indian Standards (BIS), allows certain goods to be certified for conformity before import into India." },
       { heading: "Applicable Products", body: "Electronics, electrical equipment, toys, footwear, and other consumer products listed under BIS mandatory registration schemes." },
@@ -283,7 +283,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 32, page_id: 32, locale: "en",
-    title: "NDT", subtitle: "Non-Destructive Testing", hero_image: "/images/insp-ndt.jpg",
+    title: "NDT", subtitle: "Non-Destructive Testing", hero_image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "Overview",        body: "Non-Destructive Testing (NDT) allows the inspection of materials, components, and assemblies for defects or anomalies without causing damage to the item being tested." },
       { heading: "Methods Offered", body: "Ultrasonic Testing (UT), Radiographic Testing (RT), Magnetic Particle Testing (MT), Liquid Penetrant Testing (PT), Visual Testing (VT), and Eddy Current Testing (ET)." },
@@ -295,7 +295,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 33, page_id: 33, locale: "en",
-    title: "General Inspection", subtitle: "Comprehensive Quality Control", hero_image: "/images/insp-general.jpg",
+    title: "General Inspection", subtitle: "Comprehensive Quality Control", hero_image: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "Overview",      body: "CERINS provides flexible general inspection services tailored to client requirements across a wide range of product categories and industrial sectors." },
       { heading: "Service Types", body: "During Production Inspection (DUPRO), Final Random Inspection (FRI), Container Loading Supervision (CLS), and Factory Audit." },
@@ -307,7 +307,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 34, page_id: 34, locale: "en",
-    title: "Other Services", subtitle: "Specialized Trade Support", hero_image: "/images/insp-other.jpg",
+    title: "Other Services", subtitle: "Specialized Trade Support", hero_image: "https://images.unsplash.com/photo-1494412519320-aa613dfb7738?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "Cargo Survey", body: "Marine and inland cargo surveys including draft surveys, quantity determination, damage assessment, and outturn reports at ports of loading and discharge." },
       { heading: "Expediting",   body: "On-site expediting services to monitor production progress, resolve bottlenecks, and ensure on-time delivery of critical equipment and materials." },
@@ -321,7 +321,7 @@ export const pageTranslations: PageTranslation[] = [
   // ?? Services detail ??????????????????????????????????????????????????????
   {
     id: 40, page_id: 40, locale: "en",
-    title: "Documentation", subtitle: "Trade Document Preparation & Verification", hero_image: "/images/svc-documentation.jpg",
+    title: "Documentation", subtitle: "Trade Document Preparation & Verification", hero_image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "Overview",            body: "Accurate and compliant trade documentation is critical to smooth cross-border transactions. CERINS prepares, reviews, and verifies all required commercial, shipping, and regulatory documents." },
       { heading: "Documents We Handle", body: "Certificate of Origin, Commercial Invoice Review, Packing List, Bill of Lading Review, Phytosanitary Certificate, Health Certificate, and Legalization / Apostille." },
@@ -333,7 +333,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 41, page_id: 41, locale: "en",
-    title: "Project Management & Custom Brokerage", subtitle: "End-to-End Trade Execution", hero_image: "/images/svc-pm.jpg",
+    title: "Project Management & Custom Brokerage", subtitle: "End-to-End Trade Execution", hero_image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "Project Management",  body: "For complex multi-shipment or multi-country projects, CERINS provides dedicated project management to coordinate timelines, vendors, logistics providers, and regulatory bodies." },
       { heading: "Customs Brokerage",   body: "Our licensed customs brokers manage import and export clearance in Korea and key partner markets, ensuring accurate HS code classification, duty calculation, and timely release." },
@@ -408,7 +408,7 @@ export const pageTranslations: PageTranslation[] = [
     id: 110, page_id: 10, locale: "ko",
     title: "CERINS 소개",
     subtitle: "회사 소개",
-    hero_image: "/images/hero-about.jpg",
+    hero_image: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "회사 개요", body: "CERINS는 서울에 본사를 둔 글로벌 인증 및 검사 컨설팅 기업입니다. 제조사와 수출 기업이 국제 규제 요건을 효율적이고 안정적으로 대응할 수 있도록 지원합니다." },
       { heading: "전문 분야", body: "15년 이상의 실무 경험을 바탕으로 러시아, CIS, 유럽, 동남아시아 등 주요 시장에서 인증, 선적 전 검사, 문서화, 통관 중개를 포함한 엔드투엔드 솔루션을 제공합니다." },
@@ -422,7 +422,7 @@ export const pageTranslations: PageTranslation[] = [
     id: 111, page_id: 11, locale: "ko",
     title: "비전",
     subtitle: "CERINS가 나아가는 방향",
-    hero_image: "/images/hero-vision.jpg",
+    hero_image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "비전", body: "CERINS는 기업이 마찰, 리스크, 규정 불확실성 없이 해외 시장으로 확장할 수 있도록 돕는 가장 신뢰받는 글로벌 시장의 연결자가 되고자 합니다." },
       { heading: "미션", body: "국제 무역 컴플라이언스의 복잡성을 단순하게 만드는 것이 CERINS의 역할입니다. 전문적인 안내, 투명한 프로세스, 신뢰할 수 있는 파트너십을 통해 고객의 시장 진입을 더 빠르고 확실하게 지원합니다." },
@@ -436,7 +436,7 @@ export const pageTranslations: PageTranslation[] = [
     id: 112, page_id: 12, locale: "ko",
     title: "기업 윤리 및 컴플라이언스",
     subtitle: "CERINS의 기준",
-    hero_image: "/images/hero-ethics.jpg",
+    hero_image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "정직성에 대한 약속", body: "CERINS는 가장 높은 수준의 전문 윤리를 기준으로 삼습니다. 모든 사업 지역에서 투명하게 운영하며 현지 및 국제 규정을 준수합니다." },
       { heading: "반부패 정책", body: "CERINS는 뇌물, 부패, 비윤리적 편의 제공에 대해 무관용 원칙을 유지합니다. 모든 임직원과 파트너는 행동 강령을 준수해야 합니다." },
@@ -450,7 +450,7 @@ export const pageTranslations: PageTranslation[] = [
     id: 113, page_id: 13, locale: "ko",
     title: "인증 및 인정",
     subtitle: "CERINS의 신뢰 기반",
-    hero_image: "/images/hero-accreditations.jpg",
+    hero_image: "https://images.unsplash.com/photo-1517842645767-c639042777db?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "공인 인정", body: "CERINS는 목표 시장의 규제 당국이 인정하는 공인 인증기관 및 시험소와 협력합니다. 이를 통해 모든 인증서가 법적 효력을 갖도록 지원합니다." },
       { heading: "파트너 기관", body: "CERINS의 네트워크에는 ISO/IEC 17065 공인 적합성 평가기관, 러시아 Rosstandart 승인 기관, 유럽 CE 인증기관 등이 포함됩니다." },
@@ -464,7 +464,7 @@ export const pageTranslations: PageTranslation[] = [
     id: 114, page_id: 14, locale: "ko",
     title: "오시는 길",
     subtitle: "CERINS 위치 안내",
-    hero_image: "/images/hero-location.jpg",
+    hero_image: "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "본사 - 서울, 대한민국", body: "서울특별시 강남구 테헤란로 123, 06234\nTel: +82-2-1234-5678\nEmail: info@cerins.com" },
       { heading: "지역 사무소 - 모스크바, 러시아", body: "45 Tverskaya Street, Moscow 125009, Russia\nTel: +7-495-123-4567" },
@@ -476,7 +476,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 120, page_id: 20, locale: "ko",
-    title: "러시아 인증", subtitle: "EAC 및 GOST-R", hero_image: "/images/cert-russia.jpg",
+    title: "러시아 인증", subtitle: "EAC 및 GOST-R", hero_image: "https://images.unsplash.com/photo-1547448415-e9f5b28e570d?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "개요", body: "러시아는 수입 제품에 대해 EAC 마킹, GOST-R 인증 등 다양한 필수 인증을 요구합니다. CERINS는 문서 준비부터 인증서 발급까지 전 과정을 지원합니다." },
       { heading: "서비스 범위", body: "EAC 적합성 선언, EAC 적합성 인증, GOST-R 인증, 화재 안전 인증, 계측 승인 등을 지원합니다." },
@@ -488,7 +488,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 121, page_id: 21, locale: "ko",
-    title: "카자흐스탄 인증", subtitle: "EAC 및 국가 표준", hero_image: "/images/cert-kazakhstan.jpg",
+    title: "카자흐스탄 인증", subtitle: "EAC 및 국가 표준", hero_image: "https://images.unsplash.com/photo-1601999453144-21bc97ca8a3a?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "개요", body: "카자흐스탄은 유라시아경제연합 회원국으로 EAC 마킹 제품을 인정합니다. 다만 일부 제품군은 카자흐스탄 규제 당국의 추가 국가 승인이 필요합니다." },
       { heading: "서비스 범위", body: "EAC 인증, ST KZ 국가 표준 인증, 위생역학 결론, 수의 인증 등을 지원합니다." },
@@ -500,7 +500,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 122, page_id: 22, locale: "ko",
-    title: "벨라루스 인증", subtitle: "EAC 및 BY 표준", hero_image: "/images/cert-belarus.jpg",
+    title: "벨라루스 인증", subtitle: "EAC 및 BY 표준", hero_image: "https://images.unsplash.com/photo-1505159940484-eb2b9f2588e2?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "개요", body: "벨라루스는 유라시아경제연합(EAEU)에 속해 EAC 인증이 적용됩니다. 일부 산업 분야에는 별도의 국가 규제 요건도 운영됩니다." },
       { heading: "서비스 범위", body: "EAC 적합성 인증서, 벨라루스 위생 인증, BY 국가 표준 인증, 관리 대상 제품 수입 등록을 지원합니다." },
@@ -512,7 +512,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 123, page_id: 23, locale: "ko",
-    title: "우즈베키스탄 인증", subtitle: "O'zstandart 승인", hero_image: "/images/cert-uzbekistan.jpg",
+    title: "우즈베키스탄 인증", subtitle: "O'zstandart 승인", hero_image: "https://images.unsplash.com/photo-1568454537842-d933259bb258?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "개요", body: "우즈베키스탄은 O'zstandart가 관리하는 독자적인 국가 표준화 체계를 운영합니다. 특정 제품은 시장 진입 전 의무 적합성 평가가 필요합니다." },
       { heading: "서비스 범위", body: "O'zstandart 적합성 인증, 위생 등록, 계측 승인, 수입 허가 지원을 제공합니다." },
@@ -524,7 +524,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 124, page_id: 24, locale: "ko",
-    title: "우크라이나 인증", subtitle: "UkrSEPRO 및 기술 규정", hero_image: "/images/cert-ukraine.jpg",
+    title: "우크라이나 인증", subtitle: "UkrSEPRO 및 기술 규정", hero_image: "https://images.unsplash.com/photo-1517036638908-93a18147d2fb?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "개요", body: "우크라이나는 자체 적합성 평가 제도인 UkrSEPRO를 운영하며 EU 지침에 맞춘 기술 규정을 도입하고 있습니다. 국가 인증과 EU 연계 인증이 모두 필요할 수 있습니다." },
       { heading: "서비스 범위", body: "UkrSEPRO 인증, 기술 규정 적합성, 국가 위생 전문 평가, 제품 등록을 지원합니다." },
@@ -536,7 +536,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 125, page_id: 25, locale: "ko",
-    title: "투르크메니스탄 인증", subtitle: "국가 적합성 요건", hero_image: "/images/cert-turkmenistan.jpg",
+    title: "투르크메니스탄 인증", subtitle: "국가 적합성 요건", hero_image: "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "개요", body: "투르크메니스탄은 EAEU와 별개의 자체 규제 체계를 운영합니다. 수입 인증은 Turkmenstandartlary 기관을 통해 진행됩니다." },
       { heading: "서비스 범위", body: "의무 적합성 인증, 위생 인증, 관리 대상 품목의 수입 허가 지원을 제공합니다." },
@@ -548,7 +548,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 126, page_id: 26, locale: "ko",
-    title: "아제르바이잔 인증", subtitle: "Azstandart 인증", hero_image: "/images/cert-azerbaijan.jpg",
+    title: "아제르바이잔 인증", subtitle: "Azstandart 인증", hero_image: "https://images.unsplash.com/photo-1566996694010-c0c7e62a5cf0?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "개요", body: "아제르바이잔의 국가 표준화 기관인 Azstandart는 의무 제품 인증을 관리합니다. 아제르바이잔은 국제 기준에 맞춰 표준을 점진적으로 조화시키고 있습니다." },
       { heading: "서비스 범위", body: "AZ 적합성 인증, 위생 평가, 계측 형식 승인, 제품 등록을 지원합니다." },
@@ -560,7 +560,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 127, page_id: 27, locale: "ko",
-    title: "베트남 인증", subtitle: "CR, CB 및 분야별 승인", hero_image: "/images/cert-vietnam.jpg",
+    title: "베트남 인증", subtitle: "CR, CB 및 분야별 승인", hero_image: "https://images.unsplash.com/photo-1528127269322-539801943592?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "개요", body: "베트남은 과학기술부(MOST)와 분야별 부처 규정에 따라 다수의 수입 제품에 적합성 등록(CR) 또는 적합성 발표(CB)를 요구합니다." },
       { heading: "서비스 범위", body: "적합성 등록(CR), 적합성 발표(CB), 산업무역부 승인, 수입 허가 지원을 제공합니다." },
@@ -572,7 +572,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 128, page_id: 28, locale: "ko",
-    title: "유럽 인증", subtitle: "CE 마킹 및 EU 지침", hero_image: "/images/cert-europe.jpg",
+    title: "유럽 인증", subtitle: "CE 마킹 및 EU 지침", hero_image: "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "개요", body: "CE 마킹은 유럽경제지역(EEA)에서 판매되는 제품에 필수입니다. 이는 안전, 보건, 환경 보호와 관련된 EU 지침 및 규정을 준수한다는 의미입니다." },
       { heading: "서비스 범위", body: "CE 마킹 컨설팅, 기술 파일 준비, 적합성 선언, 인증기관 조율, REACH 및 RoHS 준수, 영국 UKCA 마킹을 지원합니다." },
@@ -584,7 +584,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 130, page_id: 30, locale: "ko",
-    title: "선적 전 검사", subtitle: "출하 전 품질 보증", hero_image: "/images/insp-psi.jpg",
+    title: "선적 전 검사", subtitle: "출하 전 품질 보증", hero_image: "https://images.unsplash.com/photo-1565793298595-6a879b1d9492?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "개요", body: "선적 전 검사(PSI)는 제품이 수출자의 공장 또는 선적항을 떠나기 전에 합의된 사양, 수량, 품질 기준에 부합하는지 확인합니다." },
       { heading: "검사 항목", body: "수량 확인, 외관 품질 점검, 포장 및 라벨 검토, 기능 테스트, 구매 주문서 또는 신용장 조건에 대한 문서 검토를 수행합니다." },
@@ -596,7 +596,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 131, page_id: 31, locale: "ko",
-    title: "인도 VOC", subtitle: "해외 자율 인증", hero_image: "/images/insp-india.jpg",
+    title: "인도 VOC", subtitle: "해외 자율 인증", hero_image: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "개요", body: "인도의 해외 자율 인증(VOC) 제도는 인도표준국(BIS)이 관리하며, 일부 제품이 인도 수입 전 적합성을 인증받을 수 있도록 합니다." },
       { heading: "대상 제품", body: "BIS 의무 등록 제도에 포함된 전자제품, 전기 장비, 장난감, 신발류 및 기타 소비재가 해당됩니다." },
@@ -608,7 +608,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 132, page_id: 32, locale: "ko",
-    title: "비파괴 검사", subtitle: "NDT 서비스", hero_image: "/images/insp-ndt.jpg",
+    title: "비파괴 검사", subtitle: "NDT 서비스", hero_image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "개요", body: "비파괴 검사(NDT)는 검사 대상에 손상을 주지 않고 재료, 부품, 조립품의 결함 또는 이상 여부를 확인하는 검사 방식입니다." },
       { heading: "제공 방법", body: "초음파 검사(UT), 방사선 검사(RT), 자분 탐상(MT), 침투 탐상(PT), 육안 검사(VT), 와전류 검사(ET)를 제공합니다." },
@@ -620,7 +620,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 133, page_id: 33, locale: "ko",
-    title: "일반 검사", subtitle: "종합 품질 관리", hero_image: "/images/insp-general.jpg",
+    title: "일반 검사", subtitle: "종합 품질 관리", hero_image: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "개요", body: "CERINS는 다양한 제품군과 산업 분야에서 고객 요구사항에 맞춘 유연한 일반 검사 서비스를 제공합니다." },
       { heading: "서비스 유형", body: "생산 중 검사(DUPRO), 최종 무작위 검사(FRI), 컨테이너 적재 감독(CLS), 공장 심사를 제공합니다." },
@@ -632,7 +632,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 134, page_id: 34, locale: "ko",
-    title: "기타 서비스", subtitle: "전문 무역 지원", hero_image: "/images/insp-other.jpg",
+    title: "기타 서비스", subtitle: "전문 무역 지원", hero_image: "https://images.unsplash.com/photo-1494412519320-aa613dfb7738?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "화물 검사", body: "선적항과 양하항에서 흘수 검사, 수량 확인, 손상 평가, 양하 보고 등 해상 및 내륙 화물 검사를 수행합니다." },
       { heading: "익스페다이팅", body: "생산 진행 상황을 현장에서 확인하고 병목을 해결하며 핵심 장비와 자재가 제때 납품되도록 지원합니다." },
@@ -644,7 +644,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 140, page_id: 40, locale: "ko",
-    title: "문서화", subtitle: "무역 문서 준비 및 검토", hero_image: "/images/svc-documentation.jpg",
+    title: "문서화", subtitle: "무역 문서 준비 및 검토", hero_image: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "개요", body: "정확하고 규정에 맞는 무역 문서는 원활한 국경 간 거래의 핵심입니다. CERINS는 상업, 선적, 규제 관련 필수 문서를 준비, 검토, 확인합니다." },
       { heading: "취급 문서", body: "원산지 증명서, 상업 송장 검토, 포장 명세서, 선하증권 검토, 식물위생증명서, 보건증명서, 공증 및 아포스티유를 지원합니다." },
@@ -656,7 +656,7 @@ export const pageTranslations: PageTranslation[] = [
   },
   {
     id: 141, page_id: 41, locale: "ko",
-    title: "프로젝트 관리 및 통관 중개", subtitle: "엔드투엔드 무역 실행", hero_image: "/images/svc-pm.jpg",
+    title: "프로젝트 관리 및 통관 중개", subtitle: "엔드투엔드 무역 실행", hero_image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=1400&q=80&auto=format&fit=crop",
     content: [
       { heading: "프로젝트 관리", body: "복수 선적 또는 다국가 프로젝트의 경우 CERINS는 일정, 공급사, 물류사, 규제 기관을 조율하는 전담 프로젝트 관리를 제공합니다." },
       { heading: "통관 중개", body: "CERINS의 통관 네트워크는 한국 및 주요 파트너 시장에서 수입·수출 통관, HS 코드 분류, 관세 산정, 신속한 반출을 지원합니다." },

@@ -56,6 +56,9 @@ export interface Menu {
   parent_id: number | null;
   page_id: number | null;
   url: string | null;
+  // Decorative background image for the mega-menu panel (top-level menus only).
+  // MySQL future column: VARCHAR NULL.
+  mega_image_url: string | null;
   sort_order: number;
   is_visible: boolean;
   created_at: string;
@@ -123,4 +126,9 @@ export interface PageWithTranslation {
 export interface AlternateUrl {
   locale: LocaleCode;
   url: string;
+}
+
+// MySQL future table: site_assets (key/value image catalog managed in admin).
+export interface SiteAssets {
+  default_hero_image: string;
 }

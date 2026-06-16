@@ -58,7 +58,12 @@ export default async function NewsDetailPage({ params }: Props) {
 
   return (
     <>
-      <PageHero title="News Room" subtitle={item.published_at} breadcrumb="News" />
+      <PageHero
+        title="News Room"
+        subtitle={item.published_at}
+        breadcrumb="News"
+        image={item.thumbnail}
+      />
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <nav className="flex items-center gap-2 text-xs text-gray-400 mb-8">

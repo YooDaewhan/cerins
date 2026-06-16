@@ -1,32 +1,27 @@
+import { getDefaultHeroImage } from "@/src/lib/mockRepository";
+
 interface PageHeroProps {
   title: string;
   subtitle?: string;
   breadcrumb?: string;
-  image?: string;
+  image?: string | null;
 }
 
-const DEFAULT_IMAGE =
-  "https://images.unsplash.com/photo-1494412574643-ff11b0a5c1c3?w=1400&q=80&auto=format&fit=crop";
-
 export default function PageHero({ title, subtitle, breadcrumb, image }: PageHeroProps) {
-  const bg = image || DEFAULT_IMAGE;
+  const bg = image && image.length > 0 ? image : getDefaultHeroImage();
 
   return (
     <div
       className="relative flex items-center"
       style={{ height: "28vh", minHeight: "200px" }}
     >
-      {/* Background image */}
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url('${bg}')` }}
       />
-      {/* Overlay */}
       <div className="absolute inset-0 bg-gradient-to-r from-(--brand)/90 via-(--brand)/75 to-(--brand)/50" />
-      {/* Left red accent bar */}
       <div className="absolute left-0 top-0 bottom-0 w-1 bg-(--brand)" />
 
-      {/* Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         {breadcrumb && (
           <p className="text-xs text-(--brand) tracking-widest uppercase font-bold mb-2 flex items-center gap-2">

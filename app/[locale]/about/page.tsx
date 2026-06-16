@@ -50,6 +50,7 @@ export default async function AboutIndexPage({ params }: Props) {
         title={root.translation.title}
         subtitle={root.translation.subtitle}
         breadcrumb="About"
+        image={root.translation.hero_image}
       />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

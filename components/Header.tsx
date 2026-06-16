@@ -5,15 +5,6 @@ import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import type { Locale, LocaleCode, MenuNode } from "@/src/lib/types";
 
-const megaImages: Record<string, string> = {
-  About:
-    "https://images.unsplash.com/photo-1494412574643-ff11b0a5c1c3?w=1400&q=80&auto=format&fit=crop",
-  Certification:
-    "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1400&q=80&auto=format&fit=crop",
-  Inspection:
-    "https://images.unsplash.com/photo-1565793298595-6a879b1d9492?w=1400&q=80&auto=format&fit=crop",
-};
-
 interface HeaderProps {
   menus: MenuNode[];
   locale: LocaleCode;
@@ -315,18 +306,20 @@ export default function Header({ menus, locale, enabledLocales }: HeaderProps) {
       >
         <div className="relative h-full grid grid-cols-1 lg:grid-cols-2 bg-[#15161b] overflow-hidden">
           <div className="relative hidden lg:block overflow-hidden">
-            {Object.entries(megaImages).map(([key, url]) => (
-              <div
-                key={key}
-                className="absolute inset-0 bg-cover bg-center transition-opacity duration-700"
-                style={{
-                  backgroundImage: `url('${url}')`,
-                  opacity: openMenu === key ? 1 : 0,
-                  transform: openMenu === key ? "scale(1)" : "scale(1.05)",
-                  transition: "opacity 700ms ease, transform 8s ease-out",
-                }}
-              />
-            ))}
+            {menus
+              .filter((m) => m.mega_image_url)
+              .map((m) => (
+                <div
+                  key={m.id}
+                  className="absolute inset-0 bg-cover bg-center transition-opacity duration-700"
+                  style={{
+                    backgroundImage: `url('${m.mega_image_url}')`,
+                    opacity: openMenu === m.label ? 1 : 0,
+                    transform: openMenu === m.label ? "scale(1)" : "scale(1.05)",
+                    transition: "opacity 700ms ease, transform 8s ease-out",
+                  }}
+                />
+              ))}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#15161b]/40" />
             <div className="absolute bottom-10 left-10 z-10 text-white/80">
               <div className="flex items-center gap-3 mb-2">

@@ -11,6 +11,7 @@ import { menuTranslations } from "@/src/mocks/menuTranslations";
 import { posts, postAuthors } from "@/src/mocks/posts";
 import { partners } from "@/src/mocks/partners";
 import { heroSlides } from "@/src/mocks/heroSlides";
+import { siteAssets } from "@/src/mocks/siteAssets";
 import {
   DEFAULT_LOCALE,
   buildLocalizedPath as buildLocalizedPathImpl,
@@ -29,6 +30,7 @@ import type {
   PageWithTranslation,
   Partner,
   Post,
+  SiteAssets,
 } from "@/src/lib/types";
 
 // ── Locales ────────────────────────────────────────────────────────────────
@@ -220,6 +222,16 @@ export function getPostBySlug(
 
 export function getPostAuthor(postId: number): string {
   return postAuthors[postId] ?? "CERINS Editorial";
+}
+
+// ── Site-wide assets ───────────────────────────────────────────────────────
+
+export function getSiteAssets(): SiteAssets {
+  return siteAssets;
+}
+
+export function getDefaultHeroImage(): string {
+  return siteAssets.default_hero_image;
 }
 
 // ── Partners / hero slides ─────────────────────────────────────────────────
