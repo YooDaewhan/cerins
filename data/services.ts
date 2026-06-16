@@ -1,3 +1,5 @@
+// DEPRECATED: card data now lives inline in app/[locale]/page.tsx (will move to a dedicated `home_service_cards` table when admin CRUD lands). To be removed once that ships.
+
 export interface Service {
   id: string;
   title: string;

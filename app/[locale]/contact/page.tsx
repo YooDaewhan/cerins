@@ -1,21 +1,64 @@
-﻿import PageHero from "@/components/PageHero";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import PageHero from "@/components/PageHero";
 import ContactForm from "@/components/ContactForm";
+import {
+  getAlternateUrls,
+  getPageWithTranslation,
+} from "@/src/lib/mockRepository";
+import { isLocale } from "@/src/lib/i18n";
+import type { LocaleCode } from "@/src/lib/types";
 
-export const metadata = { title: "Contact ??CERINS" };
+interface Props {
+  params: Promise<{ locale: string }>;
+}
 
-export default function ContactPage() {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  if (!isLocale(locale)) return {};
+  const page = getPageWithTranslation("contact", locale as LocaleCode);
+  if (!page) return {};
+  return {
+    title: page.translation.meta_title,
+    description: page.translation.meta_description,
+    alternates: {
+      languages: Object.fromEntries(
+        getAlternateUrls("contact").map((a) => [a.locale, a.url]),
+      ),
+    },
+  };
+}
+
+const PRIMARY_LABELS = new Set(["Head Office", "Telephone", "Email", "Business Hours"]);
+
+const ICON_BY_HEADING: Record<string, "location" | "phone" | "email" | "clock"> = {
+  "Head Office": "location",
+  Telephone: "phone",
+  Email: "email",
+  "Business Hours": "clock",
+};
+
+export default async function ContactPage({ params }: Props) {
+  const { locale } = await params;
+  if (!isLocale(locale)) notFound();
+  const code = locale as LocaleCode;
+
+  const page = getPageWithTranslation("contact", code);
+  if (!page) notFound();
+
+  const primary = page.translation.content.filter((b) => PRIMARY_LABELS.has(b.heading));
+  const regional = page.translation.content.filter((b) => !PRIMARY_LABELS.has(b.heading));
+
   return (
     <>
       <PageHero
-        title="Contact Us"
-        subtitle="Get in touch with our certification and inspection experts."
+        title={page.translation.title}
+        subtitle={page.translation.subtitle}
         breadcrumb="Contact"
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-
-          {/* Left: info */}
           <div className="bg-white border border-gray-300 shadow-md rounded-xl p-8 space-y-8">
             <div>
               <div className="flex items-center gap-3 mb-3">
@@ -24,48 +67,34 @@ export default function ContactPage() {
               </div>
               <h2 className="text-2xl font-bold text-(--brand) mb-3">We&apos;d love to hear from you</h2>
               <p className="text-sm text-gray-500 leading-relaxed">
-                Whether you need a certification quote, have a compliance question, or want to schedule an inspection ??our team is ready to assist.
+                Whether you need a certification quote, have a compliance question, or want to schedule an inspection — our team is ready to assist.
               </p>
             </div>
 
             <div className="space-y-5">
-              <ContactInfoItem
-                icon="location"
-                label="Head Office"
-                lines={["123 Teheran-ro, Gangnam-gu", "Seoul 06234, Republic of Korea"]}
-              />
-              <ContactInfoItem
-                icon="phone"
-                label="Telephone"
-                lines={["+82-2-1234-5678"]}
-              />
-              <ContactInfoItem
-                icon="email"
-                label="Email"
-                lines={["info@cerins.com"]}
-              />
-              <ContactInfoItem
-                icon="clock"
-                label="Business Hours"
-                lines={["Mon ??Fri: 09:00 ??18:00 KST"]}
-              />
+              {primary.map((block) => (
+                <ContactInfoItem
+                  key={block.heading}
+                  icon={ICON_BY_HEADING[block.heading] ?? "location"}
+                  label={block.heading}
+                  lines={block.body.split("\n")}
+                />
+              ))}
             </div>
 
-            {/* Regional offices */}
-            <div className="border-t border-gray-100 pt-6 space-y-4">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Regional Offices</p>
-              <div>
-                <p className="text-sm font-semibold text-(--brand)">Moscow, Russia</p>
-                <p className="text-xs text-gray-500">45 Tverskaya Street, Moscow 125009</p>
+            {regional.length > 0 && (
+              <div className="border-t border-gray-100 pt-6 space-y-4">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Regional Offices</p>
+                {regional.map((block) => (
+                  <div key={block.heading}>
+                    <p className="text-sm font-semibold text-(--brand)">{block.heading}</p>
+                    <p className="text-xs text-gray-500">{block.body}</p>
+                  </div>
+                ))}
               </div>
-              <div>
-                <p className="text-sm font-semibold text-(--brand)">Ho Chi Minh City, Vietnam</p>
-                <p className="text-xs text-gray-500">88 Nguyen Hue Boulevard, District 1</p>
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* Right: form */}
           <div className="lg:col-span-2 bg-white border border-gray-300 shadow-md rounded-xl p-8">
             <div className="mb-6">
               <h3 className="text-lg font-bold text-(--brand)">Send a Message</h3>
@@ -79,7 +108,15 @@ export default function ContactPage() {
   );
 }
 
-function ContactInfoItem({ icon, label, lines }: { icon: string; label: string; lines: string[] }) {
+function ContactInfoItem({
+  icon,
+  label,
+  lines,
+}: {
+  icon: "location" | "phone" | "email" | "clock";
+  label: string;
+  lines: string[];
+}) {
   const iconMap: Record<string, React.ReactNode> = {
     location: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -116,4 +153,3 @@ function ContactInfoItem({ icon, label, lines }: { icon: string; label: string; 
     </div>
   );
 }
-

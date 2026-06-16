@@ -1,3 +1,5 @@
+// DEPRECATED: see src/mocks/partners.ts. Components must call mockRepository.listPartners() instead of importing this. To be removed once the admin CRUD lands.
+
 export interface Partner {
   id: number;
   name: string;

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { navigation } from "@/data/navigation";
+import type { Locale, LocaleCode, MenuNode } from "@/src/lib/types";
 
 const megaImages: Record<string, string> = {
   About:
@@ -14,7 +14,29 @@ const megaImages: Record<string, string> = {
     "https://images.unsplash.com/photo-1565793298595-6a879b1d9492?w=1400&q=80&auto=format&fit=crop",
 };
 
-export default function Header() {
+interface HeaderProps {
+  menus: MenuNode[];
+  locale: LocaleCode;
+  enabledLocales: Locale[];
+}
+
+const DEFAULT_LOCALE: LocaleCode = "ko";
+
+function buildLocalizedHref(target: LocaleCode, currentPathname: string, enabled: LocaleCode[]): string {
+  // Strip a leading locale segment if present.
+  const segments = currentPathname.split("/").filter(Boolean);
+  let rest = currentPathname;
+  if (segments.length > 0 && (enabled as string[]).includes(segments[0])) {
+    rest = "/" + segments.slice(1).join("/");
+    if (rest === "/") rest = "/";
+  }
+  if (rest === "") rest = "/";
+  if (target === DEFAULT_LOCALE) return rest;
+  if (rest === "/") return "/" + target;
+  return "/" + target + rest;
+}
+
+export default function Header({ menus, locale, enabledLocales }: HeaderProps) {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
@@ -22,6 +44,8 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+
+  const enabledCodes = enabledLocales.map((l) => l.code);
 
   useEffect(() => {
     function onScroll() {
@@ -38,7 +62,6 @@ export default function Header() {
     setMobileExpanded(null);
   }, [pathname]);
 
-  // ESC 키로 닫기 + 메가 열렸을 때 스크롤 잠금
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setOpenMenu(null);
@@ -47,7 +70,6 @@ export default function Header() {
       const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
       document.body.style.paddingRight = `${scrollbarWidth}px`;
       document.body.style.overflow = "hidden";
-      // fixed 헤더도 스크롤바 너비만큼 오른쪽을 보정
       if (headerRef.current) {
         headerRef.current.style.paddingRight = `${scrollbarWidth}px`;
       }
@@ -72,7 +94,8 @@ export default function Header() {
   const isActive = (path: string) =>
     pathname === path || pathname.startsWith(path + "/");
 
-  const activeItem = navigation.find((n) => n.label === openMenu);
+  const activeItem = menus.find((n) => n.label === openMenu);
+  const currentLocale = enabledLocales.find((l) => l.code === locale);
 
   return (
     <>
@@ -88,7 +111,7 @@ export default function Header() {
           <div className="flex items-center justify-between h-16">
             {/* 로고 */}
             <Link
-              href="/"
+              href={locale === DEFAULT_LOCALE ? "/" : `/${locale}`}
               className="group relative text-2xl font-bold tracking-widest"
               onClick={() => setOpenMenu(null)}
             >
@@ -99,15 +122,15 @@ export default function Header() {
 
             {/* 데스크톱 네비 */}
             <nav className="hidden lg:flex items-center gap-1">
-              {navigation.map((item) => {
+              {menus.map((item) => {
                 const isOpen = openMenu === item.label;
-                const active = isActive(item.path);
+                const active = isActive(item.href);
 
-                if (!item.children) {
+                if (item.children.length === 0) {
                   return (
                     <Link
-                      key={item.label}
-                      href={item.path}
+                      key={item.id}
+                      href={item.href}
                       className={`relative px-5 py-5 text-sm font-bold tracking-wider uppercase transition-colors ${
                         active
                           ? "text-(--brand)"
@@ -127,7 +150,7 @@ export default function Header() {
 
                 return (
                   <button
-                    key={item.label}
+                    key={item.id}
                     type="button"
                     aria-expanded={isOpen}
                     onClick={() => setOpenMenu(isOpen ? null : item.label)}
@@ -163,16 +186,32 @@ export default function Header() {
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18" />
                   </svg>
-                  KOR
+                  {currentLocale?.code.toUpperCase() ?? locale.toUpperCase()}
                 </button>
                 {langOpen && (
                   <div
-                    className="absolute right-0 mt-2 w-32 bg-white border border-gray-100 rounded-lg shadow-xl py-1"
+                    className="absolute right-0 mt-2 w-40 bg-white border border-gray-100 rounded-lg shadow-xl py-1"
                     style={{ zIndex: 200 }}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <button className="w-full text-left px-4 py-2 text-sm font-semibold text-(--brand) bg-[#fff5f6]" onClick={() => setLangOpen(false)}>Korean</button>
-                    <button className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50" onClick={() => setLangOpen(false)}>English</button>
+                    {enabledLocales.map((l) => {
+                      const href = buildLocalizedHref(l.code, pathname, enabledCodes);
+                      const isCurrent = l.code === locale;
+                      return (
+                        <Link
+                          key={l.code}
+                          href={href}
+                          onClick={() => setLangOpen(false)}
+                          className={`block w-full text-left px-4 py-2 text-sm ${
+                            isCurrent
+                              ? "font-semibold text-(--brand) bg-[#fff5f6]"
+                              : "text-gray-600 hover:bg-gray-50"
+                          }`}
+                        >
+                          {l.native_name}
+                        </Link>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -195,10 +234,10 @@ export default function Header() {
         {/* ── 모바일 메뉴 ── */}
         <div className={`lg:hidden overflow-hidden transition-all duration-300 ${mobileOpen ? "max-h-[80vh]" : "max-h-0"}`}>
           <div className="border-t border-gray-200 bg-white shadow-xl overflow-y-auto max-h-[80vh]">
-            {navigation.map((item) => (
-              <div key={item.label} className="border-b border-gray-100">
+            {menus.map((item) => (
+              <div key={item.id} className="border-b border-gray-100">
                 <div className="flex items-center">
-                  {item.children ? (
+                  {item.children.length > 0 ? (
                     <button
                       type="button"
                       className={`flex-1 text-left px-5 py-4 text-sm font-bold uppercase tracking-wider transition-colors ${
@@ -210,27 +249,27 @@ export default function Header() {
                     </button>
                   ) : (
                     <Link
-                      href={item.path}
+                      href={item.href}
                       className={`flex-1 px-5 py-4 text-sm font-bold uppercase tracking-wider transition-colors ${
-                        isActive(item.path) ? "text-(--brand)" : "text-(--brand)"
+                        isActive(item.href) ? "text-(--brand)" : "text-(--brand)"
                       }`}
                       onClick={() => setMobileOpen(false)}
                     >
                       {item.label}
                     </Link>
                   )}
-                  {item.children && (
+                  {item.children.length > 0 && (
                     <svg className={`w-4 h-4 mr-5 text-gray-400 transition-transform duration-300 ${mobileExpanded === item.label ? "rotate-180 text-(--brand)" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   )}
                 </div>
-                {item.children && (
+                {item.children.length > 0 && (
                   <div className={`bg-[#f8f9fc] border-t border-gray-100 overflow-hidden transition-all duration-300 ${mobileExpanded === item.label ? "max-h-[600px]" : "max-h-0"}`}>
                     {item.children.map((child) => (
                       <Link
-                        key={child.path}
-                        href={child.path}
+                        key={child.id}
+                        href={child.href}
                         className="flex items-center gap-2.5 pl-8 pr-5 py-3 text-sm text-gray-600 hover:text-(--brand) border-b border-gray-100 last:border-0 transition-colors"
                         onClick={() => setMobileOpen(false)}
                       >
@@ -242,10 +281,23 @@ export default function Header() {
                 )}
               </div>
             ))}
-            <div className="px-5 py-4 flex items-center gap-3 bg-gray-50">
-              <button className="text-sm font-semibold text-(--brand)">KOR</button>
-              <span className="text-gray-300 text-xs">|</span>
-              <button className="text-sm text-gray-500">ENG</button>
+            <div className="px-5 py-4 flex items-center gap-3 bg-gray-50 flex-wrap">
+              {enabledLocales.map((l, i) => {
+                const href = buildLocalizedHref(l.code, pathname, enabledCodes);
+                const isCurrent = l.code === locale;
+                return (
+                  <span key={l.code} className="flex items-center gap-3">
+                    {i > 0 && <span className="text-gray-300 text-xs">|</span>}
+                    <Link
+                      href={href}
+                      onClick={() => setMobileOpen(false)}
+                      className={`text-sm ${isCurrent ? "font-semibold text-(--brand)" : "text-gray-500"}`}
+                    >
+                      {l.code.toUpperCase()}
+                    </Link>
+                  </span>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -262,7 +314,6 @@ export default function Header() {
         style={{ height: "calc(80vh)" }}
       >
         <div className="relative h-full grid grid-cols-1 lg:grid-cols-2 bg-[#15161b] overflow-hidden">
-          {/* 좌측 이미지 */}
           <div className="relative hidden lg:block overflow-hidden">
             {Object.entries(megaImages).map(([key, url]) => (
               <div
@@ -277,7 +328,6 @@ export default function Header() {
               />
             ))}
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#15161b]/40" />
-            {/* 좌하단 데코 */}
             <div className="absolute bottom-10 left-10 z-10 text-white/80">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-px bg-(--brand)" />
@@ -291,9 +341,7 @@ export default function Header() {
             </div>
           </div>
 
-          {/* 우측 다크 패널 */}
           <div className="relative h-full flex flex-col px-8 sm:px-14 py-12 lg:py-16 overflow-y-auto">
-            {/* 타이틀 */}
             <div
               className="mb-10 lg:mb-14"
               style={{
@@ -313,11 +361,10 @@ export default function Header() {
               </h2>
             </div>
 
-            {/* 서브 아이템 리스트 */}
             <ul className="flex-1 space-y-1">
-              {activeItem?.children?.map((child, idx) => (
+              {activeItem?.children.map((child, idx) => (
                 <li
-                  key={child.path}
+                  key={child.id}
                   style={{
                     animation: openMenu
                       ? `megaIn 0.55s cubic-bezier(.2,.7,.2,1) ${0.1 + idx * 0.06}s both`
@@ -325,7 +372,7 @@ export default function Header() {
                   }}
                 >
                   <Link
-                    href={child.path}
+                    href={child.href}
                     onClick={() => setOpenMenu(null)}
                     className="group flex items-center gap-4 py-3 border-b border-white/10 text-white hover:text-(--brand) transition-colors"
                   >
@@ -348,7 +395,6 @@ export default function Header() {
               ))}
             </ul>
 
-            {/* 하단 CTA 버튼 */}
             <div
               className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-3"
               style={{
@@ -357,30 +403,29 @@ export default function Header() {
                   : "none",
               }}
             >
-              <a
-                href="/contact"
+              <Link
+                href={locale === DEFAULT_LOCALE ? "/contact" : `/${locale}/contact`}
                 className="group flex items-center justify-between gap-4 px-6 py-4 bg-(--brand) hover:bg-(--brand-dark) text-white text-sm font-bold tracking-wider uppercase transition-colors"
               >
                 CERINS Brochure
                 <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                 </svg>
-              </a>
-              <a
-                href="/contact"
+              </Link>
+              <Link
+                href={locale === DEFAULT_LOCALE ? "/contact" : `/${locale}/contact`}
                 className="group flex items-center justify-between gap-4 px-6 py-4 bg-(--brand) hover:bg-(--brand-dark) text-white text-sm font-bold tracking-wider uppercase transition-colors"
               >
                 Terms & Conditions
                 <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                 </svg>
-              </a>
+              </Link>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 배경 백드롭 (메가 아래 영역 클릭 닫기) */}
       <div
         onClick={() => setOpenMenu(null)}
         aria-hidden

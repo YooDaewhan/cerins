@@ -1,3 +1,5 @@
+// DEPRECATED: see src/mocks/posts.ts. Components must call mockRepository.getPosts('news', locale) instead of importing this. To be removed once the admin CRUD lands.
+
 export interface NewsItem {
   id: number;
   title: string;

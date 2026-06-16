@@ -1,4 +1,5 @@
-﻿"use client";
+﻿// TODO: move form labels/placeholders/success-text to a `ui_strings` table per locale once admin CRUD lands.
+"use client";
 
 import { useState } from "react";
 

@@ -1,3 +1,5 @@
+// DEPRECATED: see src/mocks/menus.ts + src/mocks/menuTranslations.ts. Components must call mockRepository.getMenus(locale) instead of importing this. To be removed once the admin CRUD lands.
+
 export interface NavChild {
   label: string;
   path: string;

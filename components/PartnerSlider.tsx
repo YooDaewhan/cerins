@@ -1,19 +1,26 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
-import { partners } from "@/data/partners";
+import type { Partner } from "@/src/lib/types";
 
 const VISIBLE = 4;
 
-export default function PartnerSlider() {
+interface PartnerSliderProps {
+  partners: Partner[];
+}
+
+export default function PartnerSlider({ partners }: PartnerSliderProps) {
   const [start, setStart] = useState(0);
 
   useEffect(() => {
+    if (partners.length === 0) return;
     const timer = setInterval(() => {
       setStart((s) => (s + 1) % partners.length);
     }, 3000);
     return () => clearInterval(timer);
-  }, []);
+  }, [partners.length]);
+
+  if (partners.length === 0) return null;
 
   const prev = () => setStart((s) => (s - 1 + partners.length) % partners.length);
   const next = () => setStart((s) => (s + 1) % partners.length);
@@ -33,7 +40,6 @@ export default function PartnerSlider() {
         </div>
 
         <div className="relative flex items-center gap-4">
-          {/* Prev */}
           <button
             onClick={prev}
             className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full border border-gray-300 text-gray-500 hover:border-(--brand) hover:text-(--brand) transition"
@@ -43,7 +49,6 @@ export default function PartnerSlider() {
             </svg>
           </button>
 
-          {/* Logo cards */}
           <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-4 overflow-hidden">
             {visible.map((partner, i) => (
               <div
@@ -55,7 +60,6 @@ export default function PartnerSlider() {
             ))}
           </div>
 
-          {/* Next */}
           <button
             onClick={next}
             className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full border border-gray-300 text-gray-500 hover:border-(--brand) hover:text-(--brand) transition"
@@ -69,4 +73,3 @@ export default function PartnerSlider() {
     </section>
   );
 }
-

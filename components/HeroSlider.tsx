@@ -1,74 +1,55 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-
-const slides = [
-  {
-    id: 1,
-    eyebrow: "Global Standards",
-    headline: "Global Certification & Inspection Partner",
-    sub: "Connecting standards, markets, and trust across 20+ countries.",
-    image:
-      "https://images.unsplash.com/photo-1494412574643-ff11b0a5c1c3?w=1600&q=80&auto=format&fit=crop",
-    fallback: "#0d2244",
-  },
-  {
-    id: 2,
-    eyebrow: "Trade Compliance",
-    headline: "Reliable Trade Compliance Solutions",
-    sub: "EAC, CE, GOST-R and more — handled by certified professionals.",
-    image:
-      "https://images.unsplash.com/photo-1578575437130-527eed3abbec?w=1600&q=80&auto=format&fit=crop",
-    fallback: "#12223a",
-  },
-  {
-    id: 3,
-    eyebrow: "Trust Network",
-    headline: "Connecting Standards, Markets and Trust",
-    sub: "From pre-shipment inspection to customs brokerage, CERINS delivers.",
-    image:
-      "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=1600&q=80&auto=format&fit=crop",
-    fallback: "#0e1e38",
-  },
-  {
-    id: 4,
-    eyebrow: "Global Markets",
-    headline: "Your Gateway to Global Markets",
-    sub: "Comprehensive certification and inspection services for international trade.",
-    image:
-      "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=1600&q=80&auto=format&fit=crop",
-    fallback: "#101f3a",
-  },
-];
+import type { HeroSlide, LocaleCode } from "@/src/lib/types";
 
 const INTERVAL = 5500;
+const DEFAULT_LOCALE: LocaleCode = "ko";
 
-export default function HeroSlider() {
+interface HeroSliderProps {
+  slides: HeroSlide[];
+  locale: LocaleCode;
+}
+
+function localized(path: string, locale: LocaleCode): string {
+  if (locale === DEFAULT_LOCALE) return path;
+  return "/" + locale + path;
+}
+
+export default function HeroSlider({ slides, locale }: HeroSliderProps) {
   const [current, setCurrent] = useState(0);
   const [progress, setProgress] = useState(0);
   const rafRef = useRef<number | null>(null);
   const startRef = useRef<number>(0);
 
-  const goTo = useCallback((idx: number) => {
-    setCurrent(((idx % slides.length) + slides.length) % slides.length);
-    setProgress(0);
-    startRef.current = performance.now();
-  }, []);
+  const total = slides.length;
+
+  const goTo = useCallback(
+    (idx: number) => {
+      if (total === 0) return;
+      setCurrent(((idx % total) + total) % total);
+      setProgress(0);
+      startRef.current = performance.now();
+    },
+    [total],
+  );
 
   const prev = useCallback(() => {
-    setCurrent((slide) => (slide - 1 + slides.length) % slides.length);
+    if (total === 0) return;
+    setCurrent((slide) => (slide - 1 + total) % total);
     setProgress(0);
     startRef.current = performance.now();
-  }, []);
+  }, [total]);
 
   const next = useCallback(() => {
-    setCurrent((slide) => (slide + 1) % slides.length);
+    if (total === 0) return;
+    setCurrent((slide) => (slide + 1) % total);
     setProgress(0);
     startRef.current = performance.now();
-  }, []);
+  }, [total]);
 
-  // requestAnimationFrame-driven progress + auto-advance
   useEffect(() => {
+    if (total === 0) return;
     startRef.current = performance.now();
 
     const tick = (now: number) => {
@@ -76,7 +57,7 @@ export default function HeroSlider() {
       const pct = Math.min(elapsed / INTERVAL, 1);
       setProgress(pct);
       if (pct >= 1) {
-        setCurrent((c) => (c + 1) % slides.length);
+        setCurrent((c) => (c + 1) % total);
         startRef.current = performance.now();
         setProgress(0);
       }
@@ -86,9 +67,8 @@ export default function HeroSlider() {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [current]);
+  }, [current, total]);
 
-  // keyboard support
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft") prev();
@@ -98,12 +78,20 @@ export default function HeroSlider() {
     return () => window.removeEventListener("keydown", onKey);
   }, [prev, next]);
 
+  if (total === 0) {
+    return (
+      <section
+        className="relative overflow-hidden select-none bg-[#0d2244]"
+        style={{ height: "78vh", minHeight: "540px" }}
+      />
+    );
+  }
+
   return (
     <section
       className="relative overflow-hidden select-none"
       style={{ height: "78vh", minHeight: "540px" }}
     >
-      {/* 슬라이드 스택 (cross-fade + ken burns) */}
       {slides.map((s, i) => (
         <div
           key={s.id}
@@ -126,14 +114,11 @@ export default function HeroSlider() {
         </div>
       ))}
 
-      {/* 오버레이: 좌측 짙은 그라데이션 + 미세한 노이즈 */}
       <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/20 z-[2]" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent z-[2]" />
 
-      {/* 좌측 빨간 accent bar */}
       <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-(--brand) via-[#d6325a] to-(--brand) z-[3]" />
 
-      {/* 우측 데코 라인 */}
       <div className="hidden lg:block absolute right-12 top-1/2 -translate-y-1/2 z-[3] text-right">
         <div className="flex items-center gap-3 justify-end mb-2">
           <div className="text-[10px] tracking-[0.3em] text-white/40 uppercase">
@@ -146,7 +131,6 @@ export default function HeroSlider() {
         </div>
       </div>
 
-      {/* 텍스트 콘텐츠 */}
       <div className="relative z-[5] h-full flex items-center">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 w-full">
           <div className="max-w-2xl" key={`text-${current}`}>
@@ -187,7 +171,7 @@ export default function HeroSlider() {
               }}
             >
               <a
-                href="/contact"
+                href={localized("/contact", locale)}
                 className="group inline-flex items-center gap-2 px-7 py-3.5 bg-(--brand) text-white text-sm font-semibold rounded-full hover:bg-(--brand-dark) transition-all duration-300 shadow-[0_8px_24px_rgba(180,18,58,0.35)] hover:shadow-[0_12px_28px_rgba(180,18,58,0.45)] hover:-translate-y-0.5"
               >
                 Get a Quote
@@ -206,7 +190,7 @@ export default function HeroSlider() {
                 </svg>
               </a>
               <a
-                href="/certification"
+                href={localized("/certification", locale)}
                 className="inline-flex items-center gap-2 px-7 py-3.5 border border-white/50 text-white text-sm font-semibold rounded-full hover:bg-white hover:text-(--brand) hover:border-white transition-all duration-300"
               >
                 Our Services
@@ -216,7 +200,6 @@ export default function HeroSlider() {
         </div>
       </div>
 
-      {/* 이전 */}
       <button
         type="button"
         onClick={prev}
@@ -238,7 +221,6 @@ export default function HeroSlider() {
         </svg>
       </button>
 
-      {/* 다음 */}
       <button
         type="button"
         onClick={next}
@@ -260,7 +242,6 @@ export default function HeroSlider() {
         </svg>
       </button>
 
-      {/* 하단 컨트롤 — 슬라이드 진행 바 */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-[10] flex items-center gap-2 sm:gap-3">
         {slides.map((_, i) => {
           const isCurrent = i === current;
@@ -287,16 +268,14 @@ export default function HeroSlider() {
         })}
       </div>
 
-      {/* 슬라이드 카운터 */}
       <div className="absolute bottom-8 right-8 z-[10] text-white/60 text-xs font-mono select-none">
         <span className="text-white font-semibold">
           {String(current + 1).padStart(2, "0")}
         </span>
         <span className="mx-1 text-white/40">/</span>
-        {String(slides.length).padStart(2, "0")}
+        {String(total).padStart(2, "0")}
       </div>
 
-      {/* 스크롤 표시기 */}
       <div className="hidden sm:flex absolute bottom-8 left-8 z-[10] items-center gap-2 text-white/40 text-[10px] tracking-[0.3em] uppercase">
         <div className="w-px h-6 bg-white/30 animate-[scrollHint_1.8s_ease-in-out_infinite]" />
         Scroll

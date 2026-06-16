@@ -1,13 +1,28 @@
 import Link from "next/link";
-import { navigation } from "@/data/navigation";
 import ThemeToggle from "./ThemeToggle";
+import type { LocaleCode, MenuNode } from "@/src/lib/types";
 
-export default function Footer() {
+interface FooterProps {
+  menus: MenuNode[];
+  locale: LocaleCode;
+}
+
+const DEFAULT_LOCALE: LocaleCode = "ko";
+
+function localized(path: string, locale: LocaleCode): string {
+  if (locale === DEFAULT_LOCALE) return path;
+  if (path === "/") return "/" + locale;
+  return "/" + locale + path;
+}
+
+export default function Footer({ menus, locale }: FooterProps) {
+  const contactHref = localized("/contact", locale);
+  const newsHref = localized("/news", locale);
+
   return (
     <footer className="bg-[#1e1e1e] text-white relative">
       <div className="h-1 bg-gradient-to-r from-(--brand) via-(--brand) to-(--brand)" />
 
-      {/* CTA 밴드 */}
       <div className="border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -21,7 +36,7 @@ export default function Footer() {
             <span className="text-(--brand)">CERINS</span>
           </h3>
           <Link
-            href="/contact"
+            href={contactHref}
             className="group inline-flex items-center gap-2 px-6 py-3 bg-(--brand) hover:opacity-90 text-white text-sm font-bold tracking-wider uppercase rounded-full transition-opacity"
           >
             Get a Quote
@@ -44,7 +59,6 @@ export default function Footer() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
-          {/* 브랜드 */}
           <div className="md:col-span-1">
             <div className="text-2xl font-bold tracking-widest mb-3">
               <span className="text-white">CER</span>
@@ -68,33 +82,32 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* 네비 컬럼 */}
-          {navigation.slice(0, 3).map((item) => (
-            <div key={item.label}>
+          {menus.slice(0, 3).map((item) => (
+            <div key={item.id}>
               <h4 className="text-xs font-bold text-white uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                 <span className="w-4 h-0.5 bg-(--brand)" />
                 {item.label}
               </h4>
               <ul className="space-y-2.5">
-                {(item.children ?? [{ label: item.label, path: item.path }]).map(
-                  (child) => (
-                    <li key={child.path}>
-                      <Link
-                        href={child.path}
-                        className="group inline-flex items-center gap-2 text-sm text-gray-400 hover:text-(--brand) transition-colors"
-                      >
-                        <span className="w-0 group-hover:w-3 h-px bg-(--brand) transition-all duration-300" />
-                        {child.label}
-                      </Link>
-                    </li>
-                  ),
-                )}
+                {(item.children.length > 0
+                  ? item.children
+                  : [{ id: item.id, label: item.label, href: item.href }]
+                ).map((child) => (
+                  <li key={child.id}>
+                    <Link
+                      href={child.href}
+                      className="group inline-flex items-center gap-2 text-sm text-gray-400 hover:text-(--brand) transition-colors"
+                    >
+                      <span className="w-0 group-hover:w-3 h-px bg-(--brand) transition-all duration-300" />
+                      {child.label}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
           ))}
         </div>
 
-        {/* 연락처 라인 */}
         <div className="mt-12 pt-8 border-t border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm">
           <div>
             <div className="text-[10px] font-bold tracking-[0.2em] uppercase text-(--brand) mb-2">
@@ -119,7 +132,6 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* 카피라이트 */}
       <div className="border-t border-white/10 bg-black/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-gray-500">
@@ -128,10 +140,10 @@ export default function Footer() {
           </p>
           <ThemeToggle />
           <div className="flex gap-5">
-            <Link href="/contact" className="text-xs text-gray-500 hover:text-(--brand) transition-colors">
+            <Link href={contactHref} className="text-xs text-gray-500 hover:text-(--brand) transition-colors">
               Contact
             </Link>
-            <Link href="/news" className="text-xs text-gray-500 hover:text-(--brand) transition-colors">
+            <Link href={newsHref} className="text-xs text-gray-500 hover:text-(--brand) transition-colors">
               News
             </Link>
             <span className="text-xs text-gray-500">Privacy</span>

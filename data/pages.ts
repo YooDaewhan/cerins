@@ -1,3 +1,5 @@
+// DEPRECATED: see src/mocks/pages.ts + src/mocks/pageTranslations.ts. Components must call mockRepository.getPageWithTranslation(slug, locale) instead of importing this. To be removed once the admin CRUD lands.
+
 export interface ContentBlock {
   heading: string;
   body: string;
