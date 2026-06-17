@@ -18,14 +18,14 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   if (!isLocale(locale)) return {};
-  const page = getPageWithTranslation("about", locale as LocaleCode);
+  const page = await getPageWithTranslation("about", locale as LocaleCode);
   if (!page) return {};
   return {
     title: page.translation.meta_title,
     description: page.translation.meta_description,
     alternates: {
       languages: Object.fromEntries(
-        getAlternateUrls("about").map((a) => [a.locale, a.url]),
+        (await getAlternateUrls("about")).map((a) => [a.locale, a.url]),
       ),
     },
   };
@@ -36,11 +36,11 @@ export default async function AboutIndexPage({ params }: Props) {
   if (!isLocale(locale)) notFound();
   const code = locale as LocaleCode;
 
-  const root = getPageWithTranslation("about", code);
+  const root = await getPageWithTranslation("about", code);
   if (!root) notFound();
 
   // All "about" detail pages — section root excluded by slug.
-  const items = listPagesByTemplate("about", code).filter(
+  const items = (await listPagesByTemplate("about", code)).filter(
     (p) => p.page.slug !== "about",
   );
 

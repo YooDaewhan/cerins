@@ -9,8 +9,8 @@ import {
 import { isLocale } from "@/src/lib/i18n";
 import type { LocaleCode } from "@/src/lib/types";
 
-export function generateStaticParams() {
-  return getEnabledLocales().map((l) => ({ locale: l.code }));
+export async function generateStaticParams() {
+  return (await getEnabledLocales()).map((l) => ({ locale: l.code }));
 }
 
 export default async function LocaleLayout({
@@ -24,8 +24,10 @@ export default async function LocaleLayout({
   if (!isLocale(locale)) notFound();
 
   const code = locale as LocaleCode;
-  const menus = getMenus(code);
-  const enabledLocales = getEnabledLocales();
+  const [menus, enabledLocales] = await Promise.all([
+    getMenus(code),
+    getEnabledLocales(),
+  ]);
 
   return (
     <ThemeProvider>

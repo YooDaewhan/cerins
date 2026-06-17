@@ -17,9 +17,13 @@ interface Props {
   params: Promise<{ locale: string; slug: string }>;
 }
 
-export function generateStaticParams() {
-  const codes = getEnabledLocales().map((l) => l.code);
-  return listPagesByTemplateRaw("inspection")
+export async function generateStaticParams() {
+  const [locales, pages] = await Promise.all([
+    getEnabledLocales(),
+    listPagesByTemplateRaw("inspection"),
+  ]);
+  const codes = locales.map((l) => l.code);
+  return pages
     .filter((p) => p.slug !== "inspection")
     .flatMap((p) => codes.map((locale) => ({ locale, slug: p.slug })));
 }
@@ -27,14 +31,14 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
   if (!isLocale(locale)) return {};
-  const page = getPageWithTranslation(slug, locale as LocaleCode);
+  const page = await getPageWithTranslation(slug, locale as LocaleCode);
   if (!page) return {};
   return {
     title: page.translation.meta_title,
     description: page.translation.meta_description,
     alternates: {
       languages: Object.fromEntries(
-        getAlternateUrls(slug).map((a) => [a.locale, a.url]),
+        (await getAlternateUrls(slug)).map((a) => [a.locale, a.url]),
       ),
     },
   };
@@ -45,12 +49,11 @@ export default async function InspectionDetailPage({ params }: Props) {
   if (!isLocale(locale)) notFound();
   const code = locale as LocaleCode;
 
-  const page = getPageWithTranslation(slug, code);
+  const page = await getPageWithTranslation(slug, code);
   if (!page || page.page.template !== "inspection" || page.page.slug === "inspection") notFound();
 
-  const sideNav = listPagesByTemplate("inspection", code).filter(
-    (p) => p.page.slug !== "inspection",
-  );
+  const allInspect = await listPagesByTemplate("inspection", code);
+  const sideNav = allInspect.filter((p) => p.page.slug !== "inspection");
 
   return (
     <>

@@ -22,14 +22,14 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   if (!isLocale(locale)) return {};
-  const home = getPageWithTranslation("home", locale as LocaleCode);
+  const home = await getPageWithTranslation("home", locale as LocaleCode);
   if (!home) return {};
   return {
     title: home.translation.meta_title,
     description: home.translation.meta_description,
     alternates: {
       languages: Object.fromEntries(
-        getAlternateUrls("home").map((a) => [a.locale, a.url]),
+        (await getAlternateUrls("home")).map((a) => [a.locale, a.url]),
       ),
     },
   };
@@ -40,9 +40,11 @@ export default async function HomePage({ params }: Props) {
   if (!isLocale(locale)) notFound();
   const code = locale as LocaleCode;
 
-  const slides = getHomeSlides(code);
-  const partners = listPartners();
-  const posts = getPosts("news", code);
+  const [slides, partners, posts] = await Promise.all([
+    getHomeSlides(code),
+    listPartners(),
+    getPosts("news", code),
+  ]);
 
   const services: ServiceCard[] = [
     {

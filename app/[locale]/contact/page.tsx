@@ -16,14 +16,14 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   if (!isLocale(locale)) return {};
-  const page = getPageWithTranslation("contact", locale as LocaleCode);
+  const page = await getPageWithTranslation("contact", locale as LocaleCode);
   if (!page) return {};
   return {
     title: page.translation.meta_title,
     description: page.translation.meta_description,
     alternates: {
       languages: Object.fromEntries(
-        getAlternateUrls("contact").map((a) => [a.locale, a.url]),
+        (await getAlternateUrls("contact")).map((a) => [a.locale, a.url]),
       ),
     },
   };
@@ -43,7 +43,7 @@ export default async function ContactPage({ params }: Props) {
   if (!isLocale(locale)) notFound();
   const code = locale as LocaleCode;
 
-  const page = getPageWithTranslation("contact", code);
+  const page = await getPageWithTranslation("contact", code);
   if (!page) notFound();
 
   const primary = page.translation.content.filter((b) => PRIMARY_LABELS.has(b.heading));

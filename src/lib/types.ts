@@ -83,6 +83,7 @@ export interface Post {
   summary: string;
   content: string;
   thumbnail?: string;
+  author?: string;
   is_published: boolean;
   published_at: string;
   created_at: string;

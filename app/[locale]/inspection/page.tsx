@@ -27,14 +27,14 @@ const SLUG_TAG: Record<string, string> = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   if (!isLocale(locale)) return {};
-  const page = getPageWithTranslation("inspection", locale as LocaleCode);
+  const page = await getPageWithTranslation("inspection", locale as LocaleCode);
   if (!page) return {};
   return {
     title: page.translation.meta_title,
     description: page.translation.meta_description,
     alternates: {
       languages: Object.fromEntries(
-        getAlternateUrls("inspection").map((a) => [a.locale, a.url]),
+        (await getAlternateUrls("inspection")).map((a) => [a.locale, a.url]),
       ),
     },
   };
@@ -45,12 +45,11 @@ export default async function InspectionIndexPage({ params }: Props) {
   if (!isLocale(locale)) notFound();
   const code = locale as LocaleCode;
 
-  const root = getPageWithTranslation("inspection", code);
+  const root = await getPageWithTranslation("inspection", code);
   if (!root) notFound();
 
-  const items = listPagesByTemplate("inspection", code).filter(
-    (p) => p.page.slug !== "inspection",
-  );
+  const allInspect = await listPagesByTemplate("inspection", code);
+  const items = allInspect.filter((p) => p.page.slug !== "inspection");
 
   return (
     <>

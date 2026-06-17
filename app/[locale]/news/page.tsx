@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import {
   getAlternateUrls,
   getPageWithTranslation,
-  getPostAuthor,
   getPosts,
 } from "@/src/lib/mockRepository";
 import { isLocale } from "@/src/lib/i18n";
@@ -18,14 +17,14 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   if (!isLocale(locale)) return {};
-  const page = getPageWithTranslation("news", locale as LocaleCode);
+  const page = await getPageWithTranslation("news", locale as LocaleCode);
   if (!page) return {};
   return {
     title: page.translation.meta_title,
     description: page.translation.meta_description,
     alternates: {
       languages: Object.fromEntries(
-        getAlternateUrls("news").map((a) => [a.locale, a.url]),
+        (await getAlternateUrls("news")).map((a) => [a.locale, a.url]),
       ),
     },
   };
@@ -36,10 +35,11 @@ export default async function NewsListPage({ params }: Props) {
   if (!isLocale(locale)) notFound();
   const code = locale as LocaleCode;
 
-  const root = getPageWithTranslation("news", code);
+  const [root, posts] = await Promise.all([
+    getPageWithTranslation("news", code),
+    getPosts("news", code),
+  ]);
   if (!root) notFound();
-
-  const posts = getPosts("news", code);
 
   const rows: NewsListRow[] = posts.map((p) => ({
     id: p.id,
@@ -47,7 +47,7 @@ export default async function NewsListPage({ params }: Props) {
     title: p.title,
     summary: p.summary,
     published_at: p.published_at,
-    author: getPostAuthor(p.id),
+    author: p.author ?? "CERINS Editorial",
   }));
 
   return (

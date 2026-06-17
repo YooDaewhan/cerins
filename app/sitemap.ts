@@ -9,10 +9,13 @@ import { buildLocalizedPath } from "@/src/lib/i18n";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://cerins.example.com";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const locales = getEnabledLocales();
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const [locales, pages, koreanPosts] = await Promise.all([
+    getEnabledLocales(),
+    listPublishedPages(),
+    getPosts("news", "ko"),
+  ]);
   const localeCodes = locales.map((l) => l.code);
-  const pages = listPublishedPages();
 
   const pageEntries: MetadataRoute.Sitemap = pages.flatMap((p) =>
     locales.map((l) => ({
@@ -26,8 +29,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
   );
 
-  // News posts (single-locale today — same slug surfaces under each locale URL).
-  const postEntries: MetadataRoute.Sitemap = getPosts("news", "ko").flatMap((post) =>
+  const postEntries: MetadataRoute.Sitemap = koreanPosts.flatMap((post) =>
     localeCodes.map((code) => ({
       url: SITE_URL + buildLocalizedPath(code, `/news/${post.slug}`),
       lastModified: post.updated_at,

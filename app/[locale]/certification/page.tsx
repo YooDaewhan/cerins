@@ -18,14 +18,14 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   if (!isLocale(locale)) return {};
-  const page = getPageWithTranslation("certification", locale as LocaleCode);
+  const page = await getPageWithTranslation("certification", locale as LocaleCode);
   if (!page) return {};
   return {
     title: page.translation.meta_title,
     description: page.translation.meta_description,
     alternates: {
       languages: Object.fromEntries(
-        getAlternateUrls("certification").map((a) => [a.locale, a.url]),
+        (await getAlternateUrls("certification")).map((a) => [a.locale, a.url]),
       ),
     },
   };
@@ -36,12 +36,11 @@ export default async function CertificationIndexPage({ params }: Props) {
   if (!isLocale(locale)) notFound();
   const code = locale as LocaleCode;
 
-  const root = getPageWithTranslation("certification", code);
+  const root = await getPageWithTranslation("certification", code);
   if (!root) notFound();
 
-  const items = listPagesByTemplate("certification", code).filter(
-    (p) => p.page.slug !== "certification",
-  );
+  const allCert = await listPagesByTemplate("certification", code);
+  const items = allCert.filter((p) => p.page.slug !== "certification");
 
   return (
     <>

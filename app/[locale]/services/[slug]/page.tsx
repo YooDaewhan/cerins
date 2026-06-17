@@ -14,24 +14,26 @@ interface Props {
   params: Promise<{ locale: string; slug: string }>;
 }
 
-export function generateStaticParams() {
-  const codes = getEnabledLocales().map((l) => l.code);
-  return listPagesByTemplateRaw("services").flatMap((p) =>
-    codes.map((locale) => ({ locale, slug: p.slug })),
-  );
+export async function generateStaticParams() {
+  const [locales, pages] = await Promise.all([
+    getEnabledLocales(),
+    listPagesByTemplateRaw("services"),
+  ]);
+  const codes = locales.map((l) => l.code);
+  return pages.flatMap((p) => codes.map((locale) => ({ locale, slug: p.slug })));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
   if (!isLocale(locale)) return {};
-  const page = getPageWithTranslation(slug, locale as LocaleCode);
+  const page = await getPageWithTranslation(slug, locale as LocaleCode);
   if (!page) return {};
   return {
     title: page.translation.meta_title,
     description: page.translation.meta_description,
     alternates: {
       languages: Object.fromEntries(
-        getAlternateUrls(slug).map((a) => [a.locale, a.url]),
+        (await getAlternateUrls(slug)).map((a) => [a.locale, a.url]),
       ),
     },
   };
@@ -42,7 +44,7 @@ export default async function ServicesPage({ params }: Props) {
   if (!isLocale(locale)) notFound();
   const code = locale as LocaleCode;
 
-  const page = getPageWithTranslation(slug, code);
+  const page = await getPageWithTranslation(slug, code);
   if (!page || page.page.template !== "services") notFound();
 
   return (

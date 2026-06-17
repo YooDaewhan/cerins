@@ -5,7 +5,6 @@ import PageHero from "@/components/PageHero";
 import {
   buildLocalizedPath,
   getEnabledLocales,
-  getPostAuthor,
   getPostBySlug,
   getPosts,
   listPublishedPostSlugs,
@@ -17,23 +16,21 @@ interface Props {
   params: Promise<{ locale: string; id: string }>;
 }
 
-export function generateStaticParams() {
-  const codes = getEnabledLocales().map((l) => l.code);
-  // Posts are single-locale today (locale='ko'); the same slug renders under
-  // every URL prefix and falls back to the ko post on detail render.
-  return listPublishedPostSlugs("news", "ko").flatMap((slug) =>
-    codes.map((locale) => ({ locale, id: slug })),
-  );
+export async function generateStaticParams() {
+  const [locales, slugs] = await Promise.all([
+    getEnabledLocales(),
+    listPublishedPostSlugs("news", "ko"),
+  ]);
+  const codes = locales.map((l) => l.code);
+  return slugs.flatMap((slug) => codes.map((locale) => ({ locale, id: slug })));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, id } = await params;
   if (!isLocale(locale)) return {};
-  // Posts are MVP single-locale. If the locale doesn't have a row, fall back
-  // to ko explicitly.
   const post =
-    getPostBySlug("news", id, locale as LocaleCode) ??
-    getPostBySlug("news", id, "ko");
+    (await getPostBySlug("news", id, locale as LocaleCode)) ??
+    (await getPostBySlug("news", id, "ko"));
   if (!post) return {};
   return {
     title: `${post.title} — CERINS News`,
@@ -47,14 +44,15 @@ export default async function NewsDetailPage({ params }: Props) {
   const code = locale as LocaleCode;
 
   const item =
-    getPostBySlug("news", id, code) ?? getPostBySlug("news", id, "ko");
+    (await getPostBySlug("news", id, code)) ??
+    (await getPostBySlug("news", id, "ko"));
   if (!item) notFound();
 
-  const allPosts = getPosts("news", item.locale);
+  const allPosts = await getPosts("news", item.locale);
   const idx = allPosts.findIndex((p) => p.id === item.id);
   const prev = allPosts[idx + 1] ?? null;
   const next = allPosts[idx - 1] ?? null;
-  const author = getPostAuthor(item.id);
+  const author = item.author ?? "CERINS Editorial";
 
   return (
     <>

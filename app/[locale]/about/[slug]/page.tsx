@@ -17,9 +17,13 @@ interface Props {
   params: Promise<{ locale: string; slug: string }>;
 }
 
-export function generateStaticParams() {
-  const codes = getEnabledLocales().map((l) => l.code);
-  return listPagesByTemplateRaw("about")
+export async function generateStaticParams() {
+  const [locales, pages] = await Promise.all([
+    getEnabledLocales(),
+    listPagesByTemplateRaw("about"),
+  ]);
+  const codes = locales.map((l) => l.code);
+  return pages
     .filter((p) => p.slug !== "about")
     .flatMap((p) => codes.map((locale) => ({ locale, slug: p.slug })));
 }
@@ -27,14 +31,14 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
   if (!isLocale(locale)) return {};
-  const page = getPageWithTranslation(slug, locale as LocaleCode);
+  const page = await getPageWithTranslation(slug, locale as LocaleCode);
   if (!page) return {};
   return {
     title: page.translation.meta_title,
     description: page.translation.meta_description,
     alternates: {
       languages: Object.fromEntries(
-        getAlternateUrls(slug).map((a) => [a.locale, a.url]),
+        (await getAlternateUrls(slug)).map((a) => [a.locale, a.url]),
       ),
     },
   };
@@ -45,12 +49,11 @@ export default async function AboutDetailPage({ params }: Props) {
   if (!isLocale(locale)) notFound();
   const code = locale as LocaleCode;
 
-  const page = getPageWithTranslation(slug, code);
+  const page = await getPageWithTranslation(slug, code);
   if (!page || page.page.template !== "about" || page.page.slug === "about") notFound();
 
-  const sideNav = listPagesByTemplate("about", code).filter(
-    (p) => p.page.slug !== "about",
-  );
+  const allAbout = await listPagesByTemplate("about", code);
+  const sideNav = allAbout.filter((p) => p.page.slug !== "about");
 
   return (
     <>
