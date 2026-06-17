@@ -1,0 +1,421 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import type { LocaleCode } from "@/src/lib/types";
+
+const TiptapEditor = dynamic(() => import("./TiptapEditor"), { ssr: false });
+
+const POST_LOCALES: LocaleCode[] = ["ko", "en", "ja", "zh", "ru"];
+const LOCALE_LABELS: Record<LocaleCode, string> = {
+  ko: "한국어",
+  en: "English",
+  ja: "日本語",
+  zh: "中文",
+  ru: "Русский",
+};
+
+interface FormState {
+  enabled: boolean;
+  title: string;
+  summary: string;
+  content: string;
+  author: string;
+  thumbnail: string;
+  is_published: boolean;
+  published_at: string;
+}
+
+function emptyForm(): FormState {
+  return {
+    enabled: false,
+    title: "",
+    summary: "",
+    content: "",
+    author: "",
+    thumbnail: "",
+    is_published: true,
+    published_at: todayIso(),
+  };
+}
+
+function todayIso(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+interface InitialTranslation {
+  title: string;
+  summary: string;
+  content: string;
+  author: string | null;
+  thumbnail: string | null;
+  is_published: boolean;
+  published_at: string;
+}
+
+export interface PostEditorInitial {
+  slug: string;
+  translations: Partial<Record<LocaleCode, InitialTranslation>>;
+}
+
+interface Props {
+  locale: string;
+  mode: "new" | "edit";
+  initial?: PostEditorInitial;
+}
+
+export default function PostEditorClient({ locale, mode, initial }: Props) {
+  const router = useRouter();
+
+  const [slug, setSlug] = useState(initial?.slug ?? "");
+  const [activeTab, setActiveTab] = useState<LocaleCode>("ko");
+  const [forms, setForms] = useState<Record<LocaleCode, FormState>>(() => {
+    const map = {} as Record<LocaleCode, FormState>;
+    for (const code of POST_LOCALES) {
+      const t = initial?.translations[code];
+      if (t) {
+        map[code] = {
+          enabled: true,
+          title: t.title,
+          summary: t.summary,
+          content: t.content,
+          author: t.author ?? "",
+          thumbnail: t.thumbnail ?? "",
+          is_published: t.is_published,
+          published_at: t.published_at,
+        };
+      } else {
+        const base = emptyForm();
+        if (code === "ko") base.enabled = mode === "new";
+        map[code] = base;
+      }
+    }
+    return map;
+  });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const adminBase = locale === "ko" ? "/admin" : `/${locale}/admin`;
+
+  const update = useCallback(
+    (code: LocaleCode, patch: Partial<FormState>) => {
+      setForms((prev) => ({ ...prev, [code]: { ...prev[code], ...patch } }));
+    },
+    [],
+  );
+
+  const enabledCount = useMemo(
+    () => POST_LOCALES.filter((c) => forms[c].enabled).length,
+    [forms],
+  );
+
+  async function handleSave() {
+    setError(null);
+    if (enabledCount === 0) {
+      setError("최소 한 개 언어를 활성화하세요.");
+      return;
+    }
+
+    const translations: Record<string, unknown> = {};
+    if (mode === "edit") {
+      // explicitly null-out disabled locales that previously existed
+      for (const code of POST_LOCALES) {
+        const f = forms[code];
+        const existed = !!initial?.translations[code];
+        if (f.enabled) {
+          translations[code] = serialize(f);
+        } else if (existed) {
+          translations[code] = null;
+        }
+      }
+    } else {
+      for (const code of POST_LOCALES) {
+        const f = forms[code];
+        if (f.enabled) translations[code] = serialize(f);
+      }
+    }
+
+    setBusy(true);
+    try {
+      const url =
+        mode === "new"
+          ? "/api/admin/posts"
+          : `/api/admin/posts/${encodeURIComponent(initial!.slug)}`;
+      const method = mode === "new" ? "POST" : "PATCH";
+      const body =
+        mode === "new"
+          ? JSON.stringify({
+              slug: slug.trim() || undefined,
+              translations,
+            })
+          : JSON.stringify({ translations });
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body,
+      });
+      const json = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !json.ok) {
+        setError(json.error ?? "저장에 실패했습니다.");
+        return;
+      }
+      router.push(`${adminBase}/posts`);
+      router.refresh();
+    } catch {
+      setError("네트워크 오류가 발생했습니다.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!initial) return;
+    if (!confirm(`'${initial.slug}' 글을 모든 언어판과 함께 삭제합니다.`))
+      return;
+    setBusy(true);
+    try {
+      const res = await fetch(
+        `/api/admin/posts/${encodeURIComponent(initial.slug)}`,
+        { method: "DELETE" },
+      );
+      const json = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !json.ok) {
+        setError(json.error ?? "삭제에 실패했습니다.");
+        return;
+      }
+      router.push(`${adminBase}/posts`);
+      router.refresh();
+    } catch {
+      setError("네트워크 오류가 발생했습니다.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const active = forms[activeTab];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3 flex-wrap">
+        <h2 className="text-lg font-semibold text-gray-800">
+          {mode === "new" ? "새 뉴스 글" : `뉴스 글 편집: ${initial?.slug}`}
+        </h2>
+        <div className="ml-auto flex gap-2">
+          {mode === "edit" && (
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={busy}
+              className="rounded border border-red-300 text-red-600 px-3 py-1.5 text-xs hover:bg-red-50 disabled:opacity-60"
+            >
+              삭제
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => router.push(`${adminBase}/posts`)}
+            className="rounded border border-gray-300 px-3 py-1.5 text-xs hover:bg-gray-50"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={busy}
+            className="rounded bg-(--brand) text-white px-4 py-1.5 text-xs font-semibold hover:opacity-90 disabled:opacity-60"
+          >
+            {busy ? "저장 중..." : "저장"}
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+          {error}
+        </p>
+      )}
+
+      {mode === "new" && (
+        <div className="rounded-lg border border-gray-200 bg-white p-4">
+          <label className="block text-xs font-semibold text-gray-700 mb-1">
+            Slug (URL용, 비우면 다음 숫자가 자동 부여)
+          </label>
+          <input
+            type="text"
+            value={slug}
+            onChange={(e) => setSlug(e.target.value)}
+            placeholder="예: 2026-vietnam-expansion (비워두면 13, 14, ... 자동)"
+            className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm font-mono"
+          />
+          <p className="text-[11px] text-gray-400 mt-1">
+            소문자/숫자/-만 가능. 같은 slug에 5개 언어가 묶입니다.
+          </p>
+        </div>
+      )}
+
+      <div className="flex border-b border-gray-200">
+        {POST_LOCALES.map((code) => {
+          const isActive = activeTab === code;
+          const enabled = forms[code].enabled;
+          return (
+            <button
+              key={code}
+              type="button"
+              onClick={() => setActiveTab(code)}
+              className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-px transition-colors flex items-center gap-1.5 ${
+                isActive
+                  ? "border-(--brand) text-(--brand)"
+                  : "border-transparent text-gray-500 hover:text-(--brand)"
+              }`}
+            >
+              <span>{LOCALE_LABELS[code]}</span>
+              <span className="text-[10px] uppercase font-mono text-gray-400">
+                {code}
+              </span>
+              {enabled && (
+                <span className="ml-1 w-1.5 h-1.5 rounded-full bg-green-500" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-4">
+        <label className="inline-flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={active.enabled}
+            onChange={(e) => update(activeTab, { enabled: e.target.checked })}
+            className="h-4 w-4 accent-(--brand)"
+          />
+          <span className="font-semibold">
+            이 언어({LOCALE_LABELS[activeTab]}) 사용
+          </span>
+          <span className="text-xs text-gray-400">
+            체크 해제 시 이 언어판은 저장되지 않거나 삭제됩니다.
+          </span>
+        </label>
+
+        <fieldset
+          disabled={!active.enabled}
+          className={active.enabled ? "" : "opacity-50 pointer-events-none"}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Field label="제목">
+              <input
+                type="text"
+                value={active.title}
+                onChange={(e) =>
+                  update(activeTab, { title: e.target.value })
+                }
+                className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+              />
+            </Field>
+            <Field label="작성자 표시명">
+              <input
+                type="text"
+                value={active.author}
+                onChange={(e) =>
+                  update(activeTab, { author: e.target.value })
+                }
+                placeholder="비우면 'CERINS Editorial' 표시"
+                className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+              />
+            </Field>
+            <Field label="발행일 (YYYY-MM-DD)">
+              <input
+                type="date"
+                value={active.published_at}
+                onChange={(e) =>
+                  update(activeTab, { published_at: e.target.value })
+                }
+                className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+              />
+            </Field>
+            <Field label="공개">
+              <label className="inline-flex items-center gap-2 text-sm pt-1.5">
+                <input
+                  type="checkbox"
+                  checked={active.is_published}
+                  onChange={(e) =>
+                    update(activeTab, { is_published: e.target.checked })
+                  }
+                  className="h-4 w-4 accent-(--brand)"
+                />
+                <span>사이트에 공개</span>
+              </label>
+            </Field>
+            <Field label="썸네일 이미지 URL (선택)" className="sm:col-span-2">
+              <input
+                type="text"
+                value={active.thumbnail}
+                onChange={(e) =>
+                  update(activeTab, { thumbnail: e.target.value })
+                }
+                placeholder="https://… (지금은 외부 URL만 지원)"
+                className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm font-mono"
+              />
+            </Field>
+            <Field label="요약 (목록·SEO에 사용)" className="sm:col-span-2">
+              <textarea
+                value={active.summary}
+                onChange={(e) =>
+                  update(activeTab, { summary: e.target.value })
+                }
+                rows={3}
+                className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+              />
+            </Field>
+          </div>
+
+          <div className="mt-4">
+            <label className="block text-xs font-semibold text-gray-700 mb-1">
+              본문
+            </label>
+            <TiptapEditor
+              value={active.content}
+              onChange={(html) => update(activeTab, { content: html })}
+              placeholder="본문을 입력하세요…"
+            />
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  );
+}
+
+function serialize(f: FormState) {
+  return {
+    title: f.title,
+    summary: f.summary,
+    content: f.content,
+    author: f.author.trim() ? f.author.trim() : null,
+    thumbnail: f.thumbnail.trim() ? f.thumbnail.trim() : null,
+    is_published: f.is_published,
+    published_at: f.published_at,
+  };
+}
+
+function Field({
+  label,
+  children,
+  className,
+}: {
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <label className="block text-xs font-semibold text-gray-700 mb-1">
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}

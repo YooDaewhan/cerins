@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import type { Locale, LocaleCode, MenuNode } from "@/src/lib/types";
+import UserMenu, { type HeaderUser } from "@/components/UserMenu";
 
 interface HeaderProps {
   menus: MenuNode[];
   locale: LocaleCode;
   enabledLocales: Locale[];
+  currentUser: HeaderUser | null;
 }
 
 const DEFAULT_LOCALE: LocaleCode = "ko";
@@ -27,7 +29,7 @@ function buildLocalizedHref(target: LocaleCode, currentPathname: string, enabled
   return "/" + target + rest;
 }
 
-export default function Header({ menus, locale, enabledLocales }: HeaderProps) {
+export default function Header({ menus, locale, enabledLocales, currentUser }: HeaderProps) {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
@@ -164,8 +166,13 @@ export default function Header({ menus, locale, enabledLocales }: HeaderProps) {
                 );
               })}
 
+              {/* 우측: 사용자 메뉴 */}
+              <div className="ml-3">
+                <UserMenu user={currentUser} locale={locale} />
+              </div>
+
               {/* 우측: 언어 선택 */}
-              <div className="ml-3 relative">
+              <div className="ml-2 relative">
                 <button
                   type="button"
                   onClick={(e) => {
@@ -272,6 +279,9 @@ export default function Header({ menus, locale, enabledLocales }: HeaderProps) {
                 )}
               </div>
             ))}
+            <div className="px-5 py-4 bg-gray-50 border-t border-gray-100">
+              <UserMenu user={currentUser} locale={locale} variant="mobile" />
+            </div>
             <div className="px-5 py-4 flex items-center gap-3 bg-gray-50 flex-wrap">
               {enabledLocales.map((l, i) => {
                 const href = buildLocalizedHref(l.code, pathname, enabledCodes);

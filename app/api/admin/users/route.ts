@@ -1,28 +1,68 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { getPool } from "@/src/lib/db";
-import { setSessionUserId } from "@/src/lib/session";
+import { requireAdmin } from "@/src/lib/auth";
 import {
-  defaultLevelForAccountType,
+  DEFAULT_USER_LEVEL,
   isAccountType,
   type AccountType,
 } from "@/src/lib/userTypes";
 
-interface SignupBody {
+interface CreateBody {
   login_id?: string;
   password?: string;
   email?: string;
   email_consent?: boolean;
   account_type?: string;
+  user_level?: number;
+}
+
+interface UserRow {
+  id: number;
+  login_id: string;
+  email: string;
+  email_consent: number;
+  account_type: AccountType;
+  user_level: number;
+  created_at: string;
+  updated_at: string;
 }
 
 const LOGIN_ID_RE = /^[a-zA-Z0-9_]{4,32}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+export async function GET() {
+  const admin = await requireAdmin();
+  if (!admin) {
+    return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
+  }
+  const pool = getPool();
+  const [rows] = await pool.execute(
+    `SELECT id, login_id, email, email_consent, account_type, user_level, created_at, updated_at
+       FROM users ORDER BY id DESC`,
+  );
+  const list = (rows as UserRow[]).map((r) => ({
+    id: r.id,
+    login_id: r.login_id,
+    email: r.email,
+    email_consent: r.email_consent === 1,
+    account_type: r.account_type,
+    user_level: r.user_level,
+    created_at: r.created_at,
+    updated_at: r.updated_at,
+  }));
+  return NextResponse.json({ users: list });
+}
+
 export async function POST(req: Request) {
-  let body: SignupBody;
+  const admin = await requireAdmin();
+  if (!admin) {
+    return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
+  }
+
+  let body: CreateBody;
   try {
-    body = (await req.json()) as SignupBody;
+    body = (await req.json()) as CreateBody;
   } catch {
     return NextResponse.json({ error: "잘못된 요청 본문입니다." }, { status: 400 });
   }
@@ -32,6 +72,10 @@ export async function POST(req: Request) {
   const email = (body.email ?? "").trim().toLowerCase();
   const email_consent = body.email_consent === true ? 1 : 0;
   const account_type_raw = body.account_type ?? "personal";
+  const user_level =
+    typeof body.user_level === "number" && Number.isFinite(body.user_level)
+      ? Math.trunc(body.user_level)
+      : DEFAULT_USER_LEVEL;
 
   if (!LOGIN_ID_RE.test(login_id)) {
     return NextResponse.json(
@@ -54,36 +98,27 @@ export async function POST(req: Request) {
       { status: 400 },
     );
   }
-  const account_type: AccountType = account_type_raw;
 
-  const pool = getPool();
   const password_hash = await bcrypt.hash(password, 10);
 
   try {
+    const pool = getPool();
     const [result] = await pool.execute(
       `INSERT INTO users (login_id, password_hash, email, email_consent, account_type, user_level)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [
-        login_id,
-        password_hash,
-        email,
-        email_consent,
-        account_type,
-        defaultLevelForAccountType(account_type),
-      ],
+      [login_id, password_hash, email, email_consent, account_type_raw, user_level],
     );
     const insertId = (result as { insertId: number }).insertId;
-    await setSessionUserId(insertId);
     return NextResponse.json({ ok: true, id: insertId });
   } catch (err: unknown) {
-    const e = err as { code?: string; message?: string };
+    const e = err as { code?: string };
     if (e.code === "ER_DUP_ENTRY") {
       return NextResponse.json(
         { error: "이미 사용 중인 아이디 또는 이메일입니다." },
         { status: 409 },
       );
     }
-    console.error("signup error", err);
+    console.error("admin user create error", err);
     return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });
   }
 }

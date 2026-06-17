@@ -1096,10 +1096,13 @@ INSERT INTO site_assets (`key`, `value`) VALUES
 
 -- ---------------------------------------------------------------------
 -- 10. users (회원가입 / 로그인)
---   - login_id    : 사용자가 직접 입력하는 로그인용 ID (영문/숫자)
+--   - login_id      : 사용자가 직접 입력하는 로그인용 ID (영문/숫자)
 --   - password_hash : bcrypt 해시 (평문 비밀번호 저장 금지)
---   - email       : 이메일
+--   - email         : 이메일
 --   - email_consent : 이메일 수신 동의 여부
+--   - account_type  : 'personal' | 'business' — 회원가입 시 선택
+--   - user_level    : 권한 레벨. 1=일반 회원, 3=기업 회원, 7=직원, 9=관리자
+--                     (값/라벨은 src/lib/userTypes.ts 와 동기화)
 -- ---------------------------------------------------------------------
 CREATE TABLE users (
   id            BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -1107,11 +1110,23 @@ CREATE TABLE users (
   password_hash VARCHAR(255) NOT NULL,
   email         VARCHAR(190) NOT NULL,
   email_consent TINYINT(1)   NOT NULL DEFAULT 0,
+  account_type  ENUM('personal','business') NOT NULL DEFAULT 'personal',
+  user_level    INT          NOT NULL DEFAULT 1,
   created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY uq_users_login_id (login_id),
-  UNIQUE KEY uq_users_email    (email)
+  UNIQUE KEY uq_users_email    (email),
+  INDEX idx_users_account_type (account_type),
+  INDEX idx_users_user_level   (user_level)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 초기 관리자 계정 (로그인 ID: admin / 비밀번호: admin1234)
+-- 비밀번호 해시는 bcrypt(cost=10) 결과이며, 운영 환경에서는 반드시 교체할 것.
+INSERT INTO users (login_id, password_hash, email, email_consent, account_type, user_level) VALUES
+  ('admin',
+   '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+   'admin@cerins.local',
+   0, 'business', 9);
 
 -- =====================================================================
 -- 끝.

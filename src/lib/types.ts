@@ -133,3 +133,16 @@ export interface AlternateUrl {
 export interface SiteAssets {
   default_hero_image: string;
 }
+
+import type { AccountType } from "@/src/lib/userTypes";
+
+export interface User {
+  id: number;
+  login_id: string;
+  email: string;
+  email_consent: boolean;
+  account_type: AccountType;
+  user_level: number;
+  created_at: string;
+  updated_at: string;
+}

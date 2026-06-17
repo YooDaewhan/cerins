@@ -4,25 +4,16 @@ import Link from "next/link";
 import PageHero from "@/components/PageHero";
 import {
   buildLocalizedPath,
-  getEnabledLocales,
   getPostBySlug,
   getPosts,
-  listPublishedPostSlugs,
 } from "@/src/lib/mockRepository";
 import { isLocale } from "@/src/lib/i18n";
 import type { LocaleCode } from "@/src/lib/types";
 
+export const dynamic = "force-dynamic";
+
 interface Props {
   params: Promise<{ locale: string; id: string }>;
-}
-
-export async function generateStaticParams() {
-  const [locales, slugs] = await Promise.all([
-    getEnabledLocales(),
-    listPublishedPostSlugs("news", "ko"),
-  ]);
-  const codes = locales.map((l) => l.code);
-  return slugs.flatMap((slug) => codes.map((locale) => ({ locale, id: slug })));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -102,7 +93,10 @@ export default async function NewsDetailPage({ params }: Props) {
             <p className="text-base text-(--brand) font-medium leading-relaxed border-l-4 border-[#c9a84c] pl-4 mb-6 italic">
               {item.summary}
             </p>
-            <p className="text-gray-600 leading-relaxed text-base">{item.content}</p>
+            <div
+              className="post-content text-gray-700 leading-relaxed text-base"
+              dangerouslySetInnerHTML={{ __html: item.content }}
+            />
           </div>
         </article>
 

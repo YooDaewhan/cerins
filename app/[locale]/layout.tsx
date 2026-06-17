@@ -7,6 +7,8 @@ import {
   getMenus,
 } from "@/src/lib/mockRepository";
 import { isLocale } from "@/src/lib/i18n";
+import { getCurrentUser } from "@/src/lib/auth";
+import { isAdminLevel } from "@/src/lib/userTypes";
 import type { LocaleCode } from "@/src/lib/types";
 
 export async function generateStaticParams() {
@@ -24,14 +26,28 @@ export default async function LocaleLayout({
   if (!isLocale(locale)) notFound();
 
   const code = locale as LocaleCode;
-  const [menus, enabledLocales] = await Promise.all([
+  const [menus, enabledLocales, currentUser] = await Promise.all([
     getMenus(code),
     getEnabledLocales(),
+    getCurrentUser(),
   ]);
+
+  const headerUser = currentUser
+    ? {
+        login_id: currentUser.login_id,
+        user_level: currentUser.user_level,
+        is_admin: isAdminLevel(currentUser.user_level),
+      }
+    : null;
 
   return (
     <ThemeProvider>
-      <Header menus={menus} locale={code} enabledLocales={enabledLocales} />
+      <Header
+        menus={menus}
+        locale={code}
+        enabledLocales={enabledLocales}
+        currentUser={headerUser}
+      />
       <main className="flex-1 pt-16">{children}</main>
       <Footer menus={menus} locale={code} />
     </ThemeProvider>

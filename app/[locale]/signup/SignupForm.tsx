@@ -3,6 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import {
+  ACCOUNT_TYPES,
+  ACCOUNT_TYPE_LABELS,
+  type AccountType,
+} from "@/src/lib/userTypes";
 
 interface Props {
   loginHref: string;
@@ -16,6 +21,7 @@ export default function SignupForm({ loginHref, redirectTo }: Props) {
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [email, setEmail] = useState("");
   const [emailConsent, setEmailConsent] = useState(false);
+  const [accountType, setAccountType] = useState<AccountType>("personal");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -38,6 +44,7 @@ export default function SignupForm({ loginHref, redirectTo }: Props) {
           password,
           email,
           email_consent: emailConsent,
+          account_type: accountType,
         }),
       });
       const data = (await res.json()) as { ok?: boolean; error?: string };
@@ -56,6 +63,38 @@ export default function SignupForm({ loginHref, redirectTo }: Props) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-5">
+      <div>
+        <span className="block text-sm font-semibold text-gray-700 mb-1.5">
+          회원 구분
+        </span>
+        <div className="grid grid-cols-2 gap-2">
+          {ACCOUNT_TYPES.map((t) => {
+            const checked = accountType === t;
+            return (
+              <label
+                key={t}
+                className={
+                  "flex items-center justify-center gap-2 rounded-md border px-3 py-2.5 text-sm cursor-pointer select-none " +
+                  (checked
+                    ? "border-(--brand) bg-(--brand)/5 text-(--brand) font-semibold"
+                    : "border-gray-300 text-gray-700 hover:bg-gray-50")
+                }
+              >
+                <input
+                  type="radio"
+                  name="account_type"
+                  value={t}
+                  checked={checked}
+                  onChange={() => setAccountType(t)}
+                  className="sr-only"
+                />
+                {ACCOUNT_TYPE_LABELS[t]}
+              </label>
+            );
+          })}
+        </div>
+      </div>
+
       <Field
         id="login_id"
         label="아이디"
