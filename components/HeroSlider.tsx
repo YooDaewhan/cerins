@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { HeroSlide, LocaleCode } from "@/src/lib/types";
+import { isVideoUrl } from "@/src/lib/media";
 
 const INTERVAL = 5500;
 const DEFAULT_LOCALE: LocaleCode = "ko";
@@ -86,27 +87,42 @@ export default function HeroSlider({ slides, locale }: HeroSliderProps) {
 
   return (
     <section className="relative w-full h-full overflow-hidden select-none">
-      {slides.map((s, i) => (
-        <div
-          key={s.id}
-          className="absolute inset-0 transition-opacity duration-[1200ms] ease-out"
-          style={{
-            opacity: i === current ? 1 : 0,
-            zIndex: i === current ? 1 : 0,
-            backgroundColor: s.fallback,
-          }}
-          aria-hidden={i !== current}
-        >
+      {slides.map((s, i) => {
+        const active = i === current;
+        const isVideo = isVideoUrl(s.image);
+        return (
           <div
-            className="absolute inset-0 bg-cover bg-center"
+            key={s.id}
+            className="absolute inset-0 transition-opacity duration-[1200ms] ease-out"
             style={{
-              backgroundImage: `url('${s.image}')`,
-              animation:
-                i === current ? "kenburns 7s ease-out forwards" : "none",
+              opacity: active ? 1 : 0,
+              zIndex: active ? 1 : 0,
+              backgroundColor: s.fallback,
             }}
-          />
-        </div>
-      ))}
+            aria-hidden={!active}
+          >
+            {isVideo ? (
+              <video
+                src={s.image}
+                className="absolute inset-0 w-full h-full object-cover"
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="auto"
+              />
+            ) : (
+              <div
+                className="absolute inset-0 bg-cover bg-center"
+                style={{
+                  backgroundImage: `url('${s.image}')`,
+                  animation: active ? "kenburns 7s ease-out forwards" : "none",
+                }}
+              />
+            )}
+          </div>
+        );
+      })}
 
       <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/20 z-[2]" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent z-[2]" />

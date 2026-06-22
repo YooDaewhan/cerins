@@ -1,17 +1,44 @@
 "use client";
 
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
+import { Node, mergeAttributes } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface Props {
   value: string;
   onChange: (html: string) => void;
   placeholder?: string;
 }
+
+const Video = Node.create({
+  name: "video",
+  group: "block",
+  atom: true,
+  draggable: true,
+  selectable: true,
+  addAttributes() {
+    return {
+      src: { default: null },
+      controls: { default: true },
+      autoplay: { default: false },
+      loop: { default: false },
+      muted: { default: false },
+      playsinline: { default: true },
+      width: { default: null },
+      height: { default: null },
+    };
+  },
+  parseHTML() {
+    return [{ tag: "video" }];
+  },
+  renderHTML({ HTMLAttributes }) {
+    return ["video", mergeAttributes(HTMLAttributes)];
+  },
+});
 
 export default function TiptapEditor({ value, onChange, placeholder }: Props) {
   const editor = useEditor({
@@ -25,6 +52,7 @@ export default function TiptapEditor({ value, onChange, placeholder }: Props) {
         HTMLAttributes: { rel: "noopener noreferrer", target: "_blank" },
       }),
       Image.configure({ inline: false }),
+      Video,
       Placeholder.configure({
         placeholder: placeholder ?? "본문을 입력하세요…",
       }),
@@ -61,6 +89,9 @@ export default function TiptapEditor({ value, onChange, placeholder }: Props) {
 }
 
 function Toolbar({ editor }: { editor: Editor | null }) {
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [uploading, setUploading] = useState(false);
+
   if (!editor) {
     return (
       <div className="border-b border-gray-200 px-2 py-1.5 text-xs text-gray-400">
@@ -92,11 +123,46 @@ function Toolbar({ editor }: { editor: Editor | null }) {
       .run();
   }
 
-  function promptImage() {
-    const url = window.prompt(
-      "이미지 URL (지금은 외부 URL만 지원, 파일 업로드는 추후)",
-      "https://",
-    );
+  async function uploadAndInsert(file: File) {
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: fd,
+      });
+      const json = (await res.json()) as {
+        ok?: boolean;
+        url?: string;
+        kind?: "image" | "video";
+        error?: string;
+      };
+      if (!res.ok || !json.ok || !json.url) {
+        window.alert(json.error ?? "업로드에 실패했습니다.");
+        return;
+      }
+      if (json.kind === "video") {
+        editor!
+          .chain()
+          .focus()
+          .insertContent({
+            type: "video",
+            attrs: { src: json.url, controls: true, playsinline: true },
+          })
+          .run();
+      } else {
+        editor!.chain().focus().setImage({ src: json.url }).run();
+      }
+    } catch {
+      window.alert("네트워크 오류로 업로드에 실패했습니다.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function promptImageUrl() {
+    const url = window.prompt("이미지 URL", "https://");
     if (!url) return;
     editor!.chain().focus().setImage({ src: url }).run();
   }
@@ -163,7 +229,7 @@ function Toolbar({ editor }: { editor: Editor | null }) {
         className={btn(editor.isActive("blockquote"))}
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
       >
-        “ ”
+        " "
       </button>
       <span className="w-px bg-gray-200 mx-1" />
       <button
@@ -173,13 +239,33 @@ function Toolbar({ editor }: { editor: Editor | null }) {
       >
         🔗
       </button>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*,video/mp4,video/webm,video/ogg"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          e.target.value = "";
+          if (f) void uploadAndInsert(f);
+        }}
+      />
       <button
         type="button"
         className={btn(false)}
-        onClick={promptImage}
-        title="이미지 URL 삽입 (파일 업로드는 추후 지원)"
+        onClick={() => fileRef.current?.click()}
+        disabled={uploading}
+        title="이미지 또는 영상(mp4) 업로드"
       >
-        🖼
+        {uploading ? "⏳" : "📎 업로드"}
+      </button>
+      <button
+        type="button"
+        className={btn(false)}
+        onClick={promptImageUrl}
+        title="이미지 URL 삽입"
+      >
+        🖼 URL
       </button>
       <span className="w-px bg-gray-200 mx-1" />
       <button

@@ -106,11 +106,18 @@ body {
   text-decoration: underline;
 }
 .tiptap-prose img,
-.post-content img {
+.post-content img,
+.tiptap-prose video,
+.post-content video {
   max-width: 100%;
   height: auto;
   border-radius: 6px;
   margin: 0.8em 0;
+}
+.tiptap-prose video,
+.post-content video {
+  display: block;
+  width: 100%;
 }
 .tiptap-prose code,
 .post-content code {

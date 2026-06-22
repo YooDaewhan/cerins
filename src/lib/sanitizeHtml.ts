@@ -28,16 +28,33 @@ const POST_OPTIONS: IOptions = {
     "td",
     "th",
     "span",
+    "video",
+    "source",
   ],
   allowedAttributes: {
     a: ["href", "target", "rel"],
     img: ["src", "alt", "title", "width", "height"],
+    video: [
+      "src",
+      "controls",
+      "autoplay",
+      "loop",
+      "muted",
+      "playsinline",
+      "poster",
+      "preload",
+      "width",
+      "height",
+    ],
+    source: ["src", "type"],
     span: ["style"],
     "*": ["class"],
   },
   allowedSchemes: ["http", "https", "mailto"],
   allowedSchemesByTag: {
     img: ["http", "https", "data"],
+    video: ["http", "https"],
+    source: ["http", "https"],
   },
   transformTags: {
     a: (tagName, attribs) => ({
