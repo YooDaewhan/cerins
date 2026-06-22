@@ -3,12 +3,18 @@ import { cookies } from "next/headers";
 const COOKIE_NAME = "cerins_uid";
 const MAX_AGE = 60 * 60 * 24 * 7;
 
+function isSecureCookie(): boolean {
+  if (process.env.COOKIE_SECURE === "true") return true;
+  if (process.env.COOKIE_SECURE === "false") return false;
+  return process.env.NODE_ENV === "production";
+}
+
 export async function setSessionUserId(userId: number): Promise<void> {
   const store = await cookies();
   store.set(COOKIE_NAME, String(userId), {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: isSecureCookie(),
     path: "/",
     maxAge: MAX_AGE,
   });
