@@ -20,7 +20,7 @@ export default function Footer({ menus, locale }: FooterProps) {
   const newsHref = localized("/news", locale);
 
   return (
-    <footer className="bg-[#1e1e1e] text-white relative">
+    <footer className="snap-start snap-always bg-[#1e1e1e] text-white relative">
       <div className="h-1 bg-gradient-to-r from-(--brand) via-(--brand) to-(--brand)" />
 
       <div className="border-b border-white/10">

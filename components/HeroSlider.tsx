@@ -80,18 +80,12 @@ export default function HeroSlider({ slides, locale }: HeroSliderProps) {
 
   if (total === 0) {
     return (
-      <section
-        className="relative overflow-hidden select-none bg-[#0d2244]"
-        style={{ height: "78vh", minHeight: "540px" }}
-      />
+      <section className="relative w-full h-full overflow-hidden select-none bg-[#0d2244]" />
     );
   }
 
   return (
-    <section
-      className="relative overflow-hidden select-none"
-      style={{ height: "78vh", minHeight: "540px" }}
-    >
+    <section className="relative w-full h-full overflow-hidden select-none">
       {slides.map((s, i) => (
         <div
           key={s.id}

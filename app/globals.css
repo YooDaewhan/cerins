@@ -7,6 +7,10 @@
   --brand-dark: #9b0f32;
   --on-brand: #0a1f44;
   --gold: #c9a84c;
+  --surface: #faf9f6;
+  --surface-2: #f3f1ea;
+  --ink-muted: #5a6478;
+  --hairline: rgba(10, 31, 68, 0.10);
 }
 
 [data-theme="navy"] {
@@ -22,6 +26,8 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-snap-type: y proximity;
+  scroll-padding-top: 4rem;
 }
 
 body {

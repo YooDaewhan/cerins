@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import HeroSlider from "@/components/HeroSlider";
-import ServiceSection, { type ServiceCard } from "@/components/ServiceSection";
+import ServiceBento from "@/components/ServiceBento";
+import ServiceProcess from "@/components/ServiceProcess";
+import ServiceValues from "@/components/ServiceValues";
+import ServiceStats from "@/components/ServiceStats";
 import PartnerSlider from "@/components/PartnerSlider";
 import NewsRoom from "@/components/NewsRoom";
 import {
-  buildLocalizedPath,
   getAlternateUrls,
   getHomeSlides,
   getPageWithTranslation,
@@ -46,51 +48,33 @@ export default async function HomePage({ params }: Props) {
     getPosts("news", code),
   ]);
 
-  const services: ServiceCard[] = [
-    {
-      id: "certification",
-      title: "Certification",
-      description:
-        "EAC, GOST-R, CE marking, and market-specific certifications across Russia, CIS, Europe, and Asia.",
-      href: buildLocalizedPath(code, "/certification/russia"),
-      icon: "certificate",
-    },
-    {
-      id: "inspection",
-      title: "Inspection",
-      description:
-        "Pre-shipment inspection, NDT, general QC, and India VOC services by certified inspectors worldwide.",
-      href: buildLocalizedPath(code, "/inspection/pre-shipment-inspection"),
-      icon: "search",
-    },
-    {
-      id: "documentation",
-      title: "Documentation",
-      description:
-        "Preparation and verification of all required commercial, shipping, and regulatory trade documents.",
-      href: buildLocalizedPath(code, "/services/documentation"),
-      icon: "document",
-    },
-    {
-      id: "project-management",
-      title: "Project Management & Custom Brokerage",
-      description:
-        "End-to-end trade execution combining project coordination with licensed customs clearance services.",
-      href: buildLocalizedPath(code, "/services/project-management-custom-brokerage"),
-      icon: "briefcase",
-    },
-  ];
+  const snapFull =
+    "snap-start snap-always h-[calc(100dvh-4rem)] flex flex-col justify-center overflow-hidden";
+  const snapTall = "snap-start snap-always";
 
   return (
     <>
-      <HeroSlider slides={slides} locale={code} />
-      <ServiceSection
-        services={services}
-        heading="CERINS Service"
-        description="CERINS provides professional certification, inspection, documentation, project management and customs brokerage services for companies entering global markets."
-      />
-      <PartnerSlider partners={partners} />
-      <NewsRoom posts={posts} locale={code} />
+      <div className={snapFull}>
+        <HeroSlider slides={slides} locale={code} />
+      </div>
+      <div className={snapFull}>
+        <ServiceBento />
+      </div>
+      <div className={snapTall}>
+        <ServiceProcess />
+      </div>
+      <div className={snapFull}>
+        <ServiceValues />
+      </div>
+      <div className={snapFull}>
+        <ServiceStats />
+      </div>
+      <div className={snapFull}>
+        <PartnerSlider partners={partners} />
+      </div>
+      <div className={snapFull}>
+        <NewsRoom posts={posts} locale={code} />
+      </div>
     </>
   );
 }
