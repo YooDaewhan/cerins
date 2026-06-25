@@ -48,7 +48,7 @@ export default async function InspectionIndexPage({ params }: Props) {
   const root = await getPageWithTranslation("inspection", code);
   if (!root) notFound();
 
-  const allInspect = await listPagesByTemplate("inspection", code);
+  const allInspect = await listPagesByTemplate("inspection", code, null);
   const items = allInspect.filter((p) => p.page.slug !== "inspection");
 
   return (

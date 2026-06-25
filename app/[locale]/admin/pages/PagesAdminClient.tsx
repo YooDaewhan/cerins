@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Template =
@@ -17,10 +18,14 @@ interface AdminPage {
   id: number;
   slug: string;
   template: Template;
+  parent_id: number | null;
   is_published: boolean;
   sort_order: number;
   translation_locales: string[];
 }
+
+const NESTABLE_TEMPLATES: Template[] = ["certification", "inspection"];
+const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
 
 interface ApiData {
   pages: AdminPage[];
@@ -50,6 +55,7 @@ const TEMPLATE_LABELS: Record<Template, string> = {
 };
 
 export default function PagesAdminClient({ locale }: { locale: string }) {
+  const router = useRouter();
   const [data, setData] = useState<ApiData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +63,7 @@ export default function PagesAdminClient({ locale }: { locale: string }) {
   const [creating, setCreating] = useState(false);
   const [createSlug, setCreateSlug] = useState("");
   const [createTemplate, setCreateTemplate] = useState<Template>("about");
+  const [createParentId, setCreateParentId] = useState<number | null>(null);
   const [createSort, setCreateSort] = useState(100);
   const [createPublished, setCreatePublished] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -83,12 +90,52 @@ export default function PagesAdminClient({ locale }: { locale: string }) {
     void load();
   }, [load]);
 
-  const filtered = useMemo(() => {
+  // 트리 평탄화: 상위(부모 없음)를 정렬한 뒤, 각 상위 바로 뒤에 자식들을 정렬해 끼움.
+  const filtered = useMemo<Array<AdminPage & { depth: 0 | 1 }>>(() => {
     if (!data) return [];
-    return data.pages
-      .filter((p) => filter === "all" || p.template === filter)
+    const pages = data.pages.filter(
+      (p) => filter === "all" || p.template === filter,
+    );
+    const top = pages
+      .filter((p) => p.parent_id == null)
       .sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
+    const childrenOf = new Map<number, AdminPage[]>();
+    for (const p of pages) {
+      if (p.parent_id != null) {
+        const arr = childrenOf.get(p.parent_id) ?? [];
+        arr.push(p);
+        childrenOf.set(p.parent_id, arr);
+      }
+    }
+    const out: Array<AdminPage & { depth: 0 | 1 }> = [];
+    for (const p of top) {
+      out.push({ ...p, depth: 0 });
+      const kids = (childrenOf.get(p.id) ?? []).sort(
+        (a, b) => a.sort_order - b.sort_order || a.id - b.id,
+      );
+      for (const k of kids) out.push({ ...k, depth: 1 });
+    }
+    return out;
   }, [data, filter]);
+
+  const topLevelByTemplate = useMemo(() => {
+    const m = new Map<Template, AdminPage[]>();
+    if (!data) return m;
+    for (const p of data.pages) {
+      if (p.parent_id != null) continue;
+      const arr = m.get(p.template) ?? [];
+      arr.push(p);
+      m.set(p.template, arr);
+    }
+    return m;
+  }, [data]);
+
+  const parentOptions = useMemo(() => {
+    if (!NESTABLE_TEMPLATES.includes(createTemplate)) return [];
+    return (topLevelByTemplate.get(createTemplate) ?? [])
+      .filter((p) => p.slug !== createTemplate) // 인덱스 페이지 자체는 제외
+      .sort((a, b) => a.sort_order - b.sort_order);
+  }, [createTemplate, topLevelByTemplate]);
 
   async function createPage() {
     if (!createSlug.trim()) {
@@ -104,6 +151,7 @@ export default function PagesAdminClient({ locale }: { locale: string }) {
         body: JSON.stringify({
           slug: createSlug.trim(),
           template: createTemplate,
+          parent_id: NESTABLE_TEMPLATES.includes(createTemplate) ? createParentId : null,
           sort_order: createSort,
           is_published: createPublished,
         }),
@@ -118,8 +166,49 @@ export default function PagesAdminClient({ locale }: { locale: string }) {
         return;
       }
       setCreateSlug("");
+      setCreateParentId(null);
       setCreating(false);
       await load();
+    } catch {
+      setError("네트워크 오류가 발생했습니다.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // 트리 행의 + 버튼: slug만 묻고 즉시 자식 페이지 생성 후 편집기로 이동.
+  async function quickAddChild(parent: AdminPage) {
+    const raw = window.prompt(
+      `'${parent.slug}' 아래에 추가할 하위 페이지 slug 를 입력하세요\n` +
+        `(예: gost-r, truc, fire-safety — 소문자/숫자/-만)`,
+    );
+    if (raw == null) return;
+    const slug = raw.trim().toLowerCase();
+    if (!SLUG_RE.test(slug)) {
+      setError("slug 형식이 올바르지 않습니다.");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/pages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          template: parent.template,
+          parent_id: parent.id,
+          sort_order: parent.sort_order + 1,
+          is_published: true,
+        }),
+      });
+      const json = (await res.json()) as { ok?: boolean; id?: number; error?: string };
+      if (!res.ok || !json.ok || !json.id) {
+        setError(json.error ?? "추가에 실패했습니다.");
+        return;
+      }
+      const adminBase = locale === "ko" ? "/admin" : `/${locale}/admin`;
+      router.push(`${adminBase}/pages/${json.id}`);
     } catch {
       setError("네트워크 오류가 발생했습니다.");
     } finally {
@@ -221,9 +310,10 @@ export default function PagesAdminClient({ locale }: { locale: string }) {
             <Field label="템플릿">
               <select
                 value={createTemplate}
-                onChange={(e) =>
-                  setCreateTemplate(e.target.value as Template)
-                }
+                onChange={(e) => {
+                  setCreateTemplate(e.target.value as Template);
+                  setCreateParentId(null);
+                }}
                 className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm bg-white"
               >
                 {data.templates.map((t) => (
@@ -236,6 +326,28 @@ export default function PagesAdminClient({ locale }: { locale: string }) {
                 템플릿이 사이트 라우트 경로를 결정합니다.
               </p>
             </Field>
+            {NESTABLE_TEMPLATES.includes(createTemplate) && (
+              <Field label="상위 페이지 (선택)" className="sm:col-span-2">
+                <select
+                  value={createParentId ?? ""}
+                  onChange={(e) =>
+                    setCreateParentId(e.target.value ? Number(e.target.value) : null)
+                  }
+                  className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm bg-white"
+                >
+                  <option value="">— (최상위 — 국가/카테고리 자체)</option>
+                  {parentOptions.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.slug}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-gray-400 mt-1">
+                  예: 러시아(러시아 인증) 아래에 TRUC, GOST R 등을 하위로 만듭니다.
+                  비워두면 새 국가/카테고리가 됩니다.
+                </p>
+              </Field>
+            )}
             <Field label="정렬 순서">
               <input
                 type="number"
@@ -297,62 +409,86 @@ export default function PagesAdminClient({ locale }: { locale: string }) {
                 </td>
               </tr>
             )}
-            {filtered.map((p) => (
-              <tr key={p.id} className="border-t border-gray-100 align-top">
-                <td className="px-4 py-2 text-gray-500">{p.id}</td>
-                <td className="px-4 py-2 font-mono text-gray-800">{p.slug}</td>
-                <td className="px-4 py-2 text-gray-700">
-                  {TEMPLATE_LABELS[p.template]}{" "}
-                  <span className="text-[10px] text-gray-400">
-                    {p.template}
-                  </span>
-                </td>
-                <td className="px-4 py-2 text-gray-700">{p.sort_order}</td>
-                <td className="px-4 py-2">
-                  {p.is_published ? (
-                    <span className="text-[11px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded">
-                      공개
-                    </span>
-                  ) : (
-                    <span className="text-[11px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
-                      비공개
-                    </span>
-                  )}
-                </td>
-                <td className="px-4 py-2">
-                  <div className="flex gap-1 flex-wrap">
-                    {p.translation_locales.length === 0 && (
-                      <span className="text-[10px] text-gray-400">없음</span>
+            {filtered.map((p) => {
+              const isNestableParent =
+                p.depth === 0 &&
+                NESTABLE_TEMPLATES.includes(p.template) &&
+                p.slug !== p.template; // 인덱스(/certification 자체) 제외
+              return (
+                <tr key={p.id} className="border-t border-gray-100 align-top">
+                  <td className="px-4 py-2 text-gray-500">{p.id}</td>
+                  <td className="px-4 py-2 font-mono text-gray-800">
+                    {p.depth === 1 && (
+                      <span className="text-gray-300 mr-1">└</span>
                     )}
-                    {p.translation_locales.map((l) => (
-                      <span
-                        key={l}
-                        className="text-[10px] bg-(--brand)/10 text-(--brand) px-1.5 py-0.5 rounded font-mono uppercase"
-                      >
-                        {l}
+                    <span className={p.depth === 1 ? "text-gray-600" : ""}>
+                      {p.slug}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 text-gray-700">
+                    {TEMPLATE_LABELS[p.template]}{" "}
+                    <span className="text-[10px] text-gray-400">
+                      {p.template}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 text-gray-700">{p.sort_order}</td>
+                  <td className="px-4 py-2">
+                    {p.is_published ? (
+                      <span className="text-[11px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded">
+                        공개
                       </span>
-                    ))}
-                  </div>
-                </td>
-                <td className="px-4 py-2 text-right pr-5 whitespace-nowrap">
-                  <div className="inline-flex gap-1">
-                    <Link
-                      href={`${adminBase}/pages/${p.id}`}
-                      className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-50"
-                    >
-                      편집
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => deletePage(p)}
-                      className="rounded border border-red-300 text-red-600 px-2.5 py-1 text-xs hover:bg-red-50"
-                    >
-                      삭제
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                    ) : (
+                      <span className="text-[11px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                        비공개
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2">
+                    <div className="flex gap-1 flex-wrap">
+                      {p.translation_locales.length === 0 && (
+                        <span className="text-[10px] text-gray-400">없음</span>
+                      )}
+                      {p.translation_locales.map((l) => (
+                        <span
+                          key={l}
+                          className="text-[10px] bg-(--brand)/10 text-(--brand) px-1.5 py-0.5 rounded font-mono uppercase"
+                        >
+                          {l}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="px-4 py-2 text-right pr-5 whitespace-nowrap">
+                    <div className="inline-flex gap-1">
+                      {isNestableParent && (
+                        <button
+                          type="button"
+                          onClick={() => quickAddChild(p)}
+                          disabled={busy}
+                          className="rounded border border-(--brand) text-(--brand) px-2.5 py-1 text-xs font-semibold hover:bg-(--brand)/5 disabled:opacity-60"
+                          title="이 페이지 아래에 하위 인증/검사 항목 추가"
+                        >
+                          + 하위
+                        </button>
+                      )}
+                      <Link
+                        href={`${adminBase}/pages/${p.id}`}
+                        className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-50"
+                      >
+                        편집
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => deletePage(p)}
+                        className="rounded border border-red-300 text-red-600 px-2.5 py-1 text-xs hover:bg-red-50"
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

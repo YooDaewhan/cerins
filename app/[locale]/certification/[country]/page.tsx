@@ -24,7 +24,7 @@ export async function generateStaticParams() {
   ]);
   const codes = locales.map((l) => l.code);
   return pages
-    .filter((p) => p.slug !== "certification")
+    .filter((p) => p.slug !== "certification" && p.parent_id == null)
     .flatMap((p) => codes.map((locale) => ({ locale, country: p.slug })));
 }
 
@@ -50,10 +50,19 @@ export default async function CertificationDetailPage({ params }: Props) {
   const code = locale as LocaleCode;
 
   const page = await getPageWithTranslation(country, code);
-  if (!page || page.page.template !== "certification" || page.page.slug === "certification") notFound();
+  if (
+    !page ||
+    page.page.template !== "certification" ||
+    page.page.slug === "certification" ||
+    page.page.parent_id != null
+  )
+    notFound();
 
-  const allCert = await listPagesByTemplate("certification", code);
-  const sideNav = allCert.filter((p) => p.page.slug !== "certification");
+  const [sideNavAll, children] = await Promise.all([
+    listPagesByTemplate("certification", code, null),
+    listPagesByTemplate("certification", code, page.page.id),
+  ]);
+  const sideNav = sideNavAll.filter((p) => p.page.slug !== "certification");
 
   return (
     <>
@@ -107,6 +116,51 @@ export default async function CertificationDetailPage({ params }: Props) {
                 </div>
               ))}
             </div>
+
+            {children.length > 0 && (
+              <div className="mt-12">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-1 h-6 bg-[#c9a84c] rounded" />
+                  <h2 className="text-xl font-bold text-(--brand)">인증 항목</h2>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {children.map((c) => (
+                    <Link
+                      key={c.page.id}
+                      href={buildLocalizedPath(
+                        code,
+                        `/certification/${country}/${c.page.slug}`,
+                      )}
+                      className="group flex items-start justify-between gap-3 border border-gray-200 rounded-lg p-4 hover:border-(--brand) hover:shadow-sm transition-all"
+                    >
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-bold text-(--brand) mb-1 truncate">
+                          {c.translation.title}
+                        </h3>
+                        {c.translation.meta_description && (
+                          <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">
+                            {c.translation.meta_description}
+                          </p>
+                        )}
+                      </div>
+                      <svg
+                        className="w-4 h-4 text-gray-300 flex-shrink-0 mt-1 group-hover:text-(--brand) transition-colors"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="mt-12 bg-(--brand) rounded-lg p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>

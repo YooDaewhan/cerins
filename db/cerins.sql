@@ -38,13 +38,21 @@ CREATE TABLE pages (
   id           INT          NOT NULL PRIMARY KEY,
   slug         VARCHAR(128) NOT NULL UNIQUE,
   template     ENUM('home','about','certification','inspection','services','news_list','contact','simple') NOT NULL,
+  parent_id    INT          NULL,
   is_published TINYINT(1)   NOT NULL DEFAULT 1,
   sort_order   INT          NOT NULL DEFAULT 0,
   created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_pages_template (template),
-  INDEX idx_pages_published (is_published)
+  INDEX idx_pages_published (is_published),
+  INDEX idx_pages_parent (parent_id),
+  CONSTRAINT fk_pages_parent FOREIGN KEY (parent_id) REFERENCES pages(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ponytail: 2단계까지만. 손주가 필요해질 때 자기참조 트리 쿼리(WITH RECURSIVE)로 확장.
+-- 기존 DB에 적용: ALTER TABLE pages ADD COLUMN parent_id INT NULL,
+--   ADD INDEX idx_pages_parent (parent_id),
+--   ADD CONSTRAINT fk_pages_parent FOREIGN KEY (parent_id) REFERENCES pages(id) ON DELETE CASCADE;
 
 INSERT INTO pages (id, slug, template, is_published, sort_order, created_at, updated_at) VALUES
   (1,  'home',          'home',          1, 1,  '2026-01-01 00:00:00', '2026-01-01 00:00:00'),

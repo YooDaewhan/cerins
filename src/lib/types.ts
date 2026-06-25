@@ -30,6 +30,8 @@ export interface Page {
   id: number;
   slug: string;
   template: PageTemplate;
+  // 2단계 트리. 최상위는 null/undefined. 모킹 데이터는 보통 생략.
+  parent_id?: number | null;
   is_published: boolean;
   sort_order: number;
   created_at: string;

@@ -39,7 +39,7 @@ export default async function CertificationIndexPage({ params }: Props) {
   const root = await getPageWithTranslation("certification", code);
   if (!root) notFound();
 
-  const allCert = await listPagesByTemplate("certification", code);
+  const allCert = await listPagesByTemplate("certification", code, null);
   const items = allCert.filter((p) => p.page.slug !== "certification");
 
   return (

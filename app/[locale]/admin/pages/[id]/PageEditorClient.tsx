@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Template =
@@ -13,12 +14,25 @@ type Template =
   | "contact"
   | "simple";
 
+const NESTABLE_TEMPLATES: Template[] = ["certification", "inspection"];
+const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
+
 interface PageMeta {
   id: number;
   slug: string;
   template: Template;
+  parent_id: number | null;
   is_published: boolean;
   sort_order: number;
+}
+
+interface AllPagesEntry {
+  id: number;
+  slug: string;
+  template: Template;
+  parent_id: number | null;
+  sort_order: number;
+  translation_locales: string[];
 }
 
 interface ContentBlock {
@@ -68,7 +82,9 @@ export default function PageEditorClient({
   locale: string;
   pageId: number;
 }) {
+  const router = useRouter();
   const [data, setData] = useState<ApiData | null>(null);
+  const [allPages, setAllPages] = useState<AllPagesEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeLocale, setActiveLocale] = useState("ko");
@@ -76,17 +92,19 @@ export default function PageEditorClient({
   const [meta, setMeta] = useState<PageMeta | null>(null);
   const [savingMeta, setSavingMeta] = useState(false);
   const [savingTrans, setSavingTrans] = useState(false);
+  const [addingChild, setAddingChild] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/pages/${pageId}`, {
-        cache: "no-store",
-      });
-      const json = (await res.json()) as ApiData & { error?: string };
-      if (!res.ok) {
+      const [pageRes, listRes] = await Promise.all([
+        fetch(`/api/admin/pages/${pageId}`, { cache: "no-store" }),
+        fetch(`/api/admin/pages`, { cache: "no-store" }),
+      ]);
+      const json = (await pageRes.json()) as ApiData & { error?: string };
+      if (!pageRes.ok) {
         setError(json.error ?? "페이지를 불러오지 못했습니다.");
         return;
       }
@@ -95,6 +113,10 @@ export default function PageEditorClient({
       const next: Record<string, PageTranslation> = {};
       for (const t of json.translations) next[t.locale] = t;
       setDrafts(next);
+      if (listRes.ok) {
+        const listJson = (await listRes.json()) as { pages: AllPagesEntry[] };
+        setAllPages(listJson.pages);
+      }
     } catch {
       setError("네트워크 오류가 발생했습니다.");
     } finally {
@@ -105,6 +127,32 @@ export default function PageEditorClient({
   useEffect(() => {
     void load();
   }, [load]);
+
+  const isNestable = meta ? NESTABLE_TEMPLATES.includes(meta.template) : false;
+  const isTopLevel = !!meta && meta.parent_id == null && meta.slug !== meta.template;
+  const hasChildren = useMemo(
+    () => allPages.some((p) => p.parent_id === pageId),
+    [allPages, pageId],
+  );
+  const parentOptions = useMemo(() => {
+    if (!meta || !isNestable) return [];
+    return allPages
+      .filter(
+        (p) =>
+          p.template === meta.template &&
+          p.parent_id == null &&
+          p.id !== meta.id &&
+          p.slug !== meta.template, // 인덱스 페이지 자체는 제외
+      )
+      .sort((a, b) => a.sort_order - b.sort_order);
+  }, [allPages, meta, isNestable]);
+  const children = useMemo(
+    () =>
+      allPages
+        .filter((p) => p.parent_id === pageId)
+        .sort((a, b) => a.sort_order - b.sort_order),
+    [allPages, pageId],
+  );
 
   const adminBase = locale === "ko" ? "/admin" : `/${locale}/admin`;
 
@@ -154,6 +202,7 @@ export default function PageEditorClient({
         body: JSON.stringify({
           slug: meta.slug,
           template: meta.template,
+          parent_id: isNestable ? meta.parent_id : null,
           sort_order: meta.sort_order,
           is_published: meta.is_published,
         }),
@@ -207,6 +256,47 @@ export default function PageEditorClient({
       setError("네트워크 오류가 발생했습니다.");
     } finally {
       setSavingTrans(false);
+    }
+  }
+
+  async function addChild() {
+    if (!meta) return;
+    const raw = window.prompt(
+      `'${meta.slug}' 아래에 추가할 하위 페이지 slug 를 입력하세요\n` +
+        `(예: gost-r, truc, fire-safety — 소문자/숫자/-만)`,
+    );
+    if (raw == null) return;
+    const slug = raw.trim().toLowerCase();
+    if (!SLUG_RE.test(slug)) {
+      setError("slug 형식이 올바르지 않습니다.");
+      return;
+    }
+    setAddingChild(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/admin/pages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          template: meta.template,
+          parent_id: meta.id,
+          sort_order: meta.sort_order + 1,
+          is_published: true,
+        }),
+      });
+      const json = (await res.json()) as { ok?: boolean; id?: number; error?: string };
+      if (!res.ok || !json.ok || !json.id) {
+        setError(json.error ?? "추가에 실패했습니다.");
+        return;
+      }
+      const adminBase = locale === "ko" ? "/admin" : `/${locale}/admin`;
+      router.push(`${adminBase}/pages/${json.id}`);
+    } catch {
+      setError("네트워크 오류가 발생했습니다.");
+    } finally {
+      setAddingChild(false);
     }
   }
 
@@ -344,6 +434,33 @@ export default function PageEditorClient({
               <span>사이트에 공개</span>
             </label>
           </Field>
+          {isNestable && (
+            <Field label="상위 페이지" className="sm:col-span-2">
+              <select
+                value={meta.parent_id ?? ""}
+                onChange={(e) =>
+                  setMeta({
+                    ...meta,
+                    parent_id: e.target.value ? Number(e.target.value) : null,
+                  })
+                }
+                disabled={hasChildren}
+                className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm bg-white disabled:bg-gray-50 disabled:text-gray-400"
+              >
+                <option value="">— (최상위 — 국가/카테고리 자체)</option>
+                {parentOptions.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.slug}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-gray-400 mt-1">
+                {hasChildren
+                  ? "이 페이지에는 이미 하위 페이지가 있어 다른 상위로 이동할 수 없습니다."
+                  : "비워두면 최상위(국가/카테고리 자체)가 됩니다."}
+              </p>
+            </Field>
+          )}
         </div>
         <div className="flex justify-end">
           <button
@@ -356,6 +473,56 @@ export default function PageEditorClient({
           </button>
         </div>
       </section>
+
+      {isNestable && isTopLevel && (
+        <section className="rounded-lg border border-gray-200 bg-white p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-800">
+              하위 페이지 ({children.length})
+            </h3>
+            <button
+              type="button"
+              onClick={addChild}
+              disabled={addingChild}
+              className="rounded bg-(--brand) text-white px-3 py-1.5 text-xs font-semibold hover:opacity-90 disabled:opacity-60"
+            >
+              {addingChild ? "추가 중..." : "+ 하위 추가"}
+            </button>
+          </div>
+          {children.length === 0 ? (
+            <p className="text-xs text-gray-400">
+              하위 페이지가 없습니다. 우측 버튼으로 TRUC, GOST R 같은 항목을 추가하세요.
+            </p>
+          ) : (
+            <ul className="divide-y divide-gray-100 border border-gray-100 rounded">
+              {children.map((c) => (
+                <li
+                  key={c.id}
+                  className="flex items-center justify-between px-3 py-2 text-sm"
+                >
+                  <div>
+                    <span className="font-mono text-gray-800">{c.slug}</span>
+                    <span className="ml-2 text-[10px] text-gray-400">
+                      ID #{c.id}
+                    </span>
+                    {c.translation_locales.length === 0 && (
+                      <span className="ml-2 text-[10px] text-amber-600">
+                        번역 없음
+                      </span>
+                    )}
+                  </div>
+                  <Link
+                    href={`${adminBase}/pages/${c.id}`}
+                    className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-50"
+                  >
+                    편집
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       <section className="rounded-lg border border-gray-200 bg-white overflow-hidden">
         <div className="border-b border-gray-200 bg-gray-50 px-4 py-2 flex gap-1 flex-wrap">

@@ -22,15 +22,24 @@ import type {
 } from "@/src/lib/types";
 
 function pathForPage(
-  page: { template: PageTemplate; slug: string },
+  page: { template: PageTemplate; slug: string; parent_id?: number | null },
   locale: LocaleCode,
+  parentSlug?: string | null,
 ): string {
   const path = (() => {
     switch (page.template) {
       case "home":          return "/";
       case "about":         return page.slug === "about" ? "/about" : `/about/${page.slug}`;
-      case "certification": return page.slug === "certification" ? "/certification" : `/certification/${page.slug}`;
-      case "inspection":    return page.slug === "inspection" ? "/inspection" : `/inspection/${page.slug}`;
+      case "certification":
+        if (page.slug === "certification") return "/certification";
+        return parentSlug
+          ? `/certification/${parentSlug}/${page.slug}`
+          : `/certification/${page.slug}`;
+      case "inspection":
+        if (page.slug === "inspection") return "/inspection";
+        return parentSlug
+          ? `/inspection/${parentSlug}/${page.slug}`
+          : `/inspection/${page.slug}`;
       case "services":      return `/services/${page.slug}`;
       case "contact":       return "/contact";
       case "news_list":     return "/news";
@@ -103,11 +112,22 @@ export async function getPageWithTranslation(
 export async function listPagesByTemplate(
   template: PageTemplate,
   locale: LocaleCode,
+  parentFilter: number | null | "any" = "any",
 ): Promise<PageWithTranslation[]> {
   const pool = getPool();
+  const where =
+    parentFilter === "any"
+      ? "template = ? AND is_published = 1"
+      : parentFilter === null
+        ? "template = ? AND is_published = 1 AND parent_id IS NULL"
+        : "template = ? AND is_published = 1 AND parent_id = ?";
+  const params: (string | number)[] =
+    parentFilter === "any" || parentFilter === null
+      ? [template]
+      : [template, parentFilter];
   const [pageRows] = await pool.query<RowDataPacket[]>(
-    "SELECT * FROM pages WHERE template = ? AND is_published = 1 ORDER BY sort_order",
-    [template],
+    `SELECT * FROM pages WHERE ${where} ORDER BY sort_order`,
+    params,
   );
   const pages = pageRows as unknown as Page[];
   if (!pages.length) return [];
@@ -153,12 +173,12 @@ export async function getMenus(locale: LocaleCode): Promise<MenuNode[]> {
       "SELECT menu_id, locale, label FROM menu_translations WHERE locale IN (?)",
       [[locale, DEFAULT_LOCALE]],
     ),
-    pool.query<RowDataPacket[]>("SELECT id, slug, template FROM pages"),
+    pool.query<RowDataPacket[]>("SELECT id, slug, template, parent_id FROM pages"),
   ]);
 
   const menus = menuRows as unknown as Menu[];
   const pageMap = new Map(
-    (pageRows as unknown as Array<{ id: number; slug: string; template: PageTemplate }>).map(
+    (pageRows as unknown as Array<{ id: number; slug: string; template: PageTemplate; parent_id: number | null }>).map(
       (p) => [p.id, p],
     ),
   );
@@ -188,7 +208,10 @@ export async function getMenus(locale: LocaleCode): Promise<MenuNode[]> {
     if (menu.url) return menu.url;
     if (menu.page_id !== null) {
       const page = pageMap.get(menu.page_id);
-      if (page) return pathForPage(page, locale);
+      if (page) {
+        const parent = page.parent_id != null ? pageMap.get(page.parent_id) : null;
+        return pathForPage(page, locale, parent?.slug ?? null);
+      }
     }
     return "#";
   };
@@ -285,6 +308,13 @@ export async function getAlternateUrls(slug: string): Promise<AlternateUrl[]> {
   const page = await getPageBySlug(slug);
   if (!page) return [];
 
+  const parentSlug = page.parent_id != null
+    ? (await getPool().query<RowDataPacket[]>(
+        "SELECT slug FROM pages WHERE id = ?",
+        [page.parent_id],
+      ).then(([rs]) => (rs[0] as { slug?: string } | undefined)?.slug ?? null))
+    : null;
+
   const [locales, [transRows]] = await Promise.all([
     getEnabledLocales(),
     getPool().query<RowDataPacket[]>(
@@ -300,7 +330,7 @@ export async function getAlternateUrls(slug: string): Promise<AlternateUrl[]> {
 
   return locales
     .filter((l: Locale) => available.has(l.code) || hasDefault)
-    .map((l: Locale) => ({ locale: l.code, url: pathForPage(page, l.code) }));
+    .map((l: Locale) => ({ locale: l.code, url: pathForPage(page, l.code, parentSlug) }));
 }
 
 export async function listPagesByTemplateRaw(template: PageTemplate): Promise<Page[]> {
@@ -331,6 +361,34 @@ export async function listPublishedPages(): Promise<Page[]> {
   return rows as unknown as Page[];
 }
 
-export function urlForPage(page: Page, locale: LocaleCode): string {
-  return pathForPage(page, locale);
+export function urlForPage(
+  page: Page,
+  locale: LocaleCode,
+  parentSlug?: string | null,
+): string {
+  return pathForPage(page, locale, parentSlug);
+}
+
+// 같은 부모를 가진 형제(혹은 자식)를 한꺼번에 가져옴. 사이드네비/하위 카드 목록용.
+export async function listChildPages(
+  parentId: number,
+  locale: LocaleCode,
+): Promise<PageWithTranslation[]> {
+  return listPagesByTemplate(
+    (await getPool()
+      .query<RowDataPacket[]>("SELECT template FROM pages WHERE id = ?", [parentId])
+      .then(([rs]) => (rs[0] as { template?: PageTemplate } | undefined)?.template)) ??
+      "simple",
+    locale,
+    parentId,
+  );
+}
+
+export async function getParentSlug(parentId: number | null): Promise<string | null> {
+  if (parentId == null) return null;
+  const [rs] = await getPool().query<RowDataPacket[]>(
+    "SELECT slug FROM pages WHERE id = ?",
+    [parentId],
+  );
+  return (rs[0] as { slug?: string } | undefined)?.slug ?? null;
 }

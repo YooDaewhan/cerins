@@ -9,6 +9,7 @@ interface PageRow extends RowDataPacket {
   id: number;
   slug: string;
   template: PageTemplate;
+  parent_id: number | null;
   is_published: number;
   sort_order: number;
   created_at: string;
@@ -40,6 +41,7 @@ const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
 interface CreateBody {
   slug?: string;
   template?: string;
+  parent_id?: number | null;
   sort_order?: number;
   is_published?: boolean;
 }
@@ -72,6 +74,7 @@ export async function GET() {
       id: p.id,
       slug: p.slug,
       template: p.template,
+      parent_id: p.parent_id,
       is_published: p.is_published === 1,
       sort_order: p.sort_order,
       created_at: p.created_at,
@@ -102,6 +105,13 @@ export async function POST(req: Request) {
       ? Math.trunc(body.sort_order)
       : 0;
   const is_published = body.is_published === false ? 0 : 1;
+  const rawParent = body.parent_id;
+  const parent_id =
+    rawParent == null
+      ? null
+      : Number.isFinite(rawParent) && (rawParent as number) > 0
+        ? Math.trunc(rawParent as number)
+        : null;
 
   if (!SLUG_RE.test(slug) || slug.length > 128) {
     return NextResponse.json(
@@ -121,6 +131,28 @@ export async function POST(req: Request) {
   try {
     await conn.beginTransaction();
 
+    if (parent_id !== null) {
+      const [parentRows] = await conn.query<RowDataPacket[]>(
+        "SELECT template, parent_id FROM pages WHERE id = ?",
+        [parent_id],
+      );
+      const parent = parentRows[0] as
+        | { template: PageTemplate; parent_id: number | null }
+        | undefined;
+      if (!parent) {
+        await conn.rollback();
+        return NextResponse.json({ error: "상위 페이지를 찾을 수 없습니다." }, { status: 400 });
+      }
+      if (parent.template !== template) {
+        await conn.rollback();
+        return NextResponse.json({ error: "상위 페이지의 템플릿과 일치해야 합니다." }, { status: 400 });
+      }
+      if (parent.parent_id !== null) {
+        await conn.rollback();
+        return NextResponse.json({ error: "하위의 하위(2단계 초과)는 지원하지 않습니다." }, { status: 400 });
+      }
+    }
+
     const [dup] = await conn.query<RowDataPacket[]>(
       "SELECT id FROM pages WHERE slug = ?",
       [slug],
@@ -139,9 +171,9 @@ export async function POST(req: Request) {
     const id = Number((maxRow[0] as { next_id: number }).next_id);
 
     await conn.execute(
-      `INSERT INTO pages (id, slug, template, is_published, sort_order)
-       VALUES (?, ?, ?, ?, ?)`,
-      [id, slug, template, is_published, sort_order],
+      `INSERT INTO pages (id, slug, template, parent_id, is_published, sort_order)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [id, slug, template, parent_id, is_published, sort_order],
     );
     await conn.commit();
     revalidatePath("/", "layout");
