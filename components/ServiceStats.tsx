@@ -122,33 +122,36 @@ function StatCard({ stat, index }: { stat: Stat; index: number }) {
 
 export default function ServiceStats() {
   return (
-    <section className="relative w-full h-full overflow-hidden bg-(--surface) text-(--on-brand)">
+    <section className="relative w-full h-full overflow-hidden">
+      <video
+        className="absolute inset-0 w-full h-full object-cover"
+        src="/uploads/trade_bg_7s.mp4"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        disableRemotePlayback
+      />
+      <div aria-hidden className="absolute inset-0 bg-black/55" />
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-(--gold)/40 to-transparent"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-60"
-        style={{
-          background:
-            "radial-gradient(800px circle at 95% 110%, rgba(180,18,58,0.06), transparent 60%), radial-gradient(700px circle at 5% -10%, rgba(10,31,68,0.05), transparent 60%)",
-        }}
       />
 
       <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-10 lg:py-14 flex flex-col">
         <div className="mb-8 lg:mb-10">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-px bg-(--brand)" />
-            <span className="text-[10px] font-bold tracking-[0.3em] text-(--brand) uppercase">
+            <div className="w-10 h-px bg-white/60" />
+            <span className="text-[10px] font-bold tracking-[0.3em] text-white/70 uppercase">
               By the numbers
             </span>
           </div>
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
-            <h2 className="text-3xl lg:text-5xl font-bold tracking-tight text-(--on-brand)">
-              Built over 15 years of <span className="text-(--brand)">cross-border work</span>.
+            <h2 className="text-3xl lg:text-5xl font-bold tracking-tight text-white">
+              Built over 15 years of <span className="text-(--gold)">cross-border work</span>.
             </h2>
-            <p className="text-sm lg:text-base text-(--ink-muted) max-w-sm">
+            <p className="text-sm lg:text-base text-white/65 max-w-sm">
               The numbers behind every project we close — measured, not marketed.
             </p>
           </div>

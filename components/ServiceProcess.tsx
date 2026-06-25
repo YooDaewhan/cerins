@@ -100,29 +100,32 @@ export default function ServiceProcess() {
   return (
     <section
       ref={ref}
-      className="relative bg-(--surface) text-(--on-brand)"
+      className="relative"
       style={{ height: `${STEPS.length * STEP_VH}dvh` }}
       aria-label="Our delivery process"
     >
+      <video
+        className="absolute inset-0 w-full h-full object-cover"
+        src="/uploads/trade_bg_7s.mp4"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        disableRemotePlayback
+      />
+      <div aria-hidden className="absolute inset-0 bg-black/55" />
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-(--gold)/40 to-transparent"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-50"
-        style={{
-          background:
-            "radial-gradient(900px circle at 90% 10%, rgba(180,18,58,0.05), transparent 60%), radial-gradient(700px circle at 10% 90%, rgba(10,31,68,0.05), transparent 60%)",
-        }}
       />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
         <div className="hidden lg:block lg:col-span-5">
           <div className="sticky top-16 h-[calc(100dvh-4rem)] flex flex-col justify-center">
             <div className="flex items-center gap-3 mb-10">
-              <div className="w-10 h-px bg-(--brand)" />
-              <span className="text-[10px] font-bold tracking-[0.3em] text-(--brand) uppercase">
+              <div className="w-10 h-px bg-white/60" />
+              <span className="text-[10px] font-bold tracking-[0.3em] text-white/70 uppercase">
                 How we deliver
               </span>
             </div>
@@ -135,13 +138,13 @@ export default function ServiceProcess() {
                 exit={{ opacity: 0, y: -14 }}
                 transition={{ duration: 0.55, ease: [0.2, 0.7, 0.2, 1] }}
               >
-                <div className="font-bold leading-[0.85] tracking-tight text-[9rem] xl:text-[11rem] text-(--on-brand)">
+                <div className="font-bold leading-[0.85] tracking-tight text-[9rem] xl:text-[11rem] text-white">
                   {current.n}
                 </div>
-                <div className="mt-3 text-[10px] font-bold tracking-[0.3em] text-(--ink-muted) uppercase">
+                <div className="mt-3 text-[10px] font-bold tracking-[0.3em] text-white/60 uppercase">
                   {current.tag}
                 </div>
-                <h3 className="mt-3 text-3xl xl:text-4xl font-semibold text-(--on-brand) tracking-tight max-w-md">
+                <h3 className="mt-3 text-3xl xl:text-4xl font-semibold text-white tracking-tight max-w-md">
                   {current.title}
                 </h3>
               </motion.div>
@@ -153,15 +156,15 @@ export default function ServiceProcess() {
                   key={s.n}
                   className={`h-[2px] transition-all duration-500 ${
                     i === active
-                      ? "w-14 bg-(--brand)"
+                      ? "w-14 bg-(--gold)"
                       : i < active
-                        ? "w-8 bg-(--on-brand)/40"
-                        : "w-8 bg-(--hairline)"
+                        ? "w-8 bg-white/40"
+                        : "w-8 bg-white/20"
                   }`}
                 />
               ))}
             </div>
-            <div className="mt-4 font-mono text-[10px] tracking-[0.25em] text-(--ink-muted) uppercase">
+            <div className="mt-4 font-mono text-[10px] tracking-[0.25em] text-white/60 uppercase">
               {String(active + 1).padStart(2, "0")} / {String(STEPS.length).padStart(2, "0")}
             </div>
           </div>
@@ -182,16 +185,16 @@ export default function ServiceProcess() {
                 className="relative w-full"
               >
                 <div className="lg:hidden mb-5 flex items-end justify-between">
-                  <div className="font-bold text-6xl leading-none text-(--on-brand)">
+                  <div className="font-bold text-6xl leading-none text-white">
                     {s.n}
                   </div>
-                  <span className="text-[10px] font-bold tracking-[0.3em] text-(--brand) uppercase">
+                  <span className="text-[10px] font-bold tracking-[0.3em] text-white/70 uppercase">
                     {s.tag}
                   </span>
                 </div>
 
                 <div className="relative rounded-2xl border border-(--hairline) bg-white p-7 sm:p-9 lg:p-10 shadow-[0_24px_60px_-30px_rgba(10,31,68,0.18)]">
-                  <div className="hidden lg:inline-flex absolute -top-3 left-8 items-center gap-2 rounded-full bg-(--surface) px-3 py-1 border border-(--hairline)">
+                  <div className="hidden lg:inline-flex absolute -top-3 left-8 items-center gap-2 rounded-full bg-white px-3 py-1 border border-gray-200">
                     <span className="font-mono text-xs font-bold text-(--brand)">{s.n}</span>
                     <span className="text-[10px] font-semibold tracking-[0.25em] text-(--ink-muted) uppercase">
                       {s.tag}

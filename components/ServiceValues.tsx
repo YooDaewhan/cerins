@@ -104,31 +104,34 @@ export default function ServiceValues() {
     <section
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
-      className="relative w-full h-full overflow-hidden bg-(--surface) text-(--on-brand)"
+      className="relative w-full h-full overflow-hidden"
       aria-label="Why CERINS"
     >
+      <video
+        className="absolute inset-0 w-full h-full object-cover"
+        src="/uploads/trade_bg_7s.mp4"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        disableRemotePlayback
+      />
+      <div aria-hidden className="absolute inset-0 bg-black/55" />
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-(--gold)/40 to-transparent"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-60"
-        style={{
-          background:
-            "radial-gradient(900px circle at 92% 8%, rgba(180,18,58,0.06), transparent 60%), radial-gradient(800px circle at 8% 92%, rgba(10,31,68,0.05), transparent 60%)",
-        }}
       />
 
       <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-10 lg:py-14 flex flex-col">
         <div className="flex items-center justify-between gap-4 mb-6 lg:mb-10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-px bg-(--brand)" />
-            <span className="text-[10px] font-bold tracking-[0.3em] text-(--brand) uppercase">
+            <div className="w-10 h-px bg-white/60" />
+            <span className="text-[10px] font-bold tracking-[0.3em] text-white/70 uppercase">
               Why CERINS
             </span>
           </div>
-          <div className="font-mono text-[10px] tracking-[0.25em] text-(--ink-muted) uppercase">
+          <div className="font-mono text-[10px] tracking-[0.25em] text-white/60 uppercase">
             {current.accent} / {String(VALUES.length).padStart(2, "0")}
           </div>
         </div>
@@ -143,21 +146,21 @@ export default function ServiceValues() {
               transition={{ duration: 0.65, ease: [0.2, 0.7, 0.2, 1] }}
               className="lg:col-span-8 relative"
             >
-              <div className="text-[10px] font-bold tracking-[0.3em] text-(--ink-muted) uppercase mb-5">
-                <span className="text-(--on-brand)">{current.eyebrow}</span>
-                <span className="mx-2 text-(--hairline)">/</span>
+              <div className="text-[10px] font-bold tracking-[0.3em] text-white/60 uppercase mb-5">
+                <span className="text-white">{current.eyebrow}</span>
+                <span className="mx-2 text-white/30">/</span>
                 Operating principle
               </div>
-              <h2 className="text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight leading-[1.04] text-(--on-brand) max-w-4xl">
+              <h2 className="text-4xl sm:text-5xl lg:text-7xl font-bold tracking-tight leading-[1.04] text-white max-w-4xl">
                 {current.title}
               </h2>
-              <p className="mt-6 lg:mt-8 text-base lg:text-xl text-(--ink-muted) leading-relaxed max-w-2xl">
+              <p className="mt-6 lg:mt-8 text-base lg:text-xl text-white/65 leading-relaxed max-w-2xl">
                 {current.desc}
               </p>
 
-              <div className="mt-8 inline-flex items-center gap-3 rounded-full border border-(--hairline) bg-white/70 backdrop-blur-sm px-4 py-2">
+              <div className="mt-8 inline-flex items-center gap-3 rounded-full border border-white/30 bg-white/15 backdrop-blur-sm px-4 py-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-(--gold)" />
-                <span className="text-xs font-semibold text-(--on-brand) tracking-wide">
+                <span className="text-xs font-semibold text-white tracking-wide">
                   {current.metric}
                 </span>
               </div>
@@ -175,7 +178,7 @@ export default function ServiceValues() {
               aria-hidden
             >
               <div className="relative">
-                <div className="font-bold leading-[0.85] tracking-tight text-[16rem] xl:text-[20rem] text-(--on-brand)/[0.06]">
+                <div className="font-bold leading-[0.85] tracking-tight text-[16rem] xl:text-[20rem] text-white/[0.08]">
                   {current.accent}
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -208,7 +211,7 @@ export default function ServiceValues() {
                   className="group text-left"
                   aria-label={`View ${v.eyebrow}`}
                 >
-                  <div className="relative h-[2px] w-full bg-(--hairline) overflow-hidden">
+                  <div className="relative h-[2px] w-full bg-white/20 overflow-hidden">
                     <span
                       className="absolute inset-y-0 left-0 bg-(--brand) transition-[width] duration-100 linear"
                       style={{ width: fill }}
@@ -217,7 +220,7 @@ export default function ServiceValues() {
                   <div className="mt-2 flex items-baseline justify-between gap-2">
                     <span
                       className={`font-mono text-[10px] tracking-[0.25em] uppercase transition-colors ${
-                        i === active ? "text-(--brand)" : "text-(--ink-muted)"
+                        i === active ? "text-white" : "text-white/50"
                       }`}
                     >
                       {v.accent}
@@ -225,8 +228,8 @@ export default function ServiceValues() {
                     <span
                       className={`text-xs font-semibold tracking-wide transition-colors ${
                         i === active
-                          ? "text-(--on-brand)"
-                          : "text-(--ink-muted) group-hover:text-(--on-brand)"
+                          ? "text-white"
+                          : "text-white/50 group-hover:text-white"
                       }`}
                     >
                       {v.eyebrow}
