@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { LocaleCode } from "@/src/lib/types";
+import MediaInput from "@/components/admin/MediaInput";
 
 interface AdminMenu {
   id: number;
@@ -663,22 +664,14 @@ function MenuForm({
           </label>
         </Field>
         {isTopLevel && (
-          <Field label="메가패널 배경 이미지 URL" className="sm:col-span-2">
-            <input
-              type="text"
-              value={draft.mega_image_url ?? ""}
-              onChange={(e) => patch("mega_image_url", e.target.value || null)}
-              placeholder="https://..."
-              className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+          <Field label="메가패널 배경 이미지" className="sm:col-span-2">
+            <MediaInput
+              url={draft.mega_image_url ?? ""}
+              onChange={(v) => patch("mega_image_url", v || null)}
+              accept="image/*"
+              previewClassName="h-24 w-auto"
+              helpText="이미지(png/jpg/gif/webp/svg) 업로드 또는 외부 URL."
             />
-            {draft.mega_image_url && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={draft.mega_image_url}
-                alt=""
-                className="mt-2 h-24 w-auto rounded border border-gray-200 object-cover"
-              />
-            )}
           </Field>
         )}
       </div>

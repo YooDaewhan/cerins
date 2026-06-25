@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import MediaInput from "@/components/admin/MediaInput";
 
 type Template =
   | "home"
@@ -570,27 +571,13 @@ export default function PageEditorClient({
                 className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
               />
             </Field>
-            <Field label="히어로 이미지 URL">
-              <input
-                type="text"
-                value={draft.hero_image ?? ""}
-                onChange={(e) =>
-                  patchDraft({ hero_image: e.target.value || null })
-                }
-                placeholder="https://..."
-                className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+            <Field label="히어로 이미지">
+              <MediaInput
+                url={draft.hero_image ?? ""}
+                onChange={(v) => patchDraft({ hero_image: v || null })}
+                accept="image/*"
+                helpText="이미지 업로드 또는 외부 URL. 비우면 사이트 기본 히어로 이미지가 사용됩니다."
               />
-              {draft.hero_image && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={draft.hero_image}
-                  alt=""
-                  className="mt-2 h-32 w-auto rounded border border-gray-200 object-cover"
-                />
-              )}
-              <p className="text-[11px] text-gray-400 mt-1">
-                (추후 파일 업로드 지원 예정 — 일단 URL 입력)
-              </p>
             </Field>
             <Field label="메타 제목 (Meta Title)">
               <input

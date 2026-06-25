@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import MediaInput from "@/components/admin/MediaInput";
 
 interface AdminPartner {
   id: number;
@@ -342,22 +343,17 @@ function PartnerForm({
             className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
           />
         </Field>
-        <Field label="로고 URL" className="sm:col-span-2">
-          <input
-            type="text"
-            value={draft.logo ?? ""}
-            onChange={(e) => patch("logo", e.target.value || null)}
+        <Field label="로고 (URL 또는 파일 업로드)" className="sm:col-span-2">
+          <MediaInput
+            url={draft.logo ?? ""}
+            onChange={(v) => patch("logo", v || null)}
+            accept="image/*"
+            previewClassName="h-16 w-auto"
+            fit="contain"
+            fallback="#ffffff"
             placeholder="/images/partners/xxx.png 또는 https://..."
-            className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+            helpText="텍스트 입력란에 URL 을 직접 붙여넣거나, '파일 선택' 으로 업로드하세요."
           />
-          {draft.logo && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={draft.logo}
-              alt=""
-              className="mt-2 h-16 w-auto rounded border border-gray-200 object-contain bg-white p-1"
-            />
-          )}
         </Field>
         <Field label="정렬 순서">
           <input
