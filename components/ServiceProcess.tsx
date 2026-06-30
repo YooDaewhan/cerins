@@ -12,70 +12,61 @@ interface Step {
   n: string;
   tag: string;
   title: string;
+  overview: string;
   desc: string;
-  bullets: string[];
+  certifications: string[];
 }
 
 const STEPS: Step[] = [
   {
     n: "01",
-    tag: "Discovery",
-    title: "Inquiry & scoping",
+    tag: "Russia & CIS",
+    title: "Russia / CIS",
+    overview:
+      "The EAEU unified certification regime covers 5 member states under a single conformity mark — one approval, five markets.",
     desc:
-      "We map your product, target market, and timeline in one consultation. No RFQ relay, no guesswork.",
-    bullets: [
-      "Regulatory snapshot for target market in 48 hours",
-      "Fixed project pricing before kickoff",
-      "Single point of contact assigned",
-    ],
+      "We manage TR CU technical regulations and EAC declarations end-to-end — from notified-body selection through certificate registration in the FSIS database.",
+    certifications: ["TR CU", "EAC", "GOST-R", "GOST ISO", "Fire Safety Certificate", "Sanitary-Epidemiological Conclusion"],
   },
   {
     n: "02",
-    tag: "Strategy",
-    title: "Regulatory assessment",
+    tag: "Europe",
+    title: "European Union",
+    overview:
+      "CE marking grants access to the EU single market of 450 million consumers, backed by the strictest product-safety framework in the world.",
     desc:
-      "Notified bodies, labs, documents, port routes — every compliance path traced before a single test runs.",
-    bullets: [
-      "Standard selection (TR CU, EAC, GOST-R, CE, BIS)",
-      "Test plan and lab scheduling",
-      "Risk register and contingency routes",
-    ],
+      "From Low Voltage Directive to Machinery Regulation, we select applicable directives, engage accredited notified bodies, and compile the complete technical file.",
+    certifications: ["CE Marking", "REACH", "RoHS / RoHS3", "WEEE", "ErP / Ecodesign", "Radio Equipment (RED)"],
   },
   {
     n: "03",
-    tag: "Compliance",
-    title: "Documentation",
+    tag: "India",
+    title: "India",
+    overview:
+      "BIS compulsory registration under the IS scheme is the primary market-access gate for electronics, electrotechnical, and consumer goods entering India.",
     desc:
-      "Every certificate, label, and customs form — drafted, translated, and legalized to destination-country standard.",
-    bullets: [
-      "Commercial, shipping, and regulatory document drafting",
-      "Notarization and consular legalization",
-      "Multi-language label and packaging review",
-    ],
+      "We coordinate BIS lab testing at NABL-accredited facilities, manage the CRS/ISI application portal, and handle liaison officer registration for foreign manufacturers.",
+    certifications: ["BIS CRS", "BIS ISI Mark", "WPC Type Approval", "EPR Registration", "CDSCO (Medical)", "PESO"],
   },
   {
     n: "04",
-    tag: "Operations",
-    title: "Execution",
+    tag: "Gulf & Middle East",
+    title: "Gulf / Middle East",
+    overview:
+      "GCC nations enforce SASO, ESMA, and ENAS mandatory schemes that require local importers and in-country lab testing for most regulated product categories.",
     desc:
-      "Inspectors, labs, brokers, and carriers — coordinated from a single CERINS project room with daily reporting.",
-    bullets: [
-      "On-site PSI and NDT in 30+ countries",
-      "Witness testing with notified-body presence",
-      "Daily progress reports and milestone gates",
-    ],
+      "Our Gulf desk coordinates SASO SALEEM registration, Emirates Authority approvals, and full compliance documentation for the Saudi, UAE, Qatar, and Kuwait markets.",
+    certifications: ["SASO SALEEM", "ENAS (UAE)", "ESMA (UAE)", "GSO", "QS Mark (Qatar)", "ICCP (Kuwait)"],
   },
   {
     n: "05",
-    tag: "Delivery",
-    title: "Customs clearance",
+    tag: "Türkiye & Southeast Asia",
+    title: "Türkiye / SEA",
+    overview:
+      "Türkiye's CE-aligned TSE regime and Vietnam's MOIT/QUATEST lab network are the key gatekeepers for industrial and consumer goods across this corridor.",
     desc:
-      "Final clearance and handoff at destination — across Russia, the CIS, EU, Türkiye, the Gulf, India, and Vietnam.",
-    bullets: [
-      "Licensed in-house brokerage at gateway ports",
-      "Tariff classification and duty optimization",
-      "Post-clearance compliance file archived 7 years",
-    ],
+      "We manage TSE type-approval, G-Mark registration, Vietnam MOIT/QUATEST testing, and Thai TIS submissions — with in-country representatives at every port.",
+    certifications: ["TSE (Türkiye)", "G-Mark (Türkiye)", "MOIT / QUATEST (Vietnam)", "TIS (Thailand)", "SNI (Indonesia)", "PSB (Singapore)"],
   },
 ];
 
@@ -147,6 +138,9 @@ export default function ServiceProcess() {
                 <h3 className="mt-3 text-3xl xl:text-4xl font-semibold text-white tracking-tight max-w-md">
                   {current.title}
                 </h3>
+                <p className="mt-5 text-sm text-white/70 leading-relaxed max-w-xs">
+                  {current.overview}
+                </p>
               </motion.div>
             </AnimatePresence>
 
@@ -208,17 +202,21 @@ export default function ServiceProcess() {
                     {s.desc}
                   </p>
 
-                  <ul className="mt-6 space-y-2.5">
-                    {s.bullets.map((b) => (
-                      <li
-                        key={b}
-                        className="flex items-start gap-3 text-sm text-(--on-brand)"
-                      >
-                        <span className="mt-2 w-1.5 h-1.5 rounded-full bg-(--gold) flex-shrink-0" />
-                        <span className="leading-relaxed">{b}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="mt-6">
+                    <div className="mb-3 text-[10px] font-bold tracking-[0.25em] text-(--ink-muted) uppercase">
+                      Certifications &amp; Approvals
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {s.certifications.map((cert) => (
+                        <span
+                          key={cert}
+                          className="inline-flex items-center rounded border border-(--brand)/20 bg-(--brand)/5 px-3 py-1.5 text-xs font-semibold tracking-wide text-(--brand)"
+                        >
+                          {cert}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             </div>
