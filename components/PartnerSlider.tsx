@@ -44,10 +44,10 @@ export default function PartnerSlider({ partners }: PartnerSliderProps) {
         <div className="text-center mb-10">
           <div className="flex items-center justify-center gap-3 mb-3">
             <div className="w-8 h-0.5 bg-(--brand)" />
-            <span className="text-xs font-semibold tracking-widest text-white/70 uppercase">Partners</span>
+            <span className="text-xs font-semibold tracking-widest text-white/70 uppercase">파트너</span>
             <div className="w-8 h-0.5 bg-(--brand)" />
           </div>
-          <h2 className="text-2xl font-bold text-white">Our Global Partners</h2>
+          <h2 className="text-2xl font-bold text-white">글로벌 파트너</h2>
         </div>
 
         <div className="relative flex items-center gap-4">

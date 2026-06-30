@@ -34,15 +34,15 @@ export default function NewsRoom({ posts, locale }: NewsRoomProps) {
           <div>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-8 h-0.5 bg-(--brand)" />
-              <span className="text-xs font-semibold tracking-widest text-white/70 uppercase">Latest</span>
+              <span className="text-xs font-semibold tracking-widest text-white/70 uppercase">최신 소식</span>
             </div>
-            <h2 className="text-3xl font-bold text-white">News Room</h2>
+            <h2 className="text-3xl font-bold text-white">뉴스룸</h2>
           </div>
           <Link
             href={localized("/news", locale)}
             className="inline-flex items-center gap-1.5 text-sm font-semibold text-white border border-white/50 rounded px-4 py-2 hover:bg-white hover:text-(--brand) transition"
           >
-            View More
+            더 보기
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>

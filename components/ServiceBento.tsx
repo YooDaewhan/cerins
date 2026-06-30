@@ -76,10 +76,10 @@ const ship = (
 const ITEMS: BentoItem[] = [
   {
     id: "certification",
-    title: "Certification",
-    eyebrow: "Market access",
+    title: "인증",
+    eyebrow: "시장 진입",
     description:
-      "EAC, GOST-R, CE, India BIS — single-window certification for Russia, CIS, Europe, and Asia.",
+      "EAC, GOST-R, CE, BIS — 러시아·CIS·유럽·아시아 원스톱 인증 서비스.",
     href: "/certification/russia",
     className: "lg:col-span-2 lg:row-span-2",
     icon: cert,
@@ -89,9 +89,9 @@ const ITEMS: BentoItem[] = [
   },
   {
     id: "inspection",
-    title: "Pre-shipment Inspection",
-    eyebrow: "Quality",
-    description: "On-site QC and PSI by certified inspectors in 30+ countries.",
+    title: "선적 전 검사",
+    eyebrow: "품질",
+    description: "30개국 이상 공인 검사원의 현장 품질검사 및 선적전 검사.",
     href: "/inspection/pre-shipment-inspection",
     className: "lg:col-span-1 lg:row-span-1",
     icon: search,
@@ -99,9 +99,9 @@ const ITEMS: BentoItem[] = [
   },
   {
     id: "ndt",
-    title: "NDT & Lab Testing",
-    eyebrow: "Engineering",
-    description: "Ultrasonic, radiographic, magnetic — destructive & non-destructive.",
+    title: "NDT & 실험실 시험",
+    eyebrow: "엔지니어링",
+    description: "초음파·방사선·자기 — 파괴 및 비파괴 검사.",
     href: "/inspection/ndt",
     className: "lg:col-span-1 lg:row-span-1",
     icon: flask,
@@ -109,9 +109,9 @@ const ITEMS: BentoItem[] = [
   },
   {
     id: "documentation",
-    title: "Documentation",
-    eyebrow: "Compliance",
-    description: "Drafted, translated, legalized for destination-country standard.",
+    title: "서류 작성",
+    eyebrow: "컴플라이언스",
+    description: "목적국 기준에 맞춘 서류 작성·번역·공증.",
     href: "/services/documentation",
     className: "lg:col-span-1 lg:row-span-1",
     icon: doc,
@@ -119,9 +119,9 @@ const ITEMS: BentoItem[] = [
   },
   {
     id: "pm",
-    title: "Project Management",
-    eyebrow: "Coordination",
-    description: "Multi-vendor, multi-country trade projects from one room.",
+    title: "프로젝트 관리",
+    eyebrow: "조율",
+    description: "다국가·다업체 무역 프로젝트 일괄 관리.",
     href: "/services/project-management-custom-brokerage",
     className: "lg:col-span-1 lg:row-span-1",
     icon: brief,
@@ -129,9 +129,9 @@ const ITEMS: BentoItem[] = [
   },
   {
     id: "customs",
-    title: "Customs Brokerage",
-    eyebrow: "Clearance",
-    description: "Licensed in-house brokers across Russia, CIS, Vietnam, and Korea.",
+    title: "통관 대리",
+    eyebrow: "통관",
+    description: "러시아·CIS·베트남·한국 자체 면허 통관사 운영.",
     href: "/services/project-management-custom-brokerage",
     className: "lg:col-span-1 lg:row-span-1",
     icon: ship,
@@ -196,7 +196,7 @@ function BigCard({ item, index }: { item: BentoItem; index: number }) {
               {item.description}
             </p>
             <div className="mt-6 inline-flex items-center gap-2 text-xs font-semibold text-(--gold) group-hover:gap-3 transition-all">
-              <span className="tracking-wider uppercase">Explore</span>
+              <span className="tracking-wider uppercase">자세히 보기</span>
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
@@ -259,7 +259,7 @@ function SmallCard({ item, index }: { item: BentoItem; index: number }) {
             {item.description}
           </p>
           <div className="mt-auto pt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold text-(--brand) group-hover:gap-2.5 transition-all">
-            <span className="tracking-wider uppercase">Explore</span>
+            <span className="tracking-wider uppercase">자세히 보기</span>
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
@@ -294,15 +294,15 @@ export default function ServiceBento() {
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-px bg-white/60" />
             <span className="text-[10px] font-bold tracking-[0.3em] text-white/70 uppercase">
-              Our Services
+              서비스
             </span>
           </div>
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
             <h2 className="text-3xl lg:text-5xl font-bold tracking-tight text-white">
-              Everything you need to <span className="text-(--gold)">go global</span>.
+              글로벌 진출에 필요한 <span className="text-(--gold)">모든 것</span>.
             </h2>
             <p className="text-sm lg:text-base text-white/65 max-w-md">
-              Six capabilities, one window. From certification to customs, CERINS moves your product across borders.
+              6가지 서비스, 하나의 창구. 인증부터 통관까지 CERINS가 국경을 넘겨드립니다.
             </p>
           </div>
         </div>

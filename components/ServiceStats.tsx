@@ -20,12 +20,12 @@ interface Stat {
 }
 
 const STATS: Stat[] = [
-  { id: "years",     target: 15,   suffix: "+",   label: "Years of operation",     sub: "Founded 2009 — Seoul HQ." },
-  { id: "certs",     target: 1000, suffix: "+",   label: "Certifications delivered", sub: "EAC, GOST-R, CE, BIS, more." },
-  { id: "countries", target: 30,   suffix: "+",   label: "Countries served",       sub: "Russia · CIS · EU · Asia." },
-  { id: "lines",     target: 6,    suffix: "",    label: "Service lines",          sub: "Cert → Inspect → Clear." },
-  { id: "support",   target: 24,   suffix: "/7",  label: "Project support",        sub: "Single project room per deal." },
-  { id: "ontime",    target: 99,   suffix: "%",   label: "On-time delivery",       sub: "Tracked across 5-year window." },
+  { id: "years",     target: 15,   suffix: "+",   label: "운영 연수",          sub: "2009년 설립 — 서울 본사." },
+  { id: "certs",     target: 1000, suffix: "+",   label: "완료 인증 건수",     sub: "EAC, GOST-R, CE, BIS 등." },
+  { id: "countries", target: 30,   suffix: "+",   label: "서비스 국가 수",     sub: "러시아 · CIS · EU · 아시아." },
+  { id: "lines",     target: 6,    suffix: "",    label: "서비스 라인",        sub: "인증 → 검사 → 통관." },
+  { id: "support",   target: 24,   suffix: "/7",  label: "프로젝트 지원",      sub: "건별 전담 프로젝트 룸 운영." },
+  { id: "ontime",    target: 99,   suffix: "%",   label: "납기 준수율",        sub: "최근 5년간 집계 기준." },
 ];
 
 function format(n: number): string {
@@ -144,15 +144,15 @@ export default function ServiceStats() {
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-px bg-white/60" />
             <span className="text-[10px] font-bold tracking-[0.3em] text-white/70 uppercase">
-              By the numbers
+              숫자로 보는 CERINS
             </span>
           </div>
           <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
             <h2 className="text-3xl lg:text-5xl font-bold tracking-tight text-white">
-              Built over 15 years of <span className="text-(--gold)">cross-border work</span>.
+              15년간의 <span className="text-(--gold)">국경을 넘는 무역</span>으로 쌓은 실적.
             </h2>
             <p className="text-sm lg:text-base text-white/65 max-w-sm">
-              The numbers behind every project we close — measured, not marketed.
+              모든 프로젝트에서 측정된 실제 수치 — 홍보가 아닌 성과입니다.
             </p>
           </div>
         </div>

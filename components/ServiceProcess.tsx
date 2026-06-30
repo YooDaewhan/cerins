@@ -20,53 +20,53 @@ interface Step {
 const STEPS: Step[] = [
   {
     n: "01",
-    tag: "Russia & CIS",
-    title: "Russia / CIS",
+    tag: "러시아 · CIS",
+    title: "러시아 / CIS",
     overview:
-      "The EAEU unified certification regime covers 5 member states under a single conformity mark — one approval, five markets.",
+      "유라시아경제연합(EAEU) 통합 인증 체계는 5개 회원국에 단일 적합성 마크로 적용됩니다. 하나의 인증으로 다섯 개 시장을 커버합니다.",
     desc:
-      "We manage TR CU technical regulations and EAC declarations end-to-end — from notified-body selection through certificate registration in the FSIS database.",
-    certifications: ["TR CU", "EAC", "GOST-R", "GOST ISO", "Fire Safety Certificate", "Sanitary-Epidemiological Conclusion"],
+      "TR CU 기술규정 및 EAC 적합성 선언을 처음부터 끝까지 관리합니다. 인증기관 선정부터 FSIS 데이터베이스 등록까지 전 과정을 지원합니다.",
+    certifications: ["TR CU", "EAC", "GOST-R", "GOST ISO", "화재안전 인증서", "위생역학 결론서"],
   },
   {
     n: "02",
-    tag: "Europe",
-    title: "European Union",
+    tag: "유럽",
+    title: "유럽연합 (EU)",
     overview:
-      "CE marking grants access to the EU single market of 450 million consumers, backed by the strictest product-safety framework in the world.",
+      "CE 마킹은 4억 5천만 소비자 규모의 EU 단일시장 진입을 위한 필수 요건으로, 세계에서 가장 엄격한 제품안전 체계를 기반으로 합니다.",
     desc:
-      "From Low Voltage Directive to Machinery Regulation, we select applicable directives, engage accredited notified bodies, and compile the complete technical file.",
-    certifications: ["CE Marking", "REACH", "RoHS / RoHS3", "WEEE", "ErP / Ecodesign", "Radio Equipment (RED)"],
+      "저전압 지침부터 기계류 규정까지, 적용 지침을 선별하고 공인 인증기관을 연결하며 완전한 기술 문서를 작성합니다.",
+    certifications: ["CE 마킹", "REACH", "RoHS / RoHS3", "WEEE", "ErP / 에코디자인", "무선기기 지침 (RED)"],
   },
   {
     n: "03",
-    tag: "India",
-    title: "India",
+    tag: "인도",
+    title: "인도",
     overview:
-      "BIS compulsory registration under the IS scheme is the primary market-access gate for electronics, electrotechnical, and consumer goods entering India.",
+      "BIS 강제 등록(IS 제도)은 전자·전기제품 및 소비재가 인도에 진입하기 위한 핵심 관문입니다.",
     desc:
-      "We coordinate BIS lab testing at NABL-accredited facilities, manage the CRS/ISI application portal, and handle liaison officer registration for foreign manufacturers.",
-    certifications: ["BIS CRS", "BIS ISI Mark", "WPC Type Approval", "EPR Registration", "CDSCO (Medical)", "PESO"],
+      "NABL 공인 시험소에서의 BIS 시험을 조율하고, CRS/ISI 신청 포털을 관리하며, 해외 제조사의 연락 담당자 등록을 지원합니다.",
+    certifications: ["BIS CRS", "BIS ISI 마크", "WPC 형식 승인", "EPR 등록", "CDSCO (의료기기)", "PESO"],
   },
   {
     n: "04",
-    tag: "Gulf & Middle East",
-    title: "Gulf / Middle East",
+    tag: "걸프 · 중동",
+    title: "걸프 / 중동",
     overview:
-      "GCC nations enforce SASO, ESMA, and ENAS mandatory schemes that require local importers and in-country lab testing for most regulated product categories.",
+      "GCC 국가들은 SASO, ESMA, ENAS 강제 인증 제도를 시행하며, 대부분의 규제 제품군에 대해 현지 수입업자 및 현지 시험을 요구합니다.",
     desc:
-      "Our Gulf desk coordinates SASO SALEEM registration, Emirates Authority approvals, and full compliance documentation for the Saudi, UAE, Qatar, and Kuwait markets.",
-    certifications: ["SASO SALEEM", "ENAS (UAE)", "ESMA (UAE)", "GSO", "QS Mark (Qatar)", "ICCP (Kuwait)"],
+      "SASO SALEEM 등록, 에미리트 당국 승인, 사우디·UAE·카타르·쿠웨이트 시장 전반의 컴플라이언스 문서를 일괄 처리합니다.",
+    certifications: ["SASO SALEEM", "ENAS (UAE)", "ESMA (UAE)", "GSO", "QS 마크 (카타르)", "ICCP (쿠웨이트)"],
   },
   {
     n: "05",
-    tag: "Türkiye & Southeast Asia",
-    title: "Türkiye / SEA",
+    tag: "튀르키예 · 동남아",
+    title: "튀르키예 / 동남아",
     overview:
-      "Türkiye's CE-aligned TSE regime and Vietnam's MOIT/QUATEST lab network are the key gatekeepers for industrial and consumer goods across this corridor.",
+      "튀르키예의 CE 연계 TSE 제도와 베트남의 MOIT/QUATEST 시험 네트워크는 이 지역 산업재·소비재의 핵심 진입 관문입니다.",
     desc:
-      "We manage TSE type-approval, G-Mark registration, Vietnam MOIT/QUATEST testing, and Thai TIS submissions — with in-country representatives at every port.",
-    certifications: ["TSE (Türkiye)", "G-Mark (Türkiye)", "MOIT / QUATEST (Vietnam)", "TIS (Thailand)", "SNI (Indonesia)", "PSB (Singapore)"],
+      "TSE 형식 승인, G-마크 등록, 베트남 MOIT/QUATEST 시험, 태국 TIS 신청을 관리하며, 주요 항구마다 현지 대리인을 운영합니다.",
+    certifications: ["TSE (튀르키예)", "G-마크 (튀르키예)", "MOIT / QUATEST (베트남)", "TIS (태국)", "SNI (인도네시아)", "PSB (싱가포르)"],
   },
 ];
 
@@ -117,7 +117,7 @@ export default function ServiceProcess() {
             <div className="flex items-center gap-3 mb-10">
               <div className="w-10 h-px bg-white/60" />
               <span className="text-[10px] font-bold tracking-[0.3em] text-white/70 uppercase">
-                How we deliver
+                인증 서비스 국가
               </span>
             </div>
 
@@ -204,7 +204,7 @@ export default function ServiceProcess() {
 
                   <div className="mt-6">
                     <div className="mb-3 text-[10px] font-bold tracking-[0.25em] text-(--ink-muted) uppercase">
-                      Certifications &amp; Approvals
+                      인증 항목
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {s.certifications.map((cert) => (
