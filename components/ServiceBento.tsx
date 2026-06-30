@@ -79,7 +79,7 @@ const ITEMS: BentoItem[] = [
     title: "인증",
     eyebrow: "시장 진입",
     description:
-      "EAC, GOST-R, CE, BIS — 러시아·CIS·유럽·아시아 원스톱 인증 서비스.",
+      "러시아·CIS·유럽·아시아 시장을 위한 EAC, GOST-R, CE, BIS 원스톱 인증.",
     href: "/certification/russia",
     className: "lg:col-span-2 lg:row-span-2",
     icon: cert,
@@ -192,7 +192,7 @@ function BigCard({ item, index }: { item: BentoItem; index: number }) {
             <h3 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-white tracking-tight mb-3 leading-[1.1]">
               {item.title}
             </h3>
-            <p className="text-sm lg:text-base text-white/75 leading-relaxed max-w-md">
+            <p className="text-sm lg:text-base text-white/75 leading-snug max-w-md line-clamp-2">
               {item.description}
             </p>
             <div className="mt-6 inline-flex items-center gap-2 text-xs font-semibold text-(--gold) group-hover:gap-3 transition-all">
@@ -221,7 +221,7 @@ function SmallCard({ item, index }: { item: BentoItem; index: number }) {
         href={item.href}
         className="group relative h-full flex flex-col overflow-hidden rounded-2xl border border-(--hairline) bg-white transition-all duration-300 hover:-translate-y-1 hover:border-(--on-brand)/20 hover:shadow-[0_24px_60px_-24px_rgba(10,31,68,0.18)]"
       >
-        <div className="relative overflow-hidden basis-[58%] flex-shrink-0 bg-(--surface-2)">
+        <div className="relative overflow-hidden basis-[48%] flex-shrink-0 bg-(--surface-2)">
           <div className="absolute inset-0 overflow-hidden transition-transform duration-[1.4s] ease-out group-hover:scale-[1.08]">
             {item.video ? (
               <video
@@ -255,7 +255,7 @@ function SmallCard({ item, index }: { item: BentoItem; index: number }) {
           <h3 className="text-base lg:text-lg font-semibold text-(--on-brand) mb-1.5 tracking-tight leading-snug">
             {item.title}
           </h3>
-          <p className="text-xs text-(--ink-muted) leading-relaxed line-clamp-2">
+          <p className="text-xs text-(--ink-muted) leading-snug line-clamp-1">
             {item.description}
           </p>
           <div className="mt-auto pt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold text-(--brand) group-hover:gap-2.5 transition-all">
