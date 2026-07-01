@@ -5,21 +5,29 @@ import type { HeroSlide, LocaleCode } from "@/src/lib/types";
 import { isVideoUrl } from "@/src/lib/media";
 
 const INTERVAL = 5500;
-const FLIP_DURATION = 700;
-const FLIP_STAGGER = 45;
-const COLS = 6;
-const ROWS = 4;
-const MAX_DELAY = (COLS - 1 + ROWS - 1) * FLIP_STAGGER;
-const TOTAL_FLIP = MAX_DELAY + FLIP_DURATION;
+const FLIP_DURATION = 1000;
+const FLIP_STAGGER = 70;
+const COLS: number = 6;
+const ROWS: number = 4;
 const DEFAULT_LOCALE: LocaleCode = "ko";
 
-const TILES = Array.from({ length: ROWS }).flatMap((_, r) =>
-  Array.from({ length: COLS }).map((_, c) => ({
-    col: c,
-    row: r,
-    delay: (c + r) * FLIP_STAGGER,
-  })),
-);
+// ponytail: 순서 함수만 다른 5개 웨이브 패턴, 플립마다 무작위로 골라 씀
+const PATTERN_FNS: Array<(col: number, row: number) => number> = [
+  (c, r) => c + r, // 대각선 ↘
+  (c, r) => COLS - 1 - c + r, // 대각선 ↙
+  (c, r) => Math.abs(c - (COLS - 1) / 2) + Math.abs(r - (ROWS - 1) / 2), // 중앙 → 바깥
+  (c, r) => COLS - 1 - c + (ROWS - 1 - r), // 우하단 → 좌상단
+  (c, r) => r, // 위 → 아래 (가로줄 순차)
+  (c, r) => c, // 왼쪽 → 오른쪽 (세로줄 순차)
+];
+
+const TILE_PATTERNS = PATTERN_FNS.map((fn) => {
+  const tiles = Array.from({ length: ROWS }).flatMap((_, r) =>
+    Array.from({ length: COLS }).map((_, c) => ({ col: c, row: r, unit: fn(c, r) })),
+  );
+  const maxUnit = Math.max(...tiles.map((t) => t.unit));
+  return { tiles, maxUnit };
+});
 
 interface HeroSliderProps {
   slides: HeroSlide[];
@@ -41,10 +49,12 @@ export default function HeroSlider({ slides, locale }: HeroSliderProps) {
   const [flipping, setFlipping] = useState(false);
   const [displayIdx, setDisplayIdx] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [patternIdx, setPatternIdx] = useState(0);
   const rafRef = useRef<number | null>(null);
   const startRef = useRef<number>(0);
 
   const current = flipCount % 2 === 0 ? frontIdx : backIdx;
+  const totalFlip = TILE_PATTERNS[patternIdx].maxUnit * FLIP_STAGGER + FLIP_DURATION;
 
   const goTo = useCallback(
     (idx: number) => {
@@ -56,6 +66,10 @@ export default function HeroSlider({ slides, locale }: HeroSliderProps) {
       setFlipping(true);
       setFlipCount((f) => f + 1);
       setProgress(0);
+      setPatternIdx((p) => {
+        const next = Math.floor(Math.random() * (TILE_PATTERNS.length - 1));
+        return next >= p ? next + 1 : next;
+      });
       startRef.current = performance.now();
     },
     [flipping, flipCount, total, current],
@@ -69,9 +83,9 @@ export default function HeroSlider({ slides, locale }: HeroSliderProps) {
     const t = setTimeout(() => {
       setFlipping(false);
       setDisplayIdx(current);
-    }, TOTAL_FLIP);
+    }, totalFlip);
     return () => clearTimeout(t);
-  }, [flipping, current]);
+  }, [flipping, current, totalFlip]);
 
   useEffect(() => {
     if (total === 0 || flipping) return;
@@ -155,7 +169,8 @@ export default function HeroSlider({ slides, locale }: HeroSliderProps) {
             backgroundColor: slides[current].fallback,
           }}
         >
-          {TILES.map(({ col, row, delay }) => {
+          {TILE_PATTERNS[patternIdx].tiles.map(({ col, row, unit }) => {
+            const delay = unit * FLIP_STAGGER;
             const bgPosX =
               COLS === 1 ? "50%" : `${(col / (COLS - 1)) * 100}%`;
             const bgPosY =
