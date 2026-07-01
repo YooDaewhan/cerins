@@ -5,7 +5,21 @@ import type { HeroSlide, LocaleCode } from "@/src/lib/types";
 import { isVideoUrl } from "@/src/lib/media";
 
 const INTERVAL = 5500;
+const FLIP_DURATION = 700;
+const FLIP_STAGGER = 45;
+const COLS = 6;
+const ROWS = 4;
+const MAX_DELAY = (COLS - 1 + ROWS - 1) * FLIP_STAGGER;
+const TOTAL_FLIP = MAX_DELAY + FLIP_DURATION;
 const DEFAULT_LOCALE: LocaleCode = "ko";
+
+const TILES = Array.from({ length: ROWS }).flatMap((_, r) =>
+  Array.from({ length: COLS }).map((_, c) => ({
+    col: c,
+    row: r,
+    delay: (c + r) * FLIP_STAGGER,
+  })),
+);
 
 interface HeroSliderProps {
   slides: HeroSlide[];
@@ -18,49 +32,58 @@ function localized(path: string, locale: LocaleCode): string {
 }
 
 export default function HeroSlider({ slides, locale }: HeroSliderProps) {
-  const [current, setCurrent] = useState(0);
+  const total = slides.length;
+  const hasVideo = slides.some((s) => isVideoUrl(s.image));
+
+  const [flipCount, setFlipCount] = useState(0);
+  const [frontIdx, setFrontIdx] = useState(0);
+  const [backIdx, setBackIdx] = useState(total > 1 ? 1 : 0);
+  const [flipping, setFlipping] = useState(false);
+  const [displayIdx, setDisplayIdx] = useState(0);
   const [progress, setProgress] = useState(0);
   const rafRef = useRef<number | null>(null);
   const startRef = useRef<number>(0);
 
-  const total = slides.length;
+  const current = flipCount % 2 === 0 ? frontIdx : backIdx;
 
   const goTo = useCallback(
     (idx: number) => {
-      if (total === 0) return;
-      setCurrent(((idx % total) + total) % total);
+      if (flipping || total === 0) return;
+      const clamped = ((idx % total) + total) % total;
+      if (clamped === current) return;
+      if (flipCount % 2 === 0) setBackIdx(clamped);
+      else setFrontIdx(clamped);
+      setFlipping(true);
+      setFlipCount((f) => f + 1);
       setProgress(0);
       startRef.current = performance.now();
     },
-    [total],
+    [flipping, flipCount, total, current],
   );
 
-  const prev = useCallback(() => {
-    if (total === 0) return;
-    setCurrent((slide) => (slide - 1 + total) % total);
-    setProgress(0);
-    startRef.current = performance.now();
-  }, [total]);
-
-  const next = useCallback(() => {
-    if (total === 0) return;
-    setCurrent((slide) => (slide + 1) % total);
-    setProgress(0);
-    startRef.current = performance.now();
-  }, [total]);
+  const prev = useCallback(() => goTo(current - 1), [current, goTo]);
+  const next = useCallback(() => goTo(current + 1), [current, goTo]);
 
   useEffect(() => {
-    if (total === 0) return;
-    startRef.current = performance.now();
+    if (!flipping) return;
+    const t = setTimeout(() => {
+      setFlipping(false);
+      setDisplayIdx(current);
+    }, TOTAL_FLIP);
+    return () => clearTimeout(t);
+  }, [flipping, current]);
 
+  useEffect(() => {
+    if (total === 0 || flipping) return;
+    startRef.current = performance.now();
     const tick = (now: number) => {
       const elapsed = now - startRef.current;
       const pct = Math.min(elapsed / INTERVAL, 1);
       setProgress(pct);
       if (pct >= 1) {
-        setCurrent((c) => (c + 1) % total);
-        startRef.current = performance.now();
         setProgress(0);
+        goTo(current + 1);
+        return;
       }
       rafRef.current = requestAnimationFrame(tick);
     };
@@ -68,7 +91,7 @@ export default function HeroSlider({ slides, locale }: HeroSliderProps) {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [current, total]);
+  }, [flipping, total, current, goTo]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -85,44 +108,109 @@ export default function HeroSlider({ slides, locale }: HeroSliderProps) {
     );
   }
 
+  const textSlide = slides[displayIdx];
+
   return (
     <section className="relative w-full h-full overflow-hidden select-none">
-      {slides.map((s, i) => {
-        const active = i === current;
-        const isVideo = isVideoUrl(s.image);
-        return (
-          <div
-            key={s.id}
-            className="absolute inset-0 transition-opacity duration-[1200ms] ease-out"
-            style={{
-              opacity: active ? 1 : 0,
-              zIndex: active ? 1 : 0,
-              backgroundColor: s.fallback,
-            }}
-            aria-hidden={!active}
-          >
-            {isVideo ? (
-              <video
-                src={s.image}
-                className="absolute inset-0 w-full h-full object-cover"
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="auto"
-              />
-            ) : (
+      {hasVideo ? (
+        // ponytail: 비디오 슬라이드는 타일 분할 불가 → 크로스페이드 폴백
+        slides.map((s, i) => {
+          const active = i === current;
+          const isVideo = isVideoUrl(s.image);
+          return (
+            <div
+              key={s.id}
+              className="absolute inset-0 transition-opacity duration-[1200ms] ease-out"
+              style={{
+                opacity: active ? 1 : 0,
+                zIndex: active ? 1 : 0,
+                backgroundColor: s.fallback,
+              }}
+              aria-hidden={!active}
+            >
+              {isVideo ? (
+                <video
+                  src={s.image}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="auto"
+                />
+              ) : (
+                <div
+                  className="absolute inset-0 bg-cover bg-center"
+                  style={{ backgroundImage: `url('${s.image}')` }}
+                />
+              )}
+            </div>
+          );
+        })
+      ) : (
+        <div
+          className="absolute inset-0 z-[1]"
+          style={{
+            perspective: "1400px",
+            backgroundColor: slides[current].fallback,
+          }}
+        >
+          {TILES.map(({ col, row, delay }) => {
+            const bgPosX =
+              COLS === 1 ? "50%" : `${(col / (COLS - 1)) * 100}%`;
+            const bgPosY =
+              ROWS === 1 ? "50%" : `${(row / (ROWS - 1)) * 100}%`;
+            const bgSize = `${COLS * 100}% ${ROWS * 100}%`;
+            return (
               <div
-                className="absolute inset-0 bg-cover bg-center"
+                key={`${col}-${row}`}
+                className="absolute"
                 style={{
-                  backgroundImage: `url('${s.image}')`,
-                  animation: active ? "kenburns 7s ease-out forwards" : "none",
+                  left: `${(col / COLS) * 100}%`,
+                  top: `${(row / ROWS) * 100}%`,
+                  width: `calc(${100 / COLS}% + 0.5px)`,
+                  height: `calc(${100 / ROWS}% + 0.5px)`,
+                  transformStyle: "preserve-3d",
                 }}
-              />
-            )}
-          </div>
-        );
-      })}
+              >
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    transformStyle: "preserve-3d",
+                    transform: `rotateY(${flipCount * 180}deg)`,
+                    transition: `transform ${FLIP_DURATION}ms cubic-bezier(0.5,0,0.3,1) ${delay}ms`,
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      backfaceVisibility: "hidden",
+                      WebkitBackfaceVisibility: "hidden",
+                      backgroundImage: `url('${slides[frontIdx].image}')`,
+                      backgroundSize: bgSize,
+                      backgroundPosition: `${bgPosX} ${bgPosY}`,
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      backfaceVisibility: "hidden",
+                      WebkitBackfaceVisibility: "hidden",
+                      transform: "rotateY(180deg)",
+                      backgroundImage: `url('${slides[backIdx].image}')`,
+                      backgroundSize: bgSize,
+                      backgroundPosition: `${bgPosX} ${bgPosY}`,
+                    }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/20 z-[2]" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent z-[2]" />
@@ -143,7 +231,7 @@ export default function HeroSlider({ slides, locale }: HeroSliderProps) {
 
       <div className="relative z-[5] h-full flex items-center">
         <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 w-full">
-          <div className="max-w-2xl" key={`text-${current}`}>
+          <div className="max-w-2xl" key={`text-${displayIdx}`}>
             <div
               className="flex items-center gap-3 mb-6"
               style={{
@@ -152,7 +240,7 @@ export default function HeroSlider({ slides, locale }: HeroSliderProps) {
             >
               <div className="w-10 h-px bg-(--brand)" />
               <span className="text-xs font-bold tracking-[0.3em] text-(--brand) uppercase">
-                {slides[current].eyebrow}
+                {textSlide.eyebrow}
               </span>
             </div>
 
@@ -162,7 +250,7 @@ export default function HeroSlider({ slides, locale }: HeroSliderProps) {
                 animation: "slideUp 0.8s cubic-bezier(.2,.7,.2,1) 0.08s both",
               }}
             >
-              {slides[current].headline}
+              {textSlide.headline}
             </h1>
 
             <p
@@ -171,7 +259,7 @@ export default function HeroSlider({ slides, locale }: HeroSliderProps) {
                 animation: "slideUp 0.8s cubic-bezier(.2,.7,.2,1) 0.18s both",
               }}
             >
-              {slides[current].sub}
+              {textSlide.sub}
             </p>
 
             <div
@@ -295,10 +383,6 @@ export default function HeroSlider({ slides, locale }: HeroSliderProps) {
         @keyframes slideUp {
           from { opacity: 0; transform: translateY(28px); }
           to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes kenburns {
-          from { transform: scale(1.08); }
-          to   { transform: scale(1.0); }
         }
         @keyframes scrollHint {
           0%, 100% { transform: scaleY(0.6); opacity: 0.4; }
