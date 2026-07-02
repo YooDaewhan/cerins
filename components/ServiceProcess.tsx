@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 
-interface Step {
+export interface Step {
   n: string;
   tag: string;
   title: string;
@@ -12,7 +12,7 @@ interface Step {
   certifications: string[];
 }
 
-const STEPS: Step[] = [
+export const STEPS: Step[] = [
   {
     n: "01",
     tag: "러시아 · CIS",
