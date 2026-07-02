@@ -50,7 +50,6 @@ export default async function HomePage({ params }: Props) {
 
   const snapFull =
     "snap-start snap-always h-[calc(100dvh-4rem)] flex flex-col justify-center overflow-hidden";
-  const snapTall = "snap-start snap-always";
 
   return (
     <>
@@ -60,7 +59,7 @@ export default async function HomePage({ params }: Props) {
       <div className={snapFull}>
         <ServiceBento />
       </div>
-      <div className={snapTall}>
+      <div className={snapFull}>
         <ServiceProcess />
       </div>
       <div className={snapFull}>

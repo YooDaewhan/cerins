@@ -1,12 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
-import {
-  AnimatePresence,
-  motion,
-  useMotionValueEvent,
-  useScroll,
-} from "motion/react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 
 interface Step {
   n: string;
@@ -70,29 +65,88 @@ const STEPS: Step[] = [
   },
 ];
 
-const STEP_VH = 90;
+const WHEEL_LOCK_MS = 650;
+const WHEEL_THRESHOLD = 24;
+const SWIPE_THRESHOLD = 40;
 
 export default function ServiceProcess() {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end end"],
-  });
+  const sectionRef = useRef<HTMLElement>(null);
   const [active, setActive] = useState(0);
+  const [inView, setInView] = useState(false);
+  const lockedRef = useRef(false);
+  const activeRef = useRef(0);
+  const touchStartY = useRef<number | null>(null);
 
-  useMotionValueEvent(scrollYProgress, "change", (v) => {
-    const raw = v * STEPS.length;
-    const idx = Math.min(STEPS.length - 1, Math.max(0, Math.floor(raw)));
-    setActive(idx);
-  });
+  useEffect(() => {
+    activeRef.current = active;
+  }, [active]);
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting && entry.intersectionRatio > 0.6),
+      { threshold: [0, 0.6, 1] },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  const step = useCallback((dir: 1 | -1) => {
+    if (lockedRef.current) return;
+    const next = activeRef.current + dir;
+    if (next < 0 || next >= STEPS.length) return;
+    lockedRef.current = true;
+    setActive(next);
+    setTimeout(() => {
+      lockedRef.current = false;
+    }, WHEEL_LOCK_MS);
+  }, []);
+
+  useEffect(() => {
+    if (!inView) return;
+
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaY) < WHEEL_THRESHOLD) return;
+      const dir = e.deltaY > 0 ? 1 : -1;
+      const atEnd = dir === 1 && activeRef.current === STEPS.length - 1;
+      const atStart = dir === -1 && activeRef.current === 0;
+      if (atEnd || atStart) return;
+      e.preventDefault();
+      step(dir);
+    };
+    const onTouchStart = (e: TouchEvent) => {
+      touchStartY.current = e.touches[0].clientY;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (touchStartY.current === null) return;
+      const dy = touchStartY.current - e.touches[0].clientY;
+      if (Math.abs(dy) < SWIPE_THRESHOLD) return;
+      const dir = dy > 0 ? 1 : -1;
+      const atEnd = dir === 1 && activeRef.current === STEPS.length - 1;
+      const atStart = dir === -1 && activeRef.current === 0;
+      if (atEnd || atStart) return;
+      e.preventDefault();
+      step(dir);
+      touchStartY.current = e.touches[0].clientY;
+    };
+
+    window.addEventListener("wheel", onWheel, { passive: false });
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    return () => {
+      window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchmove", onTouchMove);
+    };
+  }, [inView, step]);
 
   const current = STEPS[active];
 
   return (
     <section
-      ref={ref}
-      className="relative"
-      style={{ height: `${STEPS.length * STEP_VH}dvh` }}
+      ref={sectionRef}
+      className="relative h-full w-full overflow-hidden"
       aria-label="Our delivery process"
     >
       <video
@@ -111,118 +165,155 @@ export default function ServiceProcess() {
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-(--gold)/40 to-transparent"
       />
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
+      <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center">
         <div className="hidden lg:block lg:col-span-5">
-          <div className="sticky top-16 h-[calc(100dvh-4rem)] flex flex-col justify-center">
-            <div className="flex items-center gap-3 mb-10">
-              <div className="w-10 h-px bg-white/60" />
-              <span className="text-[10px] font-bold tracking-[0.3em] text-white/70 uppercase">
-                인증 서비스 국가
-              </span>
-            </div>
+          <div className="flex items-center gap-3 mb-10">
+            <div className="w-10 h-px bg-white/60" />
+            <span className="text-[10px] font-bold tracking-[0.3em] text-white/70 uppercase">
+              인증 서비스 국가
+            </span>
+          </div>
 
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={current.n}
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -14 }}
-                transition={{ duration: 0.55, ease: [0.2, 0.7, 0.2, 1] }}
-              >
-                <div className="font-bold leading-[0.85] tracking-tight text-[9rem] xl:text-[11rem] text-white">
-                  {current.n}
-                </div>
-                <div className="mt-3 text-[10px] font-bold tracking-[0.3em] text-white/60 uppercase">
-                  {current.tag}
-                </div>
-                <h3 className="mt-3 text-3xl xl:text-4xl font-semibold text-white tracking-tight max-w-md">
-                  {current.title}
-                </h3>
-                <p className="mt-5 text-sm text-white/70 leading-relaxed max-w-xs">
-                  {current.overview}
-                </p>
-              </motion.div>
-            </AnimatePresence>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={current.n}
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -14 }}
+              transition={{ duration: 0.55, ease: [0.2, 0.7, 0.2, 1] }}
+            >
+              <div className="font-bold leading-[0.85] tracking-tight text-[9rem] xl:text-[11rem] text-white">
+                {current.n}
+              </div>
+              <div className="mt-3 text-[10px] font-bold tracking-[0.3em] text-white/60 uppercase">
+                {current.tag}
+              </div>
+              <h3 className="mt-3 text-3xl xl:text-4xl font-semibold text-white tracking-tight max-w-md">
+                {current.title}
+              </h3>
+              <p className="mt-5 text-sm text-white/70 leading-relaxed max-w-xs">
+                {current.overview}
+              </p>
+            </motion.div>
+          </AnimatePresence>
 
-            <div className="mt-14 flex items-center gap-1.5">
-              {STEPS.map((s, i) => (
-                <span
-                  key={s.n}
-                  className={`h-[2px] transition-all duration-500 ${
-                    i === active
-                      ? "w-14 bg-(--gold)"
-                      : i < active
-                        ? "w-8 bg-white/40"
-                        : "w-8 bg-white/20"
-                  }`}
-                />
-              ))}
-            </div>
-            <div className="mt-4 font-mono text-[10px] tracking-[0.25em] text-white/60 uppercase">
-              {String(active + 1).padStart(2, "0")} / {String(STEPS.length).padStart(2, "0")}
-            </div>
+          <div className="mt-14 flex items-center gap-1.5">
+            {STEPS.map((s, i) => (
+              <button
+                key={s.n}
+                type="button"
+                onClick={() => setActive(i)}
+                aria-label={s.title}
+                className={`h-[2px] transition-all duration-500 ${
+                  i === active
+                    ? "w-14 bg-(--gold)"
+                    : i < active
+                      ? "w-8 bg-white/40"
+                      : "w-8 bg-white/20"
+                }`}
+              />
+            ))}
+          </div>
+          <div className="mt-4 font-mono text-[10px] tracking-[0.25em] text-white/60 uppercase">
+            {String(active + 1).padStart(2, "0")} / {String(STEPS.length).padStart(2, "0")}
           </div>
         </div>
 
-        <div className="lg:col-span-7">
-          {STEPS.map((s) => (
-            <div
-              key={s.n}
-              className="flex items-center py-10 lg:py-12"
-              style={{ minHeight: `${STEP_VH}dvh` }}
+        <div className="lg:col-span-7 w-full">
+          <div className="lg:hidden mb-5 flex items-end justify-between">
+            <div className="font-bold text-6xl leading-none text-white">
+              {current.n}
+            </div>
+            <span className="text-[10px] font-bold tracking-[0.3em] text-white/70 uppercase">
+              {current.tag}
+            </span>
+          </div>
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={current.n}
+              initial={{ opacity: 0, y: 32 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.55, ease: [0.2, 0.7, 0.2, 1] }}
+              className="relative w-full"
             >
-              <motion.div
-                initial={{ opacity: 0, y: 32 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-20% 0px -20% 0px" }}
-                transition={{ duration: 0.7, ease: [0.2, 0.7, 0.2, 1] }}
-                className="relative w-full"
-              >
-                <div className="lg:hidden mb-5 flex items-end justify-between">
-                  <div className="font-bold text-6xl leading-none text-white">
-                    {s.n}
-                  </div>
-                  <span className="text-[10px] font-bold tracking-[0.3em] text-white/70 uppercase">
-                    {s.tag}
+              <div className="relative rounded-2xl border border-(--hairline) bg-white p-7 sm:p-9 lg:p-10 shadow-[0_24px_60px_-30px_rgba(10,31,68,0.18)]">
+                <div className="hidden lg:inline-flex absolute -top-3 left-8 items-center gap-2 rounded-full bg-white px-3 py-1 border border-gray-200">
+                  <span className="font-mono text-xs font-bold text-(--brand)">{current.n}</span>
+                  <span className="text-[10px] font-semibold tracking-[0.25em] text-(--ink-muted) uppercase">
+                    {current.tag}
                   </span>
                 </div>
 
-                <div className="relative rounded-2xl border border-(--hairline) bg-white p-7 sm:p-9 lg:p-10 shadow-[0_24px_60px_-30px_rgba(10,31,68,0.18)]">
-                  <div className="hidden lg:inline-flex absolute -top-3 left-8 items-center gap-2 rounded-full bg-white px-3 py-1 border border-gray-200">
-                    <span className="font-mono text-xs font-bold text-(--brand)">{s.n}</span>
-                    <span className="text-[10px] font-semibold tracking-[0.25em] text-(--ink-muted) uppercase">
-                      {s.tag}
-                    </span>
+                <h4 className="text-2xl lg:text-3xl font-semibold text-(--on-brand) tracking-tight">
+                  {current.title}
+                </h4>
+                <p className="mt-4 text-base text-(--ink-muted) leading-relaxed max-w-lg">
+                  {current.desc}
+                </p>
+
+                <div className="mt-6">
+                  <div className="mb-3 text-[10px] font-bold tracking-[0.25em] text-(--ink-muted) uppercase">
+                    인증 항목
                   </div>
-
-                  <h4 className="text-2xl lg:text-3xl font-semibold text-(--on-brand) tracking-tight">
-                    {s.title}
-                  </h4>
-                  <p className="mt-4 text-base text-(--ink-muted) leading-relaxed max-w-lg">
-                    {s.desc}
-                  </p>
-
-                  <div className="mt-6">
-                    <div className="mb-3 text-[10px] font-bold tracking-[0.25em] text-(--ink-muted) uppercase">
-                      인증 항목
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {s.certifications.map((cert) => (
-                        <span
-                          key={cert}
-                          className="inline-flex items-center rounded border border-(--brand)/20 bg-(--brand)/5 px-3 py-1.5 text-xs font-semibold tracking-wide text-(--brand)"
-                        >
-                          {cert}
-                        </span>
-                      ))}
-                    </div>
+                  <div className="flex flex-wrap gap-2">
+                    {current.certifications.map((cert) => (
+                      <span
+                        key={cert}
+                        className="inline-flex items-center rounded border border-(--brand)/20 bg-(--brand)/5 px-3 py-1.5 text-xs font-semibold tracking-wide text-(--brand)"
+                      >
+                        {cert}
+                      </span>
+                    ))}
                   </div>
                 </div>
-              </motion.div>
-            </div>
-          ))}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+
+          <div className="lg:hidden mt-6 flex items-center gap-1.5">
+            {STEPS.map((s, i) => (
+              <button
+                key={s.n}
+                type="button"
+                onClick={() => setActive(i)}
+                aria-label={s.title}
+                className={`h-[2px] transition-all duration-500 ${
+                  i === active
+                    ? "w-10 bg-(--gold)"
+                    : i < active
+                      ? "w-6 bg-white/40"
+                      : "w-6 bg-white/20"
+                }`}
+              />
+            ))}
+          </div>
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={() => step(-1)}
+        disabled={active === 0}
+        className="hidden sm:flex absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-10 w-11 h-11 items-center justify-center rounded-full border border-white/30 text-white bg-white/5 backdrop-blur-sm hover:bg-white hover:text-(--brand) hover:border-white transition-all duration-300 disabled:opacity-0 disabled:pointer-events-none"
+        aria-label="Previous country"
+      >
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        onClick={() => step(1)}
+        disabled={active === STEPS.length - 1}
+        className="hidden sm:flex absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-10 w-11 h-11 items-center justify-center rounded-full border border-white/30 text-white bg-white/5 backdrop-blur-sm hover:bg-white hover:text-(--brand) hover:border-white transition-all duration-300 disabled:opacity-0 disabled:pointer-events-none"
+        aria-label="Next country"
+      >
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
     </section>
   );
 }
