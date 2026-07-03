@@ -126,8 +126,8 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                       href={item.href}
                       className={`relative px-5 py-5 text-sm font-bold tracking-wider uppercase transition-colors ${
                         active
-                          ? "text-(--brand)"
-                          : "text-gray-700 hover:text-(--brand)"
+                          ? "text-(--brand) bg-[#fff5f6]"
+                          : "text-gray-700 hover:text-(--brand) hover:bg-gray-100"
                       }`}
                       onClick={() => setOpenMenu(null)}
                     >
@@ -152,8 +152,8 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                     }}
                     className={`relative px-5 py-5 text-sm font-bold tracking-wider uppercase transition-colors ${
                       isOpen || active
-                        ? "text-(--brand)"
-                        : "text-gray-700 hover:text-(--brand)"
+                        ? "text-(--brand) bg-[#fff5f6]"
+                        : "text-gray-700 hover:text-(--brand) hover:bg-gray-100"
                     }`}
                   >
                     {item.label}

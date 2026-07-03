@@ -3,10 +3,8 @@ import { notFound } from "next/navigation";
 import HeroSlider from "@/components/HeroSlider";
 import ServiceBento from "@/components/ServiceBento";
 import ServiceProcess from "@/components/ServiceProcess";
-import ServiceGlobe from "@/components/ServiceGlobe";
 import ServiceFlatMap from "@/components/ServiceFlatMap";
 import ServiceValues from "@/components/ServiceValues";
-import ServiceStats from "@/components/ServiceStats";
 import PartnerSlider from "@/components/PartnerSlider";
 import NewsRoom from "@/components/NewsRoom";
 import {
@@ -65,20 +63,12 @@ export default async function HomePage({ params }: Props) {
         <ServiceProcess />
       </div>
       <div className={snapFull}>
-        <ServiceGlobe />
-      </div>
-      <div className={snapFull}>
         <ServiceFlatMap />
       </div>
       <div className={snapFull}>
         <ServiceValues />
       </div>
-      <div className={snapFull}>
-        <ServiceStats />
-      </div>
-      <div className={snapFull}>
-        <PartnerSlider partners={partners} />
-      </div>
+      <PartnerSlider partners={partners} />
       <div className={snapFull}>
         <NewsRoom posts={posts} locale={code} />
       </div>

@@ -8,8 +8,29 @@ import { COUNTRY_TO_STEP, loadWorldCountries } from "./worldGeo";
 const WIDTH = 820;
 const HEIGHT = 430;
 
+// ponytail: EAFR/EU/AS/OC only — Americas + poles excluded per design.
+const REGION = {
+  type: "Polygon" as const,
+  coordinates: [[
+    [-25, -55],
+    [180, -55],
+    [180, 72],
+    [-25, 72],
+    [-25, -55],
+  ]],
+};
+
 export default function ServiceFlatMap() {
-  const countries = useMemo(() => loadWorldCountries(), []);
+  const allCountries = useMemo(() => loadWorldCountries(), []);
+
+  const countries = useMemo(
+    () =>
+      allCountries.filter((c) => {
+        const [lon, lat] = geoCentroid(c);
+        return lon >= -25 && lon <= 180 && lat >= -55 && lat <= 72;
+      }),
+    [allCountries],
+  );
 
   const nameToFeature = useMemo(() => {
     const map: Record<string, (typeof countries)[number]> = {};
@@ -25,7 +46,7 @@ export default function ServiceFlatMap() {
   }, [nameToFeature]);
 
   const projection = useMemo(
-    () => geoNaturalEarth1().fitSize([WIDTH, HEIGHT], { type: "Sphere" }),
+    () => geoNaturalEarth1().fitExtent([[0, 0], [WIDTH, HEIGHT]], REGION),
     [],
   );
   const pathGen = useMemo(() => geoPath(projection), [projection]);

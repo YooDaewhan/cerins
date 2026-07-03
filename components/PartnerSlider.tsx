@@ -1,86 +1,69 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import type { Partner } from "@/src/lib/types";
-
-const VISIBLE = 4;
 
 interface PartnerSliderProps {
   partners: Partner[];
 }
 
 export default function PartnerSlider({ partners }: PartnerSliderProps) {
-  const [start, setStart] = useState(0);
-
-  useEffect(() => {
-    if (partners.length === 0) return;
-    const timer = setInterval(() => {
-      setStart((s) => (s + 1) % partners.length);
-    }, 3000);
-    return () => clearInterval(timer);
-  }, [partners.length]);
-
   if (partners.length === 0) return null;
 
-  const prev = () => setStart((s) => (s - 1 + partners.length) % partners.length);
-  const next = () => setStart((s) => (s + 1) % partners.length);
+  const mid = Math.ceil(partners.length / 2);
+  const rowA = partners.slice(0, mid);
+  const rowB = partners.slice(mid).length ? partners.slice(mid) : partners;
 
-  const visible = Array.from({ length: VISIBLE }, (_, i) => partners[(start + i) % partners.length]);
+  const REPEAT = 8;
+  const loopA = Array.from({ length: REPEAT }, () => rowA).flat();
+  const loopB = Array.from({ length: REPEAT }, () => rowB).flat();
 
   return (
-    <section className="relative py-16 overflow-hidden">
-      <video
-        className="absolute inset-0 w-full h-full object-cover"
-        src="/uploads/trade_bg_7s.mp4"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
-        disableRemotePlayback
+    <section className="relative bg-black py-10 my-6 overflow-hidden">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 left-0 w-24 z-10 bg-gradient-to-r from-black to-transparent"
       />
-      <div aria-hidden className="absolute inset-0 bg-black/55" />
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-10">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <div className="w-8 h-0.5 bg-(--brand)" />
-            <span className="text-xs font-semibold tracking-widest text-white/70 uppercase">파트너</span>
-            <div className="w-8 h-0.5 bg-(--brand)" />
-          </div>
-          <h2 className="text-2xl font-bold text-white">글로벌 파트너</h2>
-        </div>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 right-0 w-24 z-10 bg-gradient-to-l from-black to-transparent"
+      />
 
-        <div className="relative flex items-center gap-4">
-          <button
-            onClick={prev}
-            className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full border border-white/40 text-white/70 hover:border-white hover:text-white transition"
+      <div className="marquee-track marquee-forward flex w-max items-center gap-16 mb-6">
+        {loopA.map((p, i) => (
+          <span
+            key={`a-${p.id}-${i}`}
+            className="flex-shrink-0 whitespace-nowrap text-lg font-semibold tracking-wide text-white/80"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-
-          <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-4 overflow-hidden">
-            {visible.map((partner, i) => (
-              <div
-                key={`${partner.id}-${i}`}
-                className="bg-white border border-gray-200 rounded-lg p-5 flex items-center justify-center h-20 hover:border-(--brand) transition"
-              >
-                <span className="text-sm font-semibold text-gray-500 text-center">{partner.name}</span>
-              </div>
-            ))}
-          </div>
-
-          <button
-            onClick={next}
-            className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full border border-white/40 text-white/70 hover:border-white hover:text-white transition"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
+            {p.name}
+          </span>
+        ))}
       </div>
+
+      <div className="marquee-track marquee-reverse flex w-max items-center gap-16">
+        {loopB.map((p, i) => (
+          <span
+            key={`b-${p.id}-${i}`}
+            className="flex-shrink-0 whitespace-nowrap text-lg font-semibold tracking-wide text-white/80"
+          >
+            {p.name}
+          </span>
+        ))}
+      </div>
+
+      <style>{`
+        @keyframes partner-marquee-fwd {
+          from { transform: translate3d(0, 0, 0); }
+          to   { transform: translate3d(-50%, 0, 0); }
+        }
+        @keyframes partner-marquee-rev {
+          from { transform: translate3d(-50%, 0, 0); }
+          to   { transform: translate3d(0, 0, 0); }
+        }
+        .marquee-track { will-change: transform; }
+        .marquee-forward { animation: partner-marquee-fwd 40s linear infinite; }
+        .marquee-reverse { animation: partner-marquee-rev 50s linear infinite; }
+        .marquee-track:hover { animation-play-state: paused; }
+      `}</style>
     </section>
   );
 }
