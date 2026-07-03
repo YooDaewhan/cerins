@@ -3,18 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import type { LocaleCode } from "@/src/lib/types";
 
 const TiptapEditor = dynamic(() => import("./TiptapEditor"), { ssr: false });
 
-const POST_LOCALES: LocaleCode[] = ["ko", "en", "ja", "zh", "ru"];
-const LOCALE_LABELS: Record<LocaleCode, string> = {
-  ko: "한국어",
-  en: "English",
-  ja: "日本語",
-  zh: "中文",
-  ru: "Русский",
-};
+interface LocaleEntry {
+  code: string;
+  label: string;
+}
 
 interface FormState {
   enabled: boolean;
@@ -60,7 +55,7 @@ interface InitialTranslation {
 
 export interface PostEditorInitial {
   slug: string;
-  translations: Partial<Record<LocaleCode, InitialTranslation>>;
+  translations: Record<string, InitialTranslation>;
 }
 
 interface Props {
@@ -73,45 +68,69 @@ export default function PostEditorClient({ locale, mode, initial }: Props) {
   const router = useRouter();
 
   const [slug, setSlug] = useState(initial?.slug ?? "");
-  const [activeTab, setActiveTab] = useState<LocaleCode>("ko");
-  const [forms, setForms] = useState<Record<LocaleCode, FormState>>(() => {
-    const map = {} as Record<LocaleCode, FormState>;
-    for (const code of POST_LOCALES) {
-      const t = initial?.translations[code];
-      if (t) {
-        map[code] = {
-          enabled: true,
-          title: t.title,
-          summary: t.summary,
-          content: t.content,
-          author: t.author ?? "",
-          thumbnail: t.thumbnail ?? "",
-          is_published: t.is_published,
-          published_at: t.published_at,
-        };
-      } else {
-        const base = emptyForm();
-        if (code === "ko") base.enabled = mode === "new";
-        map[code] = base;
-      }
-    }
-    return map;
-  });
+  const [locales, setLocales] = useState<LocaleEntry[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("ko");
+  const [forms, setForms] = useState<Record<string, FormState>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch("/api/admin/locales", { cache: "no-store" });
+        if (!res.ok) return;
+        const j = (await res.json()) as {
+          locales: { code: string; native_name: string; is_enabled: boolean }[];
+        };
+        const enabled = j.locales
+          .filter((l) => l.is_enabled)
+          .map((l) => ({ code: l.code, label: l.native_name }));
+        setLocales(enabled);
+        setForms((prev) => {
+          const next: Record<string, FormState> = { ...prev };
+          for (const l of enabled) {
+            if (next[l.code]) continue;
+            const t = initial?.translations[l.code];
+            if (t) {
+              next[l.code] = {
+                enabled: true,
+                title: t.title,
+                summary: t.summary,
+                content: t.content,
+                author: t.author ?? "",
+                thumbnail: t.thumbnail ?? "",
+                is_published: t.is_published,
+                published_at: t.published_at,
+              };
+            } else {
+              const base = emptyForm();
+              if (l.code === "ko") base.enabled = mode === "new";
+              next[l.code] = base;
+            }
+          }
+          return next;
+        });
+      } catch {
+        // ignore — 편집기 기본 화면은 여전히 열림.
+      }
+    })();
+  }, [initial, mode]);
 
   const adminBase = locale === "ko" ? "/admin" : `/${locale}/admin`;
 
   const update = useCallback(
-    (code: LocaleCode, patch: Partial<FormState>) => {
-      setForms((prev) => ({ ...prev, [code]: { ...prev[code], ...patch } }));
+    (code: string, patch: Partial<FormState>) => {
+      setForms((prev) => ({
+        ...prev,
+        [code]: { ...(prev[code] ?? emptyForm()), ...patch },
+      }));
     },
     [],
   );
 
   const enabledCount = useMemo(
-    () => POST_LOCALES.filter((c) => forms[c].enabled).length,
-    [forms],
+    () => locales.filter((l) => forms[l.code]?.enabled).length,
+    [forms, locales],
   );
 
   async function handleSave() {
@@ -124,19 +143,23 @@ export default function PostEditorClient({ locale, mode, initial }: Props) {
     const translations: Record<string, unknown> = {};
     if (mode === "edit") {
       // explicitly null-out disabled locales that previously existed
-      for (const code of POST_LOCALES) {
+      const codes = new Set<string>([
+        ...locales.map((l) => l.code),
+        ...Object.keys(initial?.translations ?? {}),
+      ]);
+      for (const code of codes) {
         const f = forms[code];
         const existed = !!initial?.translations[code];
-        if (f.enabled) {
+        if (f?.enabled) {
           translations[code] = serialize(f);
         } else if (existed) {
           translations[code] = null;
         }
       }
     } else {
-      for (const code of POST_LOCALES) {
-        const f = forms[code];
-        if (f.enabled) translations[code] = serialize(f);
+      for (const l of locales) {
+        const f = forms[l.code];
+        if (f?.enabled) translations[l.code] = serialize(f);
       }
     }
 
@@ -197,7 +220,7 @@ export default function PostEditorClient({ locale, mode, initial }: Props) {
     }
   }
 
-  const active = forms[activeTab];
+  const active = forms[activeTab] ?? emptyForm();
 
   return (
     <div className="space-y-4">
@@ -258,24 +281,24 @@ export default function PostEditorClient({ locale, mode, initial }: Props) {
         </div>
       )}
 
-      <div className="flex border-b border-gray-200">
-        {POST_LOCALES.map((code) => {
-          const isActive = activeTab === code;
-          const enabled = forms[code].enabled;
+      <div className="flex border-b border-gray-200 flex-wrap">
+        {locales.map((l) => {
+          const isActive = activeTab === l.code;
+          const enabled = forms[l.code]?.enabled ?? false;
           return (
             <button
-              key={code}
+              key={l.code}
               type="button"
-              onClick={() => setActiveTab(code)}
+              onClick={() => setActiveTab(l.code)}
               className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-px transition-colors flex items-center gap-1.5 ${
                 isActive
                   ? "border-(--brand) text-(--brand)"
                   : "border-transparent text-gray-500 hover:text-(--brand)"
               }`}
             >
-              <span>{LOCALE_LABELS[code]}</span>
+              <span>{l.label}</span>
               <span className="text-[10px] uppercase font-mono text-gray-400">
-                {code}
+                {l.code}
               </span>
               {enabled && (
                 <span className="ml-1 w-1.5 h-1.5 rounded-full bg-green-500" />
@@ -294,7 +317,7 @@ export default function PostEditorClient({ locale, mode, initial }: Props) {
             className="h-4 w-4 accent-(--brand)"
           />
           <span className="font-semibold">
-            이 언어({LOCALE_LABELS[activeTab]}) 사용
+            이 언어({(locales.find((l) => l.code === activeTab)?.label ?? activeTab)}) 사용
           </span>
           <span className="text-xs text-gray-400">
             체크 해제 시 이 언어판은 저장되지 않거나 삭제됩니다.

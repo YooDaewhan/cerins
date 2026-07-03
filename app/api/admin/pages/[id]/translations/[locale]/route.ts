@@ -52,7 +52,7 @@ export async function PUT(req: Request, ctx: RouteContext) {
   if (id === null) {
     return NextResponse.json({ error: "잘못된 페이지 ID 입니다." }, { status: 400 });
   }
-  if (!/^[a-z]{2}$/.test(locale)) {
+  if (!/^[a-z]{2,8}(-[A-Za-z0-9]{2,8})?$/.test(locale)) {
     return NextResponse.json({ error: "잘못된 로케일 입니다." }, { status: 400 });
   }
 
@@ -157,7 +157,7 @@ export async function DELETE(_req: Request, ctx: RouteContext) {
   if (id === null) {
     return NextResponse.json({ error: "잘못된 페이지 ID 입니다." }, { status: 400 });
   }
-  if (!/^[a-z]{2}$/.test(locale)) {
+  if (!/^[a-z]{2,8}(-[A-Za-z0-9]{2,8})?$/.test(locale)) {
     return NextResponse.json({ error: "잘못된 로케일 입니다." }, { status: 400 });
   }
 

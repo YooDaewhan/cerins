@@ -100,9 +100,10 @@ export async function PATCH(req: Request, ctx: RouteContext) {
   const translations = body.translations ?? {};
   const inputs: Partial<Record<LocaleCode, PostTranslationInput | null>> = {};
 
-  for (const locale of SUPPORTED_POST_LOCALES) {
-    if (!(locale in translations)) continue;
-    const raw = translations[locale];
+  for (const [locale, raw] of Object.entries(translations) as [
+    LocaleCode,
+    Partial<PostTranslationInput> | null | undefined,
+  ][]) {
     if (raw === null || raw === undefined) {
       inputs[locale] = null;
       continue;

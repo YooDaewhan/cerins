@@ -4,7 +4,6 @@ import PostEditorClient, {
   type PostEditorInitial,
 } from "@/components/admin/PostEditorClient";
 import { getAdminPostGroup } from "@/src/lib/posts";
-import type { LocaleCode } from "@/src/lib/types";
 
 export const metadata: Metadata = {
   title: "관리자 - 뉴스 편집 - CERINS",
@@ -25,10 +24,8 @@ export default async function AdminPostEditPage({ params }: Props) {
     slug: group.slug,
     translations: {},
   };
-  for (const [code, t] of Object.entries(group.translations) as [
-    LocaleCode,
-    NonNullable<(typeof group.translations)[LocaleCode]>,
-  ][]) {
+  for (const [code, t] of Object.entries(group.translations)) {
+    if (!t) continue;
     initial.translations[code] = {
       title: t.title,
       summary: t.summary,

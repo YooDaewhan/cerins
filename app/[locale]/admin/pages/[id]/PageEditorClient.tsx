@@ -56,13 +56,10 @@ interface ApiData {
   translations: PageTranslation[];
 }
 
-const LOCALES = [
-  { code: "ko", label: "한국어" },
-  { code: "en", label: "English" },
-  { code: "ja", label: "日本語" },
-  { code: "zh", label: "中文" },
-  { code: "ru", label: "Русский" },
-];
+interface LocaleEntry {
+  code: string;
+  label: string;
+}
 
 function emptyTranslation(locale: string): PageTranslation {
   return {
@@ -86,6 +83,7 @@ export default function PageEditorClient({
   const router = useRouter();
   const [data, setData] = useState<ApiData | null>(null);
   const [allPages, setAllPages] = useState<AllPagesEntry[]>([]);
+  const [locales, setLocales] = useState<LocaleEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeLocale, setActiveLocale] = useState("ko");
@@ -100,9 +98,10 @@ export default function PageEditorClient({
     setLoading(true);
     setError(null);
     try {
-      const [pageRes, listRes] = await Promise.all([
+      const [pageRes, listRes, localesRes] = await Promise.all([
         fetch(`/api/admin/pages/${pageId}`, { cache: "no-store" }),
         fetch(`/api/admin/pages`, { cache: "no-store" }),
+        fetch(`/api/admin/locales`, { cache: "no-store" }),
       ]);
       const json = (await pageRes.json()) as ApiData & { error?: string };
       if (!pageRes.ok) {
@@ -117,6 +116,16 @@ export default function PageEditorClient({
       if (listRes.ok) {
         const listJson = (await listRes.json()) as { pages: AllPagesEntry[] };
         setAllPages(listJson.pages);
+      }
+      if (localesRes.ok) {
+        const lj = (await localesRes.json()) as {
+          locales: { code: string; native_name: string; is_enabled: boolean }[];
+        };
+        setLocales(
+          lj.locales
+            .filter((l) => l.is_enabled)
+            .map((l) => ({ code: l.code, label: l.native_name })),
+        );
       }
     } catch {
       setError("네트워크 오류가 발생했습니다.");
@@ -527,7 +536,7 @@ export default function PageEditorClient({
 
       <section className="rounded-lg border border-gray-200 bg-white overflow-hidden">
         <div className="border-b border-gray-200 bg-gray-50 px-4 py-2 flex gap-1 flex-wrap">
-          {LOCALES.map((l) => {
+          {locales.map((l) => {
             const has = existingLocales.has(l.code);
             const active = activeLocale === l.code;
             return (

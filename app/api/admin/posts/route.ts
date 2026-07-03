@@ -86,8 +86,10 @@ export async function POST(req: Request) {
   const inputs: Partial<Record<LocaleCode, PostTranslationInput>> = {};
 
   let hasAny = false;
-  for (const locale of SUPPORTED_POST_LOCALES) {
-    const raw = translations[locale];
+  for (const [locale, raw] of Object.entries(translations) as [
+    LocaleCode,
+    Partial<PostTranslationInput> | null | undefined,
+  ][]) {
     if (!raw) continue;
     const v = validateTranslation(locale, raw);
     if (!v.ok) {
