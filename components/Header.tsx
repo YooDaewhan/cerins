@@ -101,16 +101,15 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
         } border-b border-gray-200/60`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-20">
             {/* 로고 */}
             <Link
               href={locale === DEFAULT_LOCALE ? "/" : `/${locale}`}
-              className="group relative text-2xl font-bold tracking-widest"
+              className="flex items-center"
               onClick={() => setOpenMenu(null)}
             >
-              <span style={{ color: "var(--brand)" }}>CER</span>
-              <span style={{ color: "var(--brand)" }}>INS</span>
-              <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-(--brand) transition-all duration-300 group-hover:w-full" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/cerins-logo.jpg" alt="CERINS" className="h-14 w-auto" />
             </Link>
 
             {/* 데스크톱 네비 */}
@@ -124,7 +123,7 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                     <Link
                       key={item.id}
                       href={item.href}
-                      className={`relative px-5 py-5 text-sm font-bold tracking-wider uppercase transition-colors ${
+                      className={`relative px-6 py-6 text-base font-bold tracking-wider uppercase transition-colors ${
                         active
                           ? "text-(--brand) bg-[#fff5f6]"
                           : "text-gray-700 hover:text-(--brand) hover:bg-gray-100"
@@ -150,7 +149,7 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                     onMouseEnter={() => {
                       if (openMenu) setOpenMenu(item.label);
                     }}
-                    className={`relative px-5 py-5 text-sm font-bold tracking-wider uppercase transition-colors ${
+                    className={`relative px-6 py-6 text-base font-bold tracking-wider uppercase transition-colors ${
                       isOpen || active
                         ? "text-(--brand) bg-[#fff5f6]"
                         : "text-gray-700 hover:text-(--brand) hover:bg-gray-100"
@@ -307,7 +306,7 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
       {/* ── 메가 패널 ── */}
       <div
         aria-hidden={!openMenu}
-        className={`fixed top-16 left-0 right-0 z-[95] transition-all duration-500 ease-[cubic-bezier(.2,.7,.2,1)] ${
+        className={`fixed top-20 left-0 right-0 z-[95] transition-all duration-500 ease-[cubic-bezier(.2,.7,.2,1)] ${
           openMenu
             ? "opacity-100 pointer-events-auto"
             : "opacity-0 pointer-events-none"
