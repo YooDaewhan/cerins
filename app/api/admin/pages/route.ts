@@ -55,7 +55,7 @@ export async function GET() {
   const pool = getPool();
   const [[pages], [transCounts]] = await Promise.all([
     pool.query<PageRow[]>(
-      "SELECT id, slug, template, is_published, sort_order, created_at, updated_at FROM pages ORDER BY sort_order, id",
+      "SELECT id, slug, template, parent_id, is_published, sort_order, created_at, updated_at FROM pages ORDER BY sort_order, id",
     ),
     pool.query<TransCountRow[]>(
       `SELECT page_id, GROUP_CONCAT(locale ORDER BY locale) AS locales
