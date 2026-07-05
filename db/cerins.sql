@@ -2,6 +2,7 @@
 -- CERINS local MySQL bootstrap
 --   - 데이터베이스 생성 + 모든 테이블 스키마 + 목업 시드 데이터
 --   - 실행: mysql -u root -p < db/cerins.sql
+--   - 실행: mysql -u cerins -p < ~/cerins/db/cerins.sql
 -- =====================================================================
 
 DROP DATABASE IF EXISTS cerins;
