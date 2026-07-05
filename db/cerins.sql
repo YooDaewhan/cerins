@@ -85,6 +85,43 @@ INSERT INTO pages (id, slug, template, is_published, sort_order, created_at, upd
   (40, 'documentation',                       'services', 1, 41, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
   (41, 'project-management-custom-brokerage', 'services', 1, 42, '2026-01-01 00:00:00', '2026-01-01 00:00:00');
 
+-- 인증서 하위 상세 페이지 (parent_id = 국가 페이지 20~28)
+INSERT INTO pages (id, slug, template, parent_id, is_published, sort_order) VALUES
+  -- 러시아 (20)
+  (100, 'russia-trcu',            'certification', 20, 1, 1),
+  (101, 'russia-trcu-ex',         'certification', 20, 1, 2),
+  (102, 'russia-gost-r',          'certification', 20, 1, 3),
+  (103, 'russia-ise',             'certification', 20, 1, 4),
+  (104, 'russia-fire-safety',     'certification', 20, 1, 5),
+  (105, 'russia-metrology',       'certification', 20, 1, 6),
+  (106, 'russia-rtn',             'certification', 20, 1, 7),
+  (107, 'russia-hygiene',         'certification', 20, 1, 8),
+  (108, 'russia-medical',         'certification', 20, 1, 9),
+  (109, 'russia-others',          'certification', 20, 1, 10),
+  -- 카자흐스탄 (21)
+  (110, 'kazakhstan-trcu',        'certification', 21, 1, 1),
+  (111, 'kazakhstan-trcu-ex',     'certification', 21, 1, 2),
+  (112, 'kazakhstan-gost-k',      'certification', 21, 1, 3),
+  (113, 'kazakhstan-ise-k',       'certification', 21, 1, 4),
+  (114, 'kazakhstan-fire-safety-k','certification', 21, 1, 5),
+  (115, 'kazakhstan-metrology-k', 'certification', 21, 1, 6),
+  (116, 'kazakhstan-ggtn',        'certification', 21, 1, 7),
+  -- 벨라루스·키르기스스탄·아르메니아 (22)
+  (117, 'belarus-trcu',           'certification', 22, 1, 1),
+  (118, 'belarus-trcu-ex',        'certification', 22, 1, 2),
+  -- 우즈베키스탄 (23)
+  (119, 'uzbekistan-gust-uz',     'certification', 23, 1, 1),
+  -- 우크라이나 (24)
+  (120, 'ukraine-sepro',          'certification', 24, 1, 1),
+  -- 투르크메니스탄 (25)
+  (121, 'turkmenistan-tds',       'certification', 25, 1, 1),
+  -- 아제르바이잔 (26)
+  (122, 'azerbaijan-certification','certification', 26, 1, 1),
+  -- 베트남 (27)
+  (123, 'vietnam-cr',             'certification', 27, 1, 1),
+  -- 유럽 (28)
+  (124, 'europe-ce-mark',         'certification', 28, 1, 1);
+
 -- ---------------------------------------------------------------------
 -- 3. page_translations
 --   content 컬럼은 JSON 배열(PageContentBlock[]).
@@ -754,6 +791,92 @@ INSERT INTO page_translations (id, page_id, locale, title, subtitle, hero_image,
    '국경 간 무역 운영을 위한 엔드투엔드 프로젝트 관리 및 통관 중개 서비스입니다.',
    '2026-01-01 00:00:00', '2026-01-01 00:00:00');
 
+-- 인증서 하위 상세 페이지 번역 (ko)
+INSERT INTO page_translations (id, page_id, locale, title, subtitle, content, meta_title, meta_description) VALUES
+  (200, 100, 'ko', 'TRCU', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '유라시아경제연합(EAEU) 관세동맹 기술규정(TR CU) 적합성 인증입니다. 하나의 인증으로 EAEU 회원국 전체 시장에 통용됩니다.')),
+   'TRCU - CERINS', '러시아 TR CU 적합성 인증 서비스'),
+  (201, 101, 'ko', 'TRCU ex', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '폭발 위험 환경에서 사용되는 방폭 설비에 대한 TR CU Ex 적합성 인증입니다.')),
+   'TRCU ex - CERINS', '러시아 TR CU Ex 방폭 인증 서비스'),
+  (202, 102, 'ko', 'GOST R', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '러시아 국가 표준(GOST R) 적합성 인증으로, 러시아 내수 시장 판매에 필요한 대표적인 인증입니다.')),
+   'GOST R - CERINS', '러시아 GOST R 인증 서비스'),
+  (203, 103, 'ko', 'ISE', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '러시아 수출 제품에 요구되는 ISE 인증입니다.')),
+   'ISE - CERINS', '러시아 ISE 인증 서비스'),
+  (204, 104, 'ko', '화재안전', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '화재 안전 기술규정에 따른 화재안전 인증서입니다. 건축자재, 케이블 등 화재 위험 제품군에 요구됩니다.')),
+   '화재안전 - CERINS', '러시아 화재안전 인증 서비스'),
+  (205, 105, 'ko', '계층기기', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '계층기기 관련 인증으로, 해당 설비의 러시아 시장 진입에 필요합니다.')),
+   '계층기기 - CERINS', '러시아 계층기기 인증 서비스'),
+  (206, 106, 'ko', 'RTN', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '러시아 기술감독국(RTN, Rostechnadzor) 사용허가로, 위험 산업시설에서 사용되는 설비에 필요합니다.')),
+   'RTN - CERINS', '러시아 RTN 사용허가 서비스'),
+  (207, 107, 'ko', '국가위생등록', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '소비자 건강·위생과 관련된 제품에 요구되는 국가위생등록입니다.')),
+   '국가위생등록 - CERINS', '러시아 국가위생등록 서비스'),
+  (208, 108, 'ko', '의료기기등록', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '러시아 보건당국 의료기기 등록으로, 의료기기 판매에 필수입니다.')),
+   '의료기기등록 - CERINS', '러시아 의료기기등록 서비스'),
+  (209, 109, 'ko', '기타인증서', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '위 항목 외에 제품별로 요구되는 기타 인증서 취득을 지원합니다.')),
+   '기타인증서 - CERINS', '러시아 기타 인증 서비스'),
+
+  (210, 110, 'ko', 'TRCU', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '유라시아경제연합(EAEU) 관세동맹 기술규정(TR CU) 적합성 인증입니다. 하나의 인증으로 EAEU 회원국 전체 시장에 통용됩니다.')),
+   'TRCU - CERINS', '카자흐스탄 TR CU 적합성 인증 서비스'),
+  (211, 111, 'ko', 'TRCU ex', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '폭발 위험 환경에서 사용되는 방폭 설비에 대한 TR CU Ex 적합성 인증입니다.')),
+   'TRCU ex - CERINS', '카자흐스탄 TR CU Ex 방폭 인증 서비스'),
+  (212, 112, 'ko', 'GOST K', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '카자흐스탄 국가 표준(GOST K) 적합성 인증입니다.')),
+   'GOST K - CERINS', '카자흐스탄 GOST K 인증 서비스'),
+  (213, 113, 'ko', 'ISE K', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '카자흐스탄 수출 제품에 요구되는 ISE K 인증입니다.')),
+   'ISE K - CERINS', '카자흐스탄 ISE K 인증 서비스'),
+  (214, 114, 'ko', '화재안전 K', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '카자흐스탄 화재안전 기술규정에 따른 화재안전 인증서입니다.')),
+   '화재안전 K - CERINS', '카자흐스탄 화재안전 인증 서비스'),
+  (215, 115, 'ko', '계층기기 K', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '카자흐스탄 계층기기 관련 인증입니다.')),
+   '계층기기 K - CERINS', '카자흐스탄 계층기기 인증 서비스'),
+  (216, 116, 'ko', 'GGTN 사용허가', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '카자흐스탄 산업안전감독국(GGTN) 사용허가로, 산업 설비 사용에 필요합니다.')),
+   'GGTN 사용허가 - CERINS', '카자흐스탄 GGTN 사용허가 서비스'),
+
+  (217, 117, 'ko', 'TRCU', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '유라시아경제연합(EAEU) 관세동맹 기술규정(TR CU) 적합성 인증입니다. 벨라루스, 키르기스스탄, 아르메니아 시장에 통용됩니다.')),
+   'TRCU - CERINS', '벨라루스·키르기스스탄·아르메니아 TR CU 인증 서비스'),
+  (218, 118, 'ko', 'TRCU ex', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '폭발 위험 환경에서 사용되는 방폭 설비에 대한 TR CU Ex 적합성 인증입니다.')),
+   'TRCU ex - CERINS', '벨라루스·키르기스스탄·아르메니아 TR CU Ex 인증 서비스'),
+
+  (219, 119, 'ko', 'GUST UZ', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '우즈베키스탄 국가 표준(GUST UZ) 적합성 인증으로, 우즈베키스탄 수출에 필요합니다.')),
+   'GUST UZ - CERINS', '우즈베키스탄 GUST UZ 인증 서비스'),
+
+  (220, 120, 'ko', 'Ukr SEPRO', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '우크라이나 국가 인증 제도(UkrSEPRO)에 따른 적합성 인증입니다.')),
+   'Ukr SEPRO - CERINS', '우크라이나 UkrSEPRO 인증 서비스'),
+
+  (221, 121, 'ko', 'TDS', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '투르크메니스탄 수출에 필요한 TDS 인증입니다.')),
+   'TDS - CERINS', '투르크메니스탄 TDS 인증 서비스'),
+
+  (222, 122, 'ko', 'Azerbaijan Certification', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '아제르바이잔 국가 표준에 따른 적합성 인증으로, 아제르바이잔 수출에 필요합니다.')),
+   'Azerbaijan Certification - CERINS', '아제르바이잔 인증 서비스'),
+
+  (223, 123, 'ko', '베트남 CR 적합성마크', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', '베트남 기술규정 적합성을 나타내는 CR 마크 인증으로, 베트남 시장 판매에 필요합니다.')),
+   '베트남 CR 적합성마크 - CERINS', '베트남 CR 적합성마크 인증 서비스'),
+
+  (224, 124, 'ko', 'CE Mark', NULL,
+   JSON_ARRAY(JSON_OBJECT('heading', '개요', 'body', 'EU 시장 진입에 필요한 CE 마킹으로, 유럽 지침·규정에 대한 제품 적합성을 나타냅니다.')),
+   'CE Mark - CERINS', '유럽 CE 마킹 인증 서비스');
+
 -- ---------------------------------------------------------------------
 -- 4. menus
 -- ---------------------------------------------------------------------
@@ -1038,6 +1161,22 @@ INSERT INTO posts (id, board_code, locale, slug, title, summary, content, author
    '신규 시장 진출, 인증서 발급, 파트너십 체결 등 CERINS의 2025년 주요 성과를 돌아봅니다.',
    '2025년을 마무리하며 CERINS는 의미 있는 성장과 성과를 되돌아봅니다. 주요 성과로는 베트남 시장 진출, 러시아 및 CIS 시장 대상 EAC 인증 물량 35% 증가, NDT 서비스 라인 확대가 있습니다. CERINS는 고객과 파트너의 변함없는 신뢰에 감사드리며, 2026년에도 이러한 기반 위에서 더 큰 성장을 이어가겠습니다.',
    'CERINS 편집팀', 1, '2025-12-31', '2026-01-01 00:00:00', '2026-01-01 00:00:00');
+
+-- FAQ 게시글 (board_code='faq')
+INSERT INTO posts
+  (id, board_code, locale, slug, title, summary, content, thumbnail, author, is_published, published_at, created_at, updated_at) VALUES
+  (1001, 'faq', 'ko', '1',
+   '인증 절차는 얼마나 걸리나요?',
+   '제품군과 대상 국가에 따라 다르지만 일반적으로 3~8주가 소요됩니다.',
+   '<p>인증 소요 기간은 제품군, 대상 국가, 시험 항목에 따라 달라집니다. 정확한 일정은 담당자와 상담을 통해 안내해 드립니다.</p>',
+   NULL, 'CERINS Editorial', 1, '2026-01-01',
+   '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
+  (1002, 'faq', 'en', '1',
+   'How long does the certification process take?',
+   'It varies by product category and target country, but typically 3–8 weeks.',
+   '<p>The lead time depends on the product category, target country, and required tests. Our team will advise you on an exact schedule after consultation.</p>',
+   NULL, 'CERINS Editorial', 1, '2026-01-01',
+   '2026-01-01 00:00:00', '2026-01-01 00:00:00');
 
 -- ---------------------------------------------------------------------
 -- 7. partners
