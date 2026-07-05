@@ -14,6 +14,8 @@ export interface Step {
   certifications: CertificationLink[];
   /** 서비스 커버리지 지도에서 강조할 world-atlas 영문 국가명 */
   mapCountries?: string[];
+  /** 인증 국가 페이지 slug — 지도 색상 고정에 사용 */
+  slug?: string;
 }
 
 /** STEPS 폴백 데모용: 실제 하위 페이지가 없을 때 표시되는 정적 항목 */

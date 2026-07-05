@@ -62,6 +62,7 @@ export default async function HomePage({ params }: Props) {
         desc: c.content[1]?.body ?? c.content[0]?.body ?? "",
         certifications: c.certifications,
         mapCountries: mapCountriesForSlug(c.slug),
+        slug: c.slug,
       }))
     : undefined;
 
