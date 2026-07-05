@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import type { HeroSlide, LocaleCode } from "@/src/lib/types";
+import type { HeroSlide, HeroTag, LocaleCode } from "@/src/lib/types";
 import { isVideoUrl } from "@/src/lib/media";
 
 const INTERVAL = 5500;
@@ -32,14 +32,19 @@ const TILE_PATTERNS = PATTERN_FNS.map((fn) => {
 interface HeroSliderProps {
   slides: HeroSlide[];
   locale: LocaleCode;
+  tags?: HeroTag[];
 }
+
+// ponytail: 태그 목록 크기 티어. 티어를 좁혀 정돈된 그리드 느낌 유지.
+// 인덱스 기반 결정론적 선택으로 SSR/CSR 일치.
+const TAG_SIZES = ["text-base", "text-lg", "text-base", "text-xl"];
 
 function localized(path: string, locale: LocaleCode): string {
   if (locale === DEFAULT_LOCALE) return path;
   return "/" + locale + path;
 }
 
-export default function HeroSlider({ slides, locale }: HeroSliderProps) {
+export default function HeroSlider({ slides, locale, tags = [] }: HeroSliderProps) {
   const total = slides.length;
   const hasVideo = slides.some((s) => isVideoUrl(s.image));
 
@@ -232,21 +237,10 @@ export default function HeroSlider({ slides, locale }: HeroSliderProps) {
 
       <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-(--brand) via-[#d6325a] to-(--brand) z-[3]" />
 
-      <div className="hidden lg:block absolute right-12 top-1/2 -translate-y-1/2 z-[3] text-right">
-        <div className="flex items-center gap-3 justify-end mb-2">
-          <div className="text-[10px] tracking-[0.3em] text-white/40 uppercase">
-            since 2009
-          </div>
-          <div className="w-8 h-px bg-white/30" />
-        </div>
-        <div className="font-mono text-white/30 text-xs">
-          CERTIFICATION · INSPECTION
-        </div>
-      </div>
-
       <div className="relative z-[5] h-full flex items-center">
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 w-full">
-          <div className="max-w-2xl" key={`text-${displayIdx}`}>
+        <div className="max-w-7xl mx-auto w-full px-6 sm:px-10 lg:px-12">
+          <div className="lg:grid lg:grid-cols-[1fr_auto] lg:gap-14 lg:items-center">
+            <div className="max-w-2xl" key={`text-${displayIdx}`}>
             <div
               className="flex items-center gap-3 mb-6"
               style={{
@@ -309,6 +303,29 @@ export default function HeroSlider({ slides, locale }: HeroSliderProps) {
                 Our Services
               </a>
             </div>
+            </div>
+
+            {tags.length > 0 && (
+              <div className="hidden lg:grid grid-cols-2 gap-x-10 gap-y-3.5 content-center justify-items-end text-right">
+                {tags.map((t, i) => {
+                  const size = TAG_SIZES[(i * 3 + 1) % TAG_SIZES.length];
+                  const accent = i % 5 === 0;
+                  return (
+                    <a
+                      key={`${t.href}-${i}`}
+                      href={t.href}
+                      className={`group flex items-baseline gap-2 ${size} leading-none whitespace-nowrap transition-colors duration-300 hover:text-(--brand) ${accent ? "text-white/90 font-semibold" : "text-white/55 font-medium"}`}
+                      style={{
+                        animation: `tagFloat 0.6s cubic-bezier(.2,.7,.2,1) ${0.25 + i * 0.035}s both`,
+                      }}
+                    >
+                      <span className="w-0 h-px bg-(--brand) transition-all duration-300 group-hover:w-4" />
+                      {t.title}
+                    </a>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -402,6 +419,10 @@ export default function HeroSlider({ slides, locale }: HeroSliderProps) {
         @keyframes scrollHint {
           0%, 100% { transform: scaleY(0.6); opacity: 0.4; }
           50%      { transform: scaleY(1);   opacity: 1; }
+        }
+        @keyframes tagFloat {
+          from { opacity: 0; transform: translateY(16px) scale(0.92); }
+          to   { opacity: 1; }
         }
       `}</style>
     </section>

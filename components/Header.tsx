@@ -123,16 +123,23 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                     <Link
                       key={item.id}
                       href={item.href}
-                      className={`relative px-6 py-6 text-base font-bold tracking-wider uppercase transition-colors ${
+                      className={`group relative overflow-hidden px-6 py-6 text-base font-bold tracking-wider uppercase transition-colors duration-300 ${
                         active
-                          ? "text-(--brand) bg-[#fff5f6]"
-                          : "text-gray-700 hover:text-(--brand) hover:bg-gray-100"
+                          ? "text-white"
+                          : "text-gray-700 group-hover:text-white hover:text-white"
                       }`}
                       onClick={() => setOpenMenu(null)}
                     >
-                      {item.label}
+                      {/* 왼쪽에서 오른쪽으로 채워지는 배경 */}
                       <span
-                        className={`pointer-events-none absolute left-5 right-5 bottom-3 h-0.5 bg-(--brand) origin-left transition-transform duration-300 ${
+                        className={`pointer-events-none absolute inset-0 bg-(--brand) origin-left transition-transform duration-300 ease-out ${
+                          active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                        }`}
+                      />
+                      <span className="relative z-10">{item.label}</span>
+                      {/* 활성 상태 흰색 밑줄 */}
+                      <span
+                        className={`pointer-events-none absolute left-5 right-5 bottom-3 z-10 h-0.5 bg-white origin-left transition-transform duration-300 ${
                           active ? "scale-x-100" : "scale-x-0"
                         }`}
                       />
@@ -149,15 +156,22 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                     onMouseEnter={() => {
                       if (openMenu) setOpenMenu(item.label);
                     }}
-                    className={`relative px-6 py-6 text-base font-bold tracking-wider uppercase transition-colors ${
+                    className={`group relative overflow-hidden px-6 py-6 text-base font-bold tracking-wider uppercase transition-colors duration-300 ${
                       isOpen || active
-                        ? "text-(--brand) bg-[#fff5f6]"
-                        : "text-gray-700 hover:text-(--brand) hover:bg-gray-100"
+                        ? "text-white"
+                        : "text-gray-700 hover:text-white"
                     }`}
                   >
-                    {item.label}
+                    {/* 왼쪽에서 오른쪽으로 채워지는 배경 */}
                     <span
-                      className={`pointer-events-none absolute left-5 right-5 bottom-3 h-0.5 bg-(--brand) origin-left transition-transform duration-300 ${
+                      className={`pointer-events-none absolute inset-0 bg-(--brand) origin-left transition-transform duration-300 ease-out ${
+                        isOpen || active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                      }`}
+                    />
+                    <span className="relative z-10">{item.label}</span>
+                    {/* 활성 상태 흰색 밑줄 */}
+                    <span
+                      className={`pointer-events-none absolute left-5 right-5 bottom-3 z-10 h-0.5 bg-white origin-left transition-transform duration-300 ${
                         isOpen || active ? "scale-x-100" : "scale-x-0"
                       }`}
                     />

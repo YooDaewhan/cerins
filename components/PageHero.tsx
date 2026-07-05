@@ -19,7 +19,7 @@ export default function PageHero({ title, subtitle, breadcrumb, image }: PageHer
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url('${bg}')` }}
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-(--brand)/90 via-(--brand)/75 to-(--brand)/50" />
+      <div className="absolute inset-0 bg-gradient-to-r from-(--brand)/95 via-(--brand)/60 to-(--brand)/15" />
       <div className="absolute left-0 top-0 bottom-0 w-1 bg-(--brand)" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">

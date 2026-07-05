@@ -26,7 +26,15 @@ interface ApiData {
   locales: LocaleCode[];
 }
 
-export default function PostsAdminClient({ locale }: { locale: string }) {
+export default function PostsAdminClient({
+  locale,
+  apiBase = "/api/admin/posts",
+  listSlug = "posts",
+}: {
+  locale: string;
+  apiBase?: string;
+  listSlug?: string;
+}) {
   const [data, setData] = useState<ApiData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +46,7 @@ export default function PostsAdminClient({ locale }: { locale: string }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/admin/posts", { cache: "no-store" });
+      const res = await fetch(apiBase, { cache: "no-store" });
       const json = (await res.json()) as ApiData & { error?: string };
       if (!res.ok) {
         setError(json.error ?? "글을 불러오지 못했습니다.");
@@ -50,7 +58,7 @@ export default function PostsAdminClient({ locale }: { locale: string }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [apiBase]);
 
   useEffect(() => {
     void load();
@@ -60,7 +68,7 @@ export default function PostsAdminClient({ locale }: { locale: string }) {
     if (!confirm(`'${slug}' 글을 모든 언어판과 함께 삭제합니다.`)) return;
     setBusy(true);
     try {
-      const res = await fetch(`/api/admin/posts/${encodeURIComponent(slug)}`, {
+      const res = await fetch(`${apiBase}/${encodeURIComponent(slug)}`, {
         method: "DELETE",
       });
       const json = (await res.json()) as { ok?: boolean; error?: string };
@@ -106,7 +114,7 @@ export default function PostsAdminClient({ locale }: { locale: string }) {
             새로고침
           </button>
           <Link
-            href={`${adminBase}/posts/new`}
+            href={`${adminBase}/${listSlug}/new`}
             className="rounded bg-(--brand) text-white px-3 py-1.5 text-xs font-semibold hover:opacity-90"
           >
             + 새 글
@@ -185,7 +193,7 @@ export default function PostsAdminClient({ locale }: { locale: string }) {
                   <td className="px-4 py-2 text-right pr-5 whitespace-nowrap">
                     <div className="inline-flex gap-1">
                       <Link
-                        href={`${adminBase}/posts/${encodeURIComponent(p.slug)}`}
+                        href={`${adminBase}/${listSlug}/${encodeURIComponent(p.slug)}`}
                         className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-50"
                       >
                         편집

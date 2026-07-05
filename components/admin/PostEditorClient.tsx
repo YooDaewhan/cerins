@@ -62,9 +62,20 @@ interface Props {
   locale: string;
   mode: "new" | "edit";
   initial?: PostEditorInitial;
+  // 게시판 구분. 기본값은 뉴스와 동일하게 동작.
+  apiBase?: string;
+  listSlug?: string;
+  noun?: string;
 }
 
-export default function PostEditorClient({ locale, mode, initial }: Props) {
+export default function PostEditorClient({
+  locale,
+  mode,
+  initial,
+  apiBase = "/api/admin/posts",
+  listSlug = "posts",
+  noun = "뉴스",
+}: Props) {
   const router = useRouter();
 
   const [slug, setSlug] = useState(initial?.slug ?? "");
@@ -167,8 +178,8 @@ export default function PostEditorClient({ locale, mode, initial }: Props) {
     try {
       const url =
         mode === "new"
-          ? "/api/admin/posts"
-          : `/api/admin/posts/${encodeURIComponent(initial!.slug)}`;
+          ? apiBase
+          : `${apiBase}/${encodeURIComponent(initial!.slug)}`;
       const method = mode === "new" ? "POST" : "PATCH";
       const body =
         mode === "new"
@@ -187,7 +198,7 @@ export default function PostEditorClient({ locale, mode, initial }: Props) {
         setError(json.error ?? "저장에 실패했습니다.");
         return;
       }
-      router.push(`${adminBase}/posts`);
+      router.push(`${adminBase}/${listSlug}`);
       router.refresh();
     } catch {
       setError("네트워크 오류가 발생했습니다.");
@@ -203,7 +214,7 @@ export default function PostEditorClient({ locale, mode, initial }: Props) {
     setBusy(true);
     try {
       const res = await fetch(
-        `/api/admin/posts/${encodeURIComponent(initial.slug)}`,
+        `${apiBase}/${encodeURIComponent(initial.slug)}`,
         { method: "DELETE" },
       );
       const json = (await res.json()) as { ok?: boolean; error?: string };
@@ -211,7 +222,7 @@ export default function PostEditorClient({ locale, mode, initial }: Props) {
         setError(json.error ?? "삭제에 실패했습니다.");
         return;
       }
-      router.push(`${adminBase}/posts`);
+      router.push(`${adminBase}/${listSlug}`);
       router.refresh();
     } catch {
       setError("네트워크 오류가 발생했습니다.");
@@ -226,7 +237,7 @@ export default function PostEditorClient({ locale, mode, initial }: Props) {
     <div className="space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
         <h2 className="text-lg font-semibold text-gray-800">
-          {mode === "new" ? "새 뉴스 글" : `뉴스 글 편집: ${initial?.slug}`}
+          {mode === "new" ? `새 ${noun} 글` : `${noun} 글 편집: ${initial?.slug}`}
         </h2>
         <div className="ml-auto flex gap-2">
           {mode === "edit" && (
@@ -241,7 +252,7 @@ export default function PostEditorClient({ locale, mode, initial }: Props) {
           )}
           <button
             type="button"
-            onClick={() => router.push(`${adminBase}/posts`)}
+            onClick={() => router.push(`${adminBase}/${listSlug}`)}
             className="rounded border border-gray-300 px-3 py-1.5 text-xs hover:bg-gray-50"
           >
             취소

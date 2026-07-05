@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import HeroSlider from "@/components/HeroSlider";
 import ServiceBento from "@/components/ServiceBento";
-import ServiceProcess from "@/components/ServiceProcess";
+import ServiceProcess, { type Step } from "@/components/ServiceProcess";
 import ServiceFlatMap from "@/components/ServiceFlatMap";
 import ServiceValues from "@/components/ServiceValues";
 import PartnerSlider from "@/components/PartnerSlider";
@@ -12,8 +12,11 @@ import {
   getHomeSlides,
   getPageWithTranslation,
   getPosts,
+  listCertificationCountries,
+  listHeroTags,
   listPartners,
 } from "@/src/lib/mockRepository";
+import { mapCountriesForSlug } from "@/components/worldGeo";
 import { isLocale } from "@/src/lib/i18n";
 import type { LocaleCode } from "@/src/lib/types";
 
@@ -42,11 +45,25 @@ export default async function HomePage({ params }: Props) {
   if (!isLocale(locale)) notFound();
   const code = locale as LocaleCode;
 
-  const [slides, partners, posts] = await Promise.all([
+  const [slides, partners, posts, certCountries, heroTags] = await Promise.all([
     getHomeSlides(code),
     listPartners(),
     getPosts("news", code),
+    listCertificationCountries(code),
+    listHeroTags(code, 20),
   ]);
+
+  const certSteps: Step[] | undefined = certCountries.length
+    ? certCountries.map((c, i) => ({
+        n: String(i + 1).padStart(2, "0"),
+        tag: c.subtitle ?? c.title,
+        title: c.title,
+        overview: c.content[0]?.body ?? c.subtitle ?? "",
+        desc: c.content[1]?.body ?? c.content[0]?.body ?? "",
+        certifications: c.certifications,
+        mapCountries: mapCountriesForSlug(c.slug),
+      }))
+    : undefined;
 
   const snapFull =
     "snap-start snap-always h-[calc(100dvh-4rem)] flex flex-col justify-center overflow-hidden";
@@ -54,16 +71,16 @@ export default async function HomePage({ params }: Props) {
   return (
     <>
       <div className={snapFull}>
-        <HeroSlider slides={slides} locale={code} />
+        <HeroSlider slides={slides} locale={code} tags={heroTags} />
       </div>
       <div className={snapFull}>
         <ServiceBento />
       </div>
       <div className={snapFull}>
-        <ServiceProcess />
+        <ServiceProcess steps={certSteps} />
       </div>
       <div className={snapFull}>
-        <ServiceFlatMap />
+        <ServiceFlatMap steps={certSteps} />
       </div>
       <div className={snapFull}>
         <ServiceValues />

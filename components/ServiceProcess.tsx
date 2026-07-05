@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
+import type { CertificationLink } from "@/src/lib/types";
 
 export interface Step {
   n: string;
@@ -9,8 +11,14 @@ export interface Step {
   title: string;
   overview: string;
   desc: string;
-  certifications: string[];
+  certifications: CertificationLink[];
+  /** 서비스 커버리지 지도에서 강조할 world-atlas 영문 국가명 */
+  mapCountries?: string[];
 }
+
+/** STEPS 폴백 데모용: 실제 하위 페이지가 없을 때 표시되는 정적 항목 */
+const cert = (titles: string[]): CertificationLink[] =>
+  titles.map((title) => ({ title, href: "#" }));
 
 export const STEPS: Step[] = [
   {
@@ -21,7 +29,7 @@ export const STEPS: Step[] = [
       "유라시아경제연합(EAEU) 통합 인증 체계는 5개 회원국에 단일 적합성 마크로 적용됩니다. 하나의 인증으로 다섯 개 시장을 커버합니다.",
     desc:
       "TR CU 기술규정 및 EAC 적합성 선언을 처음부터 끝까지 관리합니다. 인증기관 선정부터 FSIS 데이터베이스 등록까지 전 과정을 지원합니다.",
-    certifications: ["TR CU", "EAC", "GOST-R", "GOST ISO", "화재안전 인증서", "위생역학 결론서"],
+    certifications: cert(["TR CU", "EAC", "GOST-R", "GOST ISO", "화재안전 인증서", "위생역학 결론서"]),
   },
   {
     n: "02",
@@ -31,7 +39,7 @@ export const STEPS: Step[] = [
       "CE 마킹은 4억 5천만 소비자 규모의 EU 단일시장 진입을 위한 필수 요건으로, 세계에서 가장 엄격한 제품안전 체계를 기반으로 합니다.",
     desc:
       "저전압 지침부터 기계류 규정까지, 적용 지침을 선별하고 공인 인증기관을 연결하며 완전한 기술 문서를 작성합니다.",
-    certifications: ["CE 마킹", "REACH", "RoHS / RoHS3", "WEEE", "ErP / 에코디자인", "무선기기 지침 (RED)"],
+    certifications: cert(["CE 마킹", "REACH", "RoHS / RoHS3", "WEEE", "ErP / 에코디자인", "무선기기 지침 (RED)"]),
   },
   {
     n: "03",
@@ -41,7 +49,7 @@ export const STEPS: Step[] = [
       "BIS 강제 등록(IS 제도)은 전자·전기제품 및 소비재가 인도에 진입하기 위한 핵심 관문입니다.",
     desc:
       "NABL 공인 시험소에서의 BIS 시험을 조율하고, CRS/ISI 신청 포털을 관리하며, 해외 제조사의 연락 담당자 등록을 지원합니다.",
-    certifications: ["BIS CRS", "BIS ISI 마크", "WPC 형식 승인", "EPR 등록", "CDSCO (의료기기)", "PESO"],
+    certifications: cert(["BIS CRS", "BIS ISI 마크", "WPC 형식 승인", "EPR 등록", "CDSCO (의료기기)", "PESO"]),
   },
   {
     n: "04",
@@ -51,7 +59,7 @@ export const STEPS: Step[] = [
       "GCC 국가들은 SASO, ESMA, ENAS 강제 인증 제도를 시행하며, 대부분의 규제 제품군에 대해 현지 수입업자 및 현지 시험을 요구합니다.",
     desc:
       "SASO SALEEM 등록, 에미리트 당국 승인, 사우디·UAE·카타르·쿠웨이트 시장 전반의 컴플라이언스 문서를 일괄 처리합니다.",
-    certifications: ["SASO SALEEM", "ENAS (UAE)", "ESMA (UAE)", "GSO", "QS 마크 (카타르)", "ICCP (쿠웨이트)"],
+    certifications: cert(["SASO SALEEM", "ENAS (UAE)", "ESMA (UAE)", "GSO", "QS 마크 (카타르)", "ICCP (쿠웨이트)"]),
   },
   {
     n: "05",
@@ -61,87 +69,47 @@ export const STEPS: Step[] = [
       "튀르키예의 CE 연계 TSE 제도와 베트남의 MOIT/QUATEST 시험 네트워크는 이 지역 산업재·소비재의 핵심 진입 관문입니다.",
     desc:
       "TSE 형식 승인, G-마크 등록, 베트남 MOIT/QUATEST 시험, 태국 TIS 신청을 관리하며, 주요 항구마다 현지 대리인을 운영합니다.",
-    certifications: ["TSE (튀르키예)", "G-마크 (튀르키예)", "MOIT / QUATEST (베트남)", "TIS (태국)", "SNI (인도네시아)", "PSB (싱가포르)"],
+    certifications: cert(["TSE (튀르키예)", "G-마크 (튀르키예)", "MOIT / QUATEST (베트남)", "TIS (태국)", "SNI (인도네시아)", "PSB (싱가포르)"]),
   },
 ];
 
-const WHEEL_LOCK_MS = 650;
-const WHEEL_THRESHOLD = 24;
-const SWIPE_THRESHOLD = 40;
+const AUTOPLAY_MS = 5000;
 
-export default function ServiceProcess() {
+export default function ServiceProcess({ steps = STEPS }: { steps?: Step[] }) {
   const sectionRef = useRef<HTMLElement>(null);
   const [active, setActive] = useState(0);
   const [inView, setInView] = useState(false);
-  const lockedRef = useRef(false);
-  const activeRef = useRef(0);
-  const touchStartY = useRef<number | null>(null);
-
-  useEffect(() => {
-    activeRef.current = active;
-  }, [active]);
 
   useEffect(() => {
     const el = sectionRef.current;
     if (!el) return;
     const io = new IntersectionObserver(
-      ([entry]) => setInView(entry.isIntersecting && entry.intersectionRatio > 0.6),
-      { threshold: [0, 0.6, 1] },
+      ([entry]) => setInView(entry.isIntersecting && entry.intersectionRatio > 0.4),
+      { threshold: [0, 0.4, 1] },
     );
     io.observe(el);
     return () => io.disconnect();
   }, []);
 
+  // 화살표 네비게이션 — 양 끝에서 멈춤
   const step = useCallback((dir: 1 | -1) => {
-    if (lockedRef.current) return;
-    const next = activeRef.current + dir;
-    if (next < 0 || next >= STEPS.length) return;
-    lockedRef.current = true;
-    setActive(next);
-    setTimeout(() => {
-      lockedRef.current = false;
-    }, WHEEL_LOCK_MS);
-  }, []);
+    setActive((cur) => {
+      const next = cur + dir;
+      if (next < 0 || next >= steps.length) return cur;
+      return next;
+    });
+  }, [steps.length]);
 
+  // 화면에 보일 때만 일정 시간마다 자동 전환 (끝에서 처음으로 순환)
   useEffect(() => {
-    if (!inView) return;
+    if (!inView || steps.length <= 1) return;
+    const id = setInterval(() => {
+      setActive((cur) => (cur + 1) % steps.length);
+    }, AUTOPLAY_MS);
+    return () => clearInterval(id);
+  }, [inView, steps.length, active]);
 
-    const onWheel = (e: WheelEvent) => {
-      if (Math.abs(e.deltaY) < WHEEL_THRESHOLD) return;
-      const dir = e.deltaY > 0 ? 1 : -1;
-      const atEnd = dir === 1 && activeRef.current === STEPS.length - 1;
-      const atStart = dir === -1 && activeRef.current === 0;
-      if (atEnd || atStart) return;
-      e.preventDefault();
-      step(dir);
-    };
-    const onTouchStart = (e: TouchEvent) => {
-      touchStartY.current = e.touches[0].clientY;
-    };
-    const onTouchMove = (e: TouchEvent) => {
-      if (touchStartY.current === null) return;
-      const dy = touchStartY.current - e.touches[0].clientY;
-      if (Math.abs(dy) < SWIPE_THRESHOLD) return;
-      const dir = dy > 0 ? 1 : -1;
-      const atEnd = dir === 1 && activeRef.current === STEPS.length - 1;
-      const atStart = dir === -1 && activeRef.current === 0;
-      if (atEnd || atStart) return;
-      e.preventDefault();
-      step(dir);
-      touchStartY.current = e.touches[0].clientY;
-    };
-
-    window.addEventListener("wheel", onWheel, { passive: false });
-    window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: false });
-    return () => {
-      window.removeEventListener("wheel", onWheel);
-      window.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchmove", onTouchMove);
-    };
-  }, [inView, step]);
-
-  const current = STEPS[active];
+  const current = steps[active];
 
   return (
     <section
@@ -198,7 +166,7 @@ export default function ServiceProcess() {
           </AnimatePresence>
 
           <div className="mt-14 flex items-center gap-1.5">
-            {STEPS.map((s, i) => (
+            {steps.map((s, i) => (
               <button
                 key={s.n}
                 type="button"
@@ -215,7 +183,7 @@ export default function ServiceProcess() {
             ))}
           </div>
           <div className="mt-4 font-mono text-[10px] tracking-[0.25em] text-white/60 uppercase">
-            {String(active + 1).padStart(2, "0")} / {String(STEPS.length).padStart(2, "0")}
+            {String(active + 1).padStart(2, "0")} / {String(steps.length).padStart(2, "0")}
           </div>
         </div>
 
@@ -258,14 +226,24 @@ export default function ServiceProcess() {
                     인증 항목
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {current.certifications.map((cert) => (
-                      <span
-                        key={cert}
-                        className="inline-flex items-center rounded border border-(--brand)/20 bg-(--brand)/5 px-3 py-1.5 text-xs font-semibold tracking-wide text-(--brand)"
-                      >
-                        {cert}
-                      </span>
-                    ))}
+                    {current.certifications.map((c) =>
+                      c.href && c.href !== "#" ? (
+                        <Link
+                          key={`${current.n}-${c.title}`}
+                          href={c.href}
+                          className="inline-flex items-center rounded border border-(--brand)/20 bg-(--brand)/5 px-3 py-1.5 text-xs font-semibold tracking-wide text-(--brand) transition-colors hover:bg-(--brand) hover:text-white hover:border-(--brand)"
+                        >
+                          {c.title}
+                        </Link>
+                      ) : (
+                        <span
+                          key={`${current.n}-${c.title}`}
+                          className="inline-flex items-center rounded border border-(--brand)/20 bg-(--brand)/5 px-3 py-1.5 text-xs font-semibold tracking-wide text-(--brand)"
+                        >
+                          {c.title}
+                        </span>
+                      ),
+                    )}
                   </div>
                 </div>
               </div>
@@ -273,7 +251,7 @@ export default function ServiceProcess() {
           </AnimatePresence>
 
           <div className="lg:hidden mt-6 flex items-center gap-1.5">
-            {STEPS.map((s, i) => (
+            {steps.map((s, i) => (
               <button
                 key={s.n}
                 type="button"
@@ -306,7 +284,7 @@ export default function ServiceProcess() {
       <button
         type="button"
         onClick={() => step(1)}
-        disabled={active === STEPS.length - 1}
+        disabled={active === steps.length - 1}
         className="hidden sm:flex absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-10 w-11 h-11 items-center justify-center rounded-full border border-white/30 text-white bg-white/5 backdrop-blur-sm hover:bg-white hover:text-(--brand) hover:border-white transition-all duration-300 disabled:opacity-0 disabled:pointer-events-none"
         aria-label="Next country"
       >

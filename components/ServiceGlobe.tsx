@@ -143,12 +143,12 @@ export default function ServiceGlobe() {
                 <p className="mt-3 text-sm text-white/70 leading-relaxed">{selected.desc}</p>
                 {selected.certifications.length > 0 && (
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {selected.certifications.map((cert) => (
+                    {selected.certifications.map((c) => (
                       <span
-                        key={cert}
+                        key={c.title}
                         className="inline-flex items-center rounded border border-(--gold)/30 bg-(--gold)/10 px-2.5 py-1 text-xs font-semibold text-(--gold)"
                       >
-                        {cert}
+                        {c.title}
                       </span>
                     ))}
                   </div>

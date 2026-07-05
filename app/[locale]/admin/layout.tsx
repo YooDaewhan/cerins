@@ -25,6 +25,7 @@ export default async function AdminLayout({ children, params }: Props) {
     { href: `${base}/menus`, label: "메뉴" },
     { href: `${base}/pages`, label: "페이지" },
     { href: `${base}/posts`, label: "뉴스" },
+    { href: `${base}/faqs`, label: "FAQ" },
     { href: `${base}/hero-slides`, label: "히어로 슬라이드" },
     { href: `${base}/partners`, label: "파트너" },
     { href: `${base}/locales`, label: "언어" },

@@ -1,9 +1,10 @@
 "use client";
 
 import { useId, useMemo, useState } from "react";
+import Link from "next/link";
 import { geoCentroid, geoNaturalEarth1, geoPath } from "d3-geo";
 import { type Step } from "./ServiceProcess";
-import { COUNTRY_TO_STEP, loadWorldCountries } from "./worldGeo";
+import { COUNTRY_TO_STEP, HOME, WEST_BOUND, loadWorldCountries } from "./worldGeo";
 
 const WIDTH = 820;
 const HEIGHT = 430;
@@ -12,22 +13,32 @@ const HEIGHT = 430;
 const REGION = {
   type: "Polygon" as const,
   coordinates: [[
-    [-25, -55],
+    [WEST_BOUND, -55],
     [180, -55],
     [180, 72],
-    [-25, 72],
-    [-25, -55],
+    [WEST_BOUND, 72],
+    [WEST_BOUND, -55],
   ]],
 };
 
-export default function ServiceFlatMap() {
+export default function ServiceFlatMap({ steps }: { steps?: Step[] }) {
   const allCountries = useMemo(() => loadWorldCountries(), []);
+
+  const countryToStep = useMemo(() => {
+    if (!steps || steps.length === 0) return COUNTRY_TO_STEP;
+    const map: Record<string, Step> = {};
+    for (const step of steps) {
+      for (const name of step.mapCountries ?? []) map[name] = step;
+    }
+    map["South Korea"] = HOME;
+    return map;
+  }, [steps]);
 
   const countries = useMemo(
     () =>
       allCountries.filter((c) => {
         const [lon, lat] = geoCentroid(c);
-        return lon >= -25 && lon <= 180 && lat >= -55 && lat <= 72;
+        return lon >= WEST_BOUND && lon <= 180 && lat >= -55 && lat <= 72;
       }),
     [allCountries],
   );
@@ -66,7 +77,7 @@ export default function ServiceFlatMap() {
   }, [activeName, koreaCentroid, nameToFeature, pathGen]);
 
   const handleClick = (name: string) => {
-    const step = COUNTRY_TO_STEP[name];
+    const step = countryToStep[name];
     if (!step) return;
     setSelected(step);
     setSelectedName(name === "South Korea" ? null : name);
@@ -78,7 +89,7 @@ export default function ServiceFlatMap() {
       aria-label="Interactive service coverage flat map"
     >
       <svg
-        viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+        viewBox={`${WIDTH * 0.05} ${-HEIGHT * 0.1} ${WIDTH} ${HEIGHT}`}
         preserveAspectRatio="xMidYMid slice"
         className="absolute inset-0 h-full w-full select-none"
       >
@@ -97,7 +108,7 @@ export default function ServiceFlatMap() {
         </defs>
         {countries.map((c) => {
           const name = c.properties.name;
-          const step = COUNTRY_TO_STEP[name];
+          const step = countryToStep[name];
           const isHome = name === "South Korea";
           const isSelected = selected && step === selected;
           return (
@@ -161,14 +172,24 @@ export default function ServiceFlatMap() {
                 <p className="mt-3 text-sm text-white/70 leading-relaxed">{selected.desc}</p>
                 {selected.certifications.length > 0 && (
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {selected.certifications.map((cert) => (
-                      <span
-                        key={cert}
-                        className="inline-flex items-center rounded border border-(--gold)/30 bg-(--gold)/10 px-2.5 py-1 text-xs font-semibold text-(--gold)"
-                      >
-                        {cert}
-                      </span>
-                    ))}
+                    {selected.certifications.map((c) =>
+                      c.href && c.href !== "#" ? (
+                        <Link
+                          key={c.title}
+                          href={c.href}
+                          className="inline-flex items-center rounded border border-(--gold)/30 bg-(--gold)/10 px-2.5 py-1 text-xs font-semibold text-(--gold) transition-colors hover:bg-(--gold) hover:text-(--on-brand)"
+                        >
+                          {c.title}
+                        </Link>
+                      ) : (
+                        <span
+                          key={c.title}
+                          className="inline-flex items-center rounded border border-(--gold)/30 bg-(--gold)/10 px-2.5 py-1 text-xs font-semibold text-(--gold)"
+                        >
+                          {c.title}
+                        </span>
+                      ),
+                    )}
                   </div>
                 )}
               </div>

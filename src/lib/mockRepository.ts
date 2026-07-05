@@ -7,7 +7,10 @@ import {
 } from "@/src/lib/i18n";
 import type {
   AlternateUrl,
+  CertificationCountry,
+  CertificationLink,
   HeroSlide,
+  HeroTag,
   Locale,
   LocaleCode,
   Menu,
@@ -43,6 +46,7 @@ function pathForPage(
       case "services":      return `/services/${page.slug}`;
       case "contact":       return "/contact";
       case "news_list":     return "/news";
+      case "faq_list":      return "/faq";
       case "simple":        return `/${page.slug}`;
     }
   })();
@@ -160,6 +164,71 @@ export async function listPagesByTemplate(
     }
   }
   return results;
+}
+
+// 메인페이지 인증 섹션용: 인증 국가(최상위 certification 페이지)와
+// 그 하위 인증서 페이지 제목 목록. 어드민 페이지 관리의 "+하위" 로 추가한
+// 하위 페이지가 그대로 인증서 목록이 된다.
+export async function listCertificationCountries(
+  locale: LocaleCode,
+): Promise<CertificationCountry[]> {
+  const all = await listPagesByTemplate("certification", locale, "any");
+  const slugById = new Map<number, string>();
+  for (const { page } of all) slugById.set(page.id, page.slug);
+
+  const certsByParent = new Map<number, CertificationLink[]>();
+  for (const { page, translation } of all) {
+    if (page.parent_id == null) continue;
+    const list = certsByParent.get(page.parent_id) ?? [];
+    list.push({
+      title: translation.title,
+      href: pathForPage(page, locale, slugById.get(page.parent_id) ?? null),
+    });
+    certsByParent.set(page.parent_id, list);
+  }
+  return all
+    .filter(({ page }) => page.parent_id == null && page.slug !== "certification")
+    .map(({ page, translation }) => ({
+      slug: page.slug,
+      title: translation.title,
+      subtitle: translation.subtitle ?? null,
+      content: Array.isArray(translation.content) ? translation.content : [],
+      certifications: certsByParent.get(page.id) ?? [],
+    }));
+}
+
+// 메인 히어로 우측 태그 클라우드용: 인증(certification)·검사(inspection) 템플릿의
+// 하위 페이지(=인증서/검사 항목)들을 제목 + 링크 형태로 뽑아온다. 부모(국가/분류)
+// 페이지는 제외하고, 두 템플릿을 번갈아 섞어 limit개까지 반환한다.
+export async function listHeroTags(
+  locale: LocaleCode,
+  limit = 15,
+): Promise<HeroTag[]> {
+  const [certs, inspections] = await Promise.all([
+    listPagesByTemplate("certification", locale, "any"),
+    listPagesByTemplate("inspection", locale, "any"),
+  ]);
+
+  const slugById = new Map<number, string>();
+  for (const { page } of [...certs, ...inspections]) slugById.set(page.id, page.slug);
+
+  const toTags = (pages: PageWithTranslation[]): HeroTag[] =>
+    pages
+      .filter(({ page }) => page.parent_id != null)
+      .map(({ page, translation }) => ({
+        title: translation.title,
+        href: pathForPage(page, locale, slugById.get(page.parent_id!) ?? null),
+      }));
+
+  // 인증/검사를 번갈아 배치해 한쪽으로 치우치지 않게 한다.
+  const certTags = toTags(certs);
+  const inspTags = toTags(inspections);
+  const interleaved: HeroTag[] = [];
+  for (let i = 0; i < Math.max(certTags.length, inspTags.length); i++) {
+    if (certTags[i]) interleaved.push(certTags[i]);
+    if (inspTags[i]) interleaved.push(inspTags[i]);
+  }
+  return interleaved.slice(0, limit);
 }
 
 // ── Menus ──────────────────────────────────────────────────────────────────

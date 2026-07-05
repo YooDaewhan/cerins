@@ -10,6 +10,7 @@ export type PageTemplate =
   | "inspection"
   | "services"
   | "news_list"
+  | "faq_list"
   | "contact"
   | "simple";
 
@@ -99,6 +100,27 @@ export interface Partner {
   website?: string;
   sort_order: number;
   is_visible: boolean;
+}
+
+/** 인증 항목: 하위 인증서 페이지 제목 + 상세 페이지 링크 */
+export interface CertificationLink {
+  title: string;
+  href: string;
+}
+
+/** 메인페이지 인증 섹션용: 인증 국가 페이지 + 하위 인증서 페이지 목록 */
+export interface CertificationCountry {
+  slug: string;
+  title: string;
+  subtitle: string | null;
+  content: PageContentBlock[];
+  certifications: CertificationLink[];
+}
+
+/** 메인 히어로 슬라이더 우측 태그 클라우드용: 인증서/검사 하위 페이지 제목 + 링크 */
+export interface HeroTag {
+  title: string;
+  href: string;
 }
 
 export interface HeroSlide {
