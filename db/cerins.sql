@@ -1298,6 +1298,58 @@ INSERT INTO users (login_id, password_hash, email, email_consent, account_type, 
    'admin@cerins.local',
    0, 'business', 9);
 
+-- ---------------------------------------------------------------------
+-- 11. inquiries / satisfaction_reviews / staff_evaluations
+--   - inquiries            : /contact 문의 폼 접수 내역 (누구나 제출)
+--   - satisfaction_reviews : 고객 만족도 (일반회원=1 / 기업회원=3 제출)
+--   - staff_evaluations    : 직원 평가 (직원=7 제출)
+--   - 별점 항목은 ratings(JSON)에 {항목키: 점수} 로 저장 → 항목 추가 시 스키마 변경 불필요.
+--     (항목 라벨은 src/lib/reviewTypes.ts 와 동기화)
+-- ---------------------------------------------------------------------
+CREATE TABLE inquiries (
+  id         BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  name       VARCHAR(190) NOT NULL,
+  company    VARCHAR(190) NULL,
+  department VARCHAR(190) NULL,
+  country    VARCHAR(120) NULL,
+  email      VARCHAR(190) NOT NULL,
+  website    VARCHAR(255) NULL,
+  phone      VARCHAR(60)  NULL,
+  subject    VARCHAR(255) NOT NULL,
+  message    TEXT         NOT NULL,
+  created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_inquiries_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE satisfaction_reviews (
+  id         BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  user_id    BIGINT       NULL,
+  name       VARCHAR(190) NOT NULL,
+  company    VARCHAR(190) NULL,
+  email      VARCHAR(190) NULL,
+  ratings    JSON         NOT NULL,
+  comment    TEXT         NULL,
+  created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_satisfaction_created_at (created_at),
+  INDEX idx_satisfaction_user_id (user_id),
+  CONSTRAINT fk_satisfaction_user FOREIGN KEY (user_id)
+    REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE staff_evaluations (
+  id         BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  user_id    BIGINT       NULL,
+  name       VARCHAR(190) NOT NULL,
+  department VARCHAR(190) NULL,
+  ratings    JSON         NOT NULL,
+  comment    TEXT         NULL,
+  created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_staff_eval_created_at (created_at),
+  INDEX idx_staff_eval_user_id (user_id),
+  CONSTRAINT fk_staff_eval_user FOREIGN KEY (user_id)
+    REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- =====================================================================
 -- 끝.
 -- =====================================================================

@@ -29,6 +29,9 @@ export default async function AdminLayout({ children, params }: Props) {
     { href: `${base}/hero-slides`, label: "히어로 슬라이드" },
     { href: `${base}/partners`, label: "파트너" },
     { href: `${base}/locales`, label: "언어" },
+    { href: `${base}/inquiries`, label: "문의" },
+    { href: `${base}/satisfaction`, label: "고객만족도" },
+    { href: `${base}/staff-evaluations`, label: "직원평가" },
   ];
 
   return (

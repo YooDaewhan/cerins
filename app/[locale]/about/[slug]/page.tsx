@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
+import LocationMap from "@/components/LocationMap";
 import {
   buildLocalizedPath,
   getAlternateUrls,
@@ -90,17 +91,21 @@ export default async function AboutDetailPage({ params }: Props) {
           </aside>
 
           <div className="flex-1 min-w-0">
-            <div className="space-y-10">
-              {page.translation.content.map((block, i) => (
-                <div key={i}>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-1 h-6 bg-[#c9a84c] rounded" />
-                    <h2 className="text-xl font-bold text-(--brand)">{block.heading}</h2>
+            {slug === "location" ? (
+              <LocationMap />
+            ) : (
+              <div className="space-y-10">
+                {page.translation.content.map((block, i) => (
+                  <div key={i}>
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-1 h-6 bg-[#c9a84c] rounded" />
+                      <h2 className="text-xl font-bold text-(--brand)">{block.heading}</h2>
+                    </div>
+                    <p className="text-gray-600 leading-relaxed whitespace-pre-line pl-4">{block.body}</p>
                   </div>
-                  <p className="text-gray-600 leading-relaxed whitespace-pre-line pl-4">{block.body}</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             <div className="mt-14 pt-6 border-t border-gray-100 flex items-center justify-between">
               <Link href={buildLocalizedPath(code, "/about")} className="text-sm text-gray-400 hover:text-(--brand) transition flex items-center gap-1">

@@ -1,10 +1,12 @@
 import Link from "next/link";
 import ThemeToggle from "./ThemeToggle";
+import FeedbackButton, { type FeedbackUser } from "./FeedbackButton";
 import type { LocaleCode, MenuNode } from "@/src/lib/types";
 
 interface FooterProps {
   menus: MenuNode[];
   locale: LocaleCode;
+  currentUser: FeedbackUser | null;
 }
 
 const DEFAULT_LOCALE: LocaleCode = "ko";
@@ -15,7 +17,7 @@ function localized(path: string, locale: LocaleCode): string {
   return "/" + locale + path;
 }
 
-export default function Footer({ menus, locale }: FooterProps) {
+export default function Footer({ menus, locale, currentUser }: FooterProps) {
   const contactHref = localized("/contact", locale);
   const newsHref = localized("/news", locale);
 
@@ -35,25 +37,28 @@ export default function Footer({ menus, locale }: FooterProps) {
             Bring your products to global markets with{" "}
             <span className="text-(--brand)">CERINS</span>
           </h3>
-          <Link
-            href={contactHref}
-            className="group inline-flex items-center gap-2 px-6 py-3 bg-(--brand) hover:opacity-90 text-white text-sm font-bold tracking-wider uppercase rounded-full transition-opacity"
-          >
-            Get a Quote
-            <svg
-              className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <Link
+              href={contactHref}
+              className="group inline-flex items-center gap-2 px-6 py-3 bg-(--brand) hover:opacity-90 text-white text-sm font-bold tracking-wider uppercase rounded-full transition-opacity"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2.5}
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </Link>
+              Get a Quote
+              <svg
+                className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2.5}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </Link>
+            <FeedbackButton currentUser={currentUser} />
+          </div>
         </div>
       </div>
 

@@ -49,7 +49,19 @@ export default async function LocaleLayout({
         currentUser={headerUser}
       />
       <main className="flex-1 pt-20">{children}</main>
-      <Footer menus={menus} locale={code} />
+      <Footer
+        menus={menus}
+        locale={code}
+        currentUser={
+          currentUser
+            ? {
+                login_id: currentUser.login_id,
+                email: currentUser.email,
+                user_level: currentUser.user_level,
+              }
+            : null
+        }
+      />
     </ThemeProvider>
   );
 }
