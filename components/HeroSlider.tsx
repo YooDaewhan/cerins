@@ -322,7 +322,7 @@ export default function HeroSlider({ slides, locale, tags = [] }: HeroSliderProp
             <div className="hidden lg:flex flex-col gap-7 content-center justify-center lg:mt-28">
               <form
                 onSubmit={handleSearch}
-                className="w-full max-w-xs ml-auto"
+                className="w-full min-w-[340px] ml-auto"
                 style={{
                   animation: "tagFloat 0.6s cubic-bezier(.2,.7,.2,1) 0.2s both",
                 }}
@@ -382,7 +382,7 @@ export default function HeroSlider({ slides, locale, tags = [] }: HeroSliderProp
 
               {/* 동영상 재생 공간 — 우선 검은 배경으로 자리만 확보 */}
               <div
-                className="w-full max-w-xs ml-auto aspect-video rounded-xl bg-black border border-white/15 overflow-hidden"
+                className="w-full min-w-[340px] ml-auto aspect-video rounded-xl bg-black border border-white/15 overflow-hidden"
                 style={{
                   animation: "tagFloat 0.6s cubic-bezier(.2,.7,.2,1) 0.4s both",
                 }}
