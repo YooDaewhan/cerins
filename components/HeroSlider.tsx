@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import type { HeroSlide, HeroTag, LocaleCode } from "@/src/lib/types";
 import { isVideoUrl } from "@/src/lib/media";
+import { buildLocalizedPath } from "@/src/lib/i18n";
 
 const INTERVAL = 5500;
 const FLIP_DURATION = 1000;
@@ -47,6 +49,18 @@ function localized(path: string, locale: LocaleCode): string {
 export default function HeroSlider({ slides, locale, tags = [] }: HeroSliderProps) {
   const total = slides.length;
   const hasVideo = slides.some((s) => isVideoUrl(s.image));
+  const router = useRouter();
+
+  // 검색창 아래로 노출할 키워드 — 상단 4개는 검색창으로 대체하며 제외
+  const shownTags = tags.slice(4);
+  const [query, setQuery] = useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = query.trim();
+    if (!q) return;
+    router.push(buildLocalizedPath(locale, `/search?q=${encodeURIComponent(q)}`));
+  };
 
   const [flipCount, setFlipCount] = useState(0);
   const [frontIdx, setFrontIdx] = useState(0);
@@ -305,27 +319,67 @@ export default function HeroSlider({ slides, locale, tags = [] }: HeroSliderProp
             </div>
             </div>
 
-            {tags.length > 0 && (
-              <div className="hidden lg:grid grid-cols-2 gap-x-10 gap-y-3.5 content-center justify-items-end text-right">
-                {tags.map((t, i) => {
-                  const size = TAG_SIZES[(i * 3 + 1) % TAG_SIZES.length];
-                  const accent = i % 5 === 0;
-                  return (
-                    <a
-                      key={`${t.href}-${i}`}
-                      href={t.href}
-                      className={`group flex items-baseline gap-2 ${size} leading-none whitespace-nowrap transition-colors duration-300 hover:text-(--brand) ${accent ? "text-white/90 font-semibold" : "text-white/55 font-medium"}`}
-                      style={{
-                        animation: `tagFloat 0.6s cubic-bezier(.2,.7,.2,1) ${0.25 + i * 0.035}s both`,
-                      }}
+            <div className="hidden lg:flex flex-col gap-7 content-center justify-center">
+              <form
+                onSubmit={handleSearch}
+                className="w-full max-w-xs ml-auto"
+                style={{
+                  animation: "tagFloat 0.6s cubic-bezier(.2,.7,.2,1) 0.2s both",
+                }}
+              >
+                <div className="relative">
+                  <input
+                    type="search"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="인증·국가 검색"
+                    aria-label="인증 검색"
+                    className="w-full rounded-full bg-white/10 border border-white/25 backdrop-blur-md pl-5 pr-12 py-3 text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-(--brand) focus:bg-white/15 transition-all duration-300"
+                  />
+                  <button
+                    type="submit"
+                    aria-label="검색"
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full bg-(--brand) text-white hover:bg-(--brand-dark) transition-colors duration-300"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
                     >
-                      <span className="w-0 h-px bg-(--brand) transition-all duration-300 group-hover:w-4" />
-                      {t.title}
-                    </a>
-                  );
-                })}
-              </div>
-            )}
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.2}
+                        d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </form>
+
+              {shownTags.length > 0 && (
+                <div className="grid grid-cols-2 gap-x-10 gap-y-3.5 justify-items-end text-right">
+                  {shownTags.map((t, i) => {
+                    const size = TAG_SIZES[(i * 3 + 1) % TAG_SIZES.length];
+                    const accent = i % 5 === 0;
+                    return (
+                      <a
+                        key={`${t.href}-${i}`}
+                        href={t.href}
+                        className={`group flex items-baseline gap-2 ${size} leading-none whitespace-nowrap transition-colors duration-300 hover:text-(--brand) ${accent ? "text-white/90 font-semibold" : "text-white/55 font-medium"}`}
+                        style={{
+                          animation: `tagFloat 0.6s cubic-bezier(.2,.7,.2,1) ${0.28 + i * 0.035}s both`,
+                        }}
+                      >
+                        <span className="w-0 h-px bg-(--brand) transition-all duration-300 group-hover:w-4" />
+                        {t.title}
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
