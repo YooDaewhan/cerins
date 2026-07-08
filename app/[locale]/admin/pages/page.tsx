@@ -13,10 +13,11 @@ interface Props {
 
 export default async function AdminPagesPage({ params }: Props) {
   const { locale } = await params;
+  const isPrimary = locale === "ko";
   return (
     <div>
       <h2 className="text-lg font-semibold text-gray-800 mb-4">페이지 관리</h2>
-      <PagesAdminClient locale={locale} />
+      <PagesAdminClient locale={locale} isPrimary={isPrimary} />
     </div>
   );
 }

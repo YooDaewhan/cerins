@@ -38,6 +38,11 @@ interface ApiData {
 
 type DraftState = Omit<AdminMenu, "id">;
 
+interface Props {
+  locale: LocaleCode;
+  isPrimary: boolean;
+}
+
 function emptyDraft(parent_id: number | null, nextSort: number): DraftState {
   return {
     parent_id,
@@ -50,7 +55,7 @@ function emptyDraft(parent_id: number | null, nextSort: number): DraftState {
   };
 }
 
-export default function MenusAdminClient() {
+export default function MenusAdminClient({ locale, isPrimary }: Props) {
   const [data, setData] = useState<ApiData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -82,6 +87,11 @@ export default function MenusAdminClient() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const localeName = useMemo(() => {
+    const l = data?.locales.find((x) => x.code === locale);
+    return l ? `${l.native_name} (${l.code})` : locale;
+  }, [data, locale]);
 
   const childrenOf = useMemo(() => {
     const map = new Map<number | null, AdminMenu[]>();
@@ -126,7 +136,7 @@ export default function MenusAdminClient() {
   }
 
   function startCreate(parent_id: number | null) {
-    if (!data) return;
+    if (!data || !isPrimary) return;
     setEditingId(null);
     setCreatingFor(parent_id ?? "root");
     const siblings = childrenOf.get(parent_id) ?? [];
@@ -148,7 +158,7 @@ export default function MenusAdminClient() {
   }
 
   async function saveCreate() {
-    if (!createDraft) return;
+    if (!createDraft || !isPrimary) return;
     const ko = (createDraft.translations.ko ?? "").trim();
     if (!ko) {
       setError("한국어 라벨은 필수입니다.");
@@ -181,10 +191,25 @@ export default function MenusAdminClient() {
     setBusy(true);
     setError(null);
     try {
+      // Primary(ko) admin can change structure fields + the ko label.
+      // Other-language admins only upsert their own locale's label.
+      const payload = isPrimary
+        ? {
+            parent_id: draft.parent_id,
+            page_id: draft.page_id,
+            url: draft.url,
+            mega_image_url: draft.mega_image_url,
+            sort_order: draft.sort_order,
+            is_visible: draft.is_visible,
+            translations: { ko: draft.translations.ko ?? "" },
+          }
+        : {
+            translations: { [locale]: draft.translations[locale] ?? "" },
+          };
       const res = await fetch(`/api/admin/menus/${editingId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(draft),
+        body: JSON.stringify(payload),
       });
       const json = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok || !json.ok) {
@@ -201,6 +226,7 @@ export default function MenusAdminClient() {
   }
 
   async function removeMenu(m: AdminMenu) {
+    if (!isPrimary) return;
     const kids = childrenOf.get(m.id) ?? [];
     const label = m.translations.ko ?? m.translations.en ?? `#${m.id}`;
     const warn =
@@ -240,15 +266,28 @@ export default function MenusAdminClient() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border border-gray-200 bg-amber-50 px-4 py-3 text-xs text-gray-700">
-        <p className="font-semibold mb-1">메뉴 구조 안내</p>
-        <ul className="list-disc list-inside space-y-0.5 text-gray-600">
-          <li>하위 메뉴가 1개 이상이면 사이트 헤더에서 자동으로 메가패널(드롭다운)로 표시됩니다.</li>
-          <li>하위 메뉴가 없으면 단일 링크로 표시됩니다. (예: 문의, 뉴스)</li>
-          <li>메가패널 배경 이미지는 최상위 메뉴에만 적용됩니다.</li>
-          <li>각 메뉴는 등록된 페이지를 선택하거나 직접 URL을 입력할 수 있습니다. 페이지 선택이 우선합니다.</li>
-        </ul>
-      </div>
+      {isPrimary ? (
+        <div className="rounded-md border border-gray-200 bg-amber-50 px-4 py-3 text-xs text-gray-700">
+          <p className="font-semibold mb-1">메뉴 구조 안내 · 한국어 관리자</p>
+          <ul className="list-disc list-inside space-y-0.5 text-gray-600">
+            <li>메뉴 구조(추가·삭제·정렬·링크·노출)와 한국어 라벨은 이 화면에서 관리합니다.</li>
+            <li>하위 메뉴가 1개 이상이면 사이트 헤더에서 자동으로 메가패널(드롭다운)로 표시됩니다.</li>
+            <li>하위 메뉴가 없으면 단일 링크로 표시됩니다. (예: 문의, 뉴스)</li>
+            <li>다른 언어 라벨은 각 언어 관리자 화면에서 번역합니다.</li>
+          </ul>
+        </div>
+      ) : (
+        <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-gray-700">
+          <p className="font-semibold mb-1">
+            {localeName} 라벨 번역
+          </p>
+          <ul className="list-disc list-inside space-y-0.5 text-gray-600">
+            <li>메뉴 구조(추가·삭제·정렬·링크)는 한국어 관리자가 관리합니다.</li>
+            <li>이 화면에서는 각 메뉴의 <b>{localeName}</b> 라벨만 입력·수정합니다.</li>
+            <li>번역이 비어 있으면 사이트에서 한국어 라벨로 대체됩니다.</li>
+          </ul>
+        </div>
+      )}
 
       {error && (
         <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
@@ -266,20 +305,24 @@ export default function MenusAdminClient() {
           >
             새로고침
           </button>
-          <button
-            type="button"
-            onClick={() => startCreate(null)}
-            className="rounded bg-(--brand) text-white px-3 py-1.5 text-xs font-semibold hover:opacity-90"
-          >
-            + 최상위 메뉴 추가
-          </button>
+          {isPrimary && (
+            <button
+              type="button"
+              onClick={() => startCreate(null)}
+              className="rounded bg-(--brand) text-white px-3 py-1.5 text-xs font-semibold hover:opacity-90"
+            >
+              + 최상위 메뉴 추가
+            </button>
+          )}
         </div>
       </div>
 
-      {creatingFor === "root" && createDraft && (
+      {isPrimary && creatingFor === "root" && createDraft && (
         <MenuForm
           title="새 최상위 메뉴"
-          locales={data.locales}
+          locale={locale}
+          localeName={localeName}
+          isPrimary={isPrimary}
           pages={data.pages}
           isTopLevel={true}
           draft={createDraft}
@@ -318,7 +361,9 @@ export default function MenusAdminClient() {
             onChildCancelEdit={cancelEdit}
             onChildSaveEdit={saveEdit}
             onChildDelete={removeMenu}
-            locales={data.locales}
+            locale={locale}
+            localeName={localeName}
+            isPrimary={isPrimary}
             pages={data.pages}
             busy={busy}
           />
@@ -353,9 +398,15 @@ interface MenuRowProps {
   onChildCancelEdit: () => void;
   onChildSaveEdit: () => void;
   onChildDelete: (m: AdminMenu) => void;
-  locales: AdminLocale[];
+  locale: LocaleCode;
+  localeName: string;
+  isPrimary: boolean;
   pages: AdminPage[];
   busy: boolean;
+}
+
+function displayLabel(menu: AdminMenu, locale: LocaleCode): string {
+  return menu.translations[locale] ?? menu.translations.ko ?? `#${menu.id}`;
 }
 
 function MenuRow(props: MenuRowProps) {
@@ -384,12 +435,15 @@ function MenuRow(props: MenuRowProps) {
     onChildCancelEdit,
     onChildSaveEdit,
     onChildDelete,
-    locales,
+    locale,
+    localeName,
+    isPrimary,
     pages,
     busy,
   } = props;
 
-  const label = menu.translations.ko ?? menu.translations.en ?? `#${menu.id}`;
+  const label = displayLabel(menu, locale);
+  const missingTranslation = !isPrimary && !menu.translations[locale];
   const isParent = menu.parent_id === null;
   const childCount = children.length;
   const target = menu.page_id
@@ -421,6 +475,11 @@ function MenuRow(props: MenuRowProps) {
             <span className="text-sm font-semibold text-gray-800 truncate">
               {label}
             </span>
+            {missingTranslation && (
+              <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
+                미번역
+              </span>
+            )}
             {!menu.is_visible && (
               <span className="text-[10px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded">
                 숨김
@@ -442,7 +501,7 @@ function MenuRow(props: MenuRowProps) {
           </div>
         </div>
         <div className="flex gap-1">
-          {isParent && (
+          {isPrimary && isParent && (
             <button
               type="button"
               onClick={onAddChild}
@@ -458,21 +517,27 @@ function MenuRow(props: MenuRowProps) {
           >
             수정
           </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            className="rounded border border-red-300 text-red-600 px-2.5 py-1 text-xs hover:bg-red-50"
-          >
-            삭제
-          </button>
+          {isPrimary && (
+            <button
+              type="button"
+              onClick={onDelete}
+              className="rounded border border-red-300 text-red-600 px-2.5 py-1 text-xs hover:bg-red-50"
+            >
+              삭제
+            </button>
+          )}
         </div>
       </div>
 
       {isEditing && draft && (
         <div className="border-t border-gray-200 bg-gray-50 px-4 py-4">
           <MenuForm
-            title={`메뉴 #${menu.id} 수정`}
-            locales={locales}
+            title={
+              isPrimary ? `메뉴 #${menu.id} 수정` : `메뉴 #${menu.id} · ${localeName} 라벨`
+            }
+            locale={locale}
+            localeName={localeName}
+            isPrimary={isPrimary}
             pages={pages}
             isTopLevel={isParent}
             draft={draft}
@@ -487,10 +552,12 @@ function MenuRow(props: MenuRowProps) {
 
       {isParent && isExpanded && (
         <div className="border-t border-gray-200 bg-gray-50 px-4 py-3 space-y-2">
-          {createForId === menu.id && createDraft && (
+          {isPrimary && createForId === menu.id && createDraft && (
             <MenuForm
               title="새 하위 메뉴"
-              locales={locales}
+              locale={locale}
+              localeName={localeName}
+              isPrimary={isPrimary}
               pages={pages}
               isTopLevel={false}
               draft={createDraft}
@@ -507,63 +574,79 @@ function MenuRow(props: MenuRowProps) {
             </p>
           )}
           <ul className="space-y-1.5">
-            {children.map((c) => (
-              <li
-                key={c.id}
-                className="rounded border border-gray-200 bg-white"
-              >
-                <div className="flex items-center gap-2 px-3 py-2">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-800 truncate">
-                        {c.translations.ko ?? c.translations.en ?? `#${c.id}`}
-                      </span>
-                      {!c.is_visible && (
-                        <span className="text-[10px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded">
-                          숨김
+            {children.map((c) => {
+              const childMissing = !isPrimary && !c.translations[locale];
+              return (
+                <li
+                  key={c.id}
+                  className="rounded border border-gray-200 bg-white"
+                >
+                  <div className="flex items-center gap-2 px-3 py-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-800 truncate">
+                          {displayLabel(c, locale)}
                         </span>
+                        {childMissing && (
+                          <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
+                            미번역
+                          </span>
+                        )}
+                        {!c.is_visible && (
+                          <span className="text-[10px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded">
+                            숨김
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-gray-500 mt-0.5 truncate">
+                        #{c.id} · sort {c.sort_order} ·{" "}
+                        {c.page_id ? `page#${c.page_id}` : c.url ?? "(링크 없음)"}
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => startChildEdit(c)}
+                        className="rounded border border-gray-300 px-2 py-0.5 text-[11px] hover:bg-gray-50"
+                      >
+                        수정
+                      </button>
+                      {isPrimary && (
+                        <button
+                          type="button"
+                          onClick={() => onChildDelete(c)}
+                          className="rounded border border-red-300 text-red-600 px-2 py-0.5 text-[11px] hover:bg-red-50"
+                        >
+                          삭제
+                        </button>
                       )}
                     </div>
-                    <div className="text-[11px] text-gray-500 mt-0.5 truncate">
-                      #{c.id} · sort {c.sort_order} ·{" "}
-                      {c.page_id ? `page#${c.page_id}` : c.url ?? "(링크 없음)"}
+                  </div>
+                  {editingId === c.id && childDraft && (
+                    <div className="border-t border-gray-200 bg-gray-50 px-3 py-3">
+                      <MenuForm
+                        title={
+                          isPrimary
+                            ? `메뉴 #${c.id} 수정`
+                            : `메뉴 #${c.id} · ${localeName} 라벨`
+                        }
+                        locale={locale}
+                        localeName={localeName}
+                        isPrimary={isPrimary}
+                        pages={pages}
+                        isTopLevel={false}
+                        draft={childDraft}
+                        onChange={onChildDraftChange}
+                        onSave={onChildSaveEdit}
+                        onCancel={onChildCancelEdit}
+                        busy={busy}
+                        inline
+                      />
                     </div>
-                  </div>
-                  <div className="flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() => startChildEdit(c)}
-                      className="rounded border border-gray-300 px-2 py-0.5 text-[11px] hover:bg-gray-50"
-                    >
-                      수정
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onChildDelete(c)}
-                      className="rounded border border-red-300 text-red-600 px-2 py-0.5 text-[11px] hover:bg-red-50"
-                    >
-                      삭제
-                    </button>
-                  </div>
-                </div>
-                {editingId === c.id && childDraft && (
-                  <div className="border-t border-gray-200 bg-gray-50 px-3 py-3">
-                    <MenuForm
-                      title={`메뉴 #${c.id} 수정`}
-                      locales={locales}
-                      pages={pages}
-                      isTopLevel={false}
-                      draft={childDraft}
-                      onChange={onChildDraftChange}
-                      onSave={onChildSaveEdit}
-                      onCancel={onChildCancelEdit}
-                      busy={busy}
-                      inline
-                    />
-                  </div>
-                )}
-              </li>
-            ))}
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
@@ -573,7 +656,9 @@ function MenuRow(props: MenuRowProps) {
 
 interface MenuFormProps {
   title: string;
-  locales: AdminLocale[];
+  locale: LocaleCode;
+  localeName: string;
+  isPrimary: boolean;
   pages: AdminPage[];
   isTopLevel: boolean;
   draft: DraftState;
@@ -586,7 +671,9 @@ interface MenuFormProps {
 
 function MenuForm({
   title,
-  locales,
+  locale,
+  localeName,
+  isPrimary,
   pages,
   isTopLevel,
   draft,
@@ -618,85 +705,105 @@ function MenuForm({
         <h3 className="text-sm font-semibold text-gray-800">{title}</h3>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Field label="연결할 페이지">
-          <select
-            value={draft.page_id ?? ""}
-            onChange={(e) =>
-              patch("page_id", e.target.value === "" ? null : Number(e.target.value))
-            }
-            className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm bg-white"
-          >
-            <option value="">(없음)</option>
-            {pages.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.label ?? p.slug} ({p.slug})
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="또는 직접 URL">
-          <input
-            type="text"
-            value={draft.url ?? ""}
-            onChange={(e) => patch("url", e.target.value || null)}
-            placeholder="/path 또는 https://..."
-            className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
-          />
-        </Field>
-        <Field label="정렬 순서">
-          <input
-            type="number"
-            value={draft.sort_order}
-            onChange={(e) => patch("sort_order", Number(e.target.value) || 0)}
-            className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
-          />
-        </Field>
-        <Field label="노출 여부">
-          <label className="inline-flex items-center gap-2 text-sm pt-1.5">
+      {isPrimary && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="연결할 페이지">
+            <select
+              value={draft.page_id ?? ""}
+              onChange={(e) =>
+                patch("page_id", e.target.value === "" ? null : Number(e.target.value))
+              }
+              className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm bg-white"
+            >
+              <option value="">(없음)</option>
+              {pages.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.label ?? p.slug} ({p.slug})
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="또는 직접 URL">
             <input
-              type="checkbox"
-              checked={draft.is_visible}
-              onChange={(e) => patch("is_visible", e.target.checked)}
-              className="h-4 w-4 accent-(--brand)"
-            />
-            <span>사이트에 표시</span>
-          </label>
-        </Field>
-        {isTopLevel && (
-          <Field label="메가패널 배경 이미지" className="sm:col-span-2">
-            <MediaInput
-              url={draft.mega_image_url ?? ""}
-              onChange={(v) => patch("mega_image_url", v || null)}
-              accept="image/*"
-              previewClassName="h-24 w-auto"
-              helpText="이미지(png/jpg/gif/webp/svg) 업로드 또는 외부 URL."
+              type="text"
+              value={draft.url ?? ""}
+              onChange={(e) => patch("url", e.target.value || null)}
+              placeholder="/path 또는 https://..."
+              className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
             />
           </Field>
-        )}
-      </div>
+          <Field label="정렬 순서">
+            <input
+              type="number"
+              value={draft.sort_order}
+              onChange={(e) => patch("sort_order", Number(e.target.value) || 0)}
+              className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+            />
+          </Field>
+          <Field label="노출 여부">
+            <label className="inline-flex items-center gap-2 text-sm pt-1.5">
+              <input
+                type="checkbox"
+                checked={draft.is_visible}
+                onChange={(e) => patch("is_visible", e.target.checked)}
+                className="h-4 w-4 accent-(--brand)"
+              />
+              <span>사이트에 표시</span>
+            </label>
+          </Field>
+          {isTopLevel && (
+            <Field label="메가패널 배경 이미지" className="sm:col-span-2">
+              <MediaInput
+                url={draft.mega_image_url ?? ""}
+                onChange={(v) => patch("mega_image_url", v || null)}
+                accept="image/*"
+                previewClassName="h-24 w-auto"
+                helpText="이미지(png/jpg/gif/webp/svg) 업로드 또는 외부 URL."
+              />
+            </Field>
+          )}
+        </div>
+      )}
+
+      {!isPrimary && (
+        <div className="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-[11px] text-gray-500">
+          한국어 라벨: <b>{draft.translations.ko ?? "(없음)"}</b>
+          {" · "}
+          {draft.page_id ? `page#${draft.page_id}` : draft.url ?? "링크 없음"}
+        </div>
+      )}
 
       <div>
-        <p className="text-xs font-semibold text-gray-700 mb-1.5">언어별 라벨</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {locales.map((l) => (
-            <div key={l.code} className="flex items-center gap-2">
-              <span className="text-[11px] font-mono text-gray-500 w-8 uppercase">
-                {l.code}
-              </span>
-              <input
-                type="text"
-                value={draft.translations[l.code] ?? ""}
-                onChange={(e) => setTrans(l.code, e.target.value)}
-                placeholder={l.code === "ko" ? "(필수)" : "(선택)"}
-                className="flex-1 rounded border border-gray-300 px-2 py-1 text-sm"
-              />
-            </div>
-          ))}
-        </div>
-        <p className="text-[11px] text-gray-400 mt-1">
-          한국어 라벨은 필수입니다. 다른 언어가 비어 있으면 한국어로 대체됩니다.
-        </p>
+        {isPrimary ? (
+          <>
+            <p className="text-xs font-semibold text-gray-700 mb-1.5">
+              한국어 라벨
+            </p>
+            <input
+              type="text"
+              value={draft.translations.ko ?? ""}
+              onChange={(e) => setTrans("ko", e.target.value)}
+              placeholder="(필수)"
+              className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+            />
+            <p className="text-[11px] text-gray-400 mt-1">
+              한국어 라벨은 필수입니다. 다른 언어 라벨은 각 언어 관리자 화면에서 입력합니다.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-xs font-semibold text-gray-700 mb-1.5">
+              {localeName} 라벨
+            </p>
+            <input
+              type="text"
+              value={draft.translations[locale] ?? ""}
+              onChange={(e) => setTrans(locale, e.target.value)}
+              placeholder="(비우면 한국어로 대체)"
+              className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+            />
+          </>
+        )}
       </div>
 
       <div className="flex justify-end gap-2 pt-1">

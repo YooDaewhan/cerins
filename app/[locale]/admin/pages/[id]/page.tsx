@@ -17,5 +17,6 @@ export default async function AdminPageDetailPage({ params }: Props) {
   const pageId = Number(id);
   if (!Number.isFinite(pageId) || pageId <= 0) notFound();
 
-  return <PageEditorClient locale={locale} pageId={pageId} />;
+  const isPrimary = locale === "ko";
+  return <PageEditorClient locale={locale} pageId={pageId} isPrimary={isPrimary} />;
 }

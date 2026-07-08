@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ACCOUNT_TYPES,
   ACCOUNT_TYPE_LABELS,
@@ -9,6 +9,7 @@ import {
   type AccountType,
   type UserLevelKey,
 } from "@/src/lib/userTypes";
+import { locales } from "@/src/mocks/locales";
 import type { User } from "@/src/lib/types";
 
 interface Props {
@@ -29,6 +30,26 @@ const LEVEL_OPTIONS = (Object.keys(USER_LEVELS) as UserLevelKey[]).map((k) => ({
   label: USER_LEVEL_LABELS[k],
 }));
 
+const COUNTRY_LABEL: Record<string, string> = Object.fromEntries(
+  locales.map((l) => [l.code, l.native_name]),
+);
+
+function countryLabel(code: string | null): string {
+  if (!code) return "-";
+  return COUNTRY_LABEL[code] ?? code.toUpperCase();
+}
+
+type SortKey =
+  | "id"
+  | "login_id"
+  | "email"
+  | "country"
+  | "account_type"
+  | "user_level"
+  | "email_consent"
+  | "created_at";
+type SortDir = "asc" | "desc";
+
 export default function AdminUsersClient({ currentUserId }: Props) {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,6 +57,15 @@ export default function AdminUsersClient({ currentUserId }: Props) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editState, setEditState] = useState<EditState | null>(null);
   const [savingId, setSavingId] = useState<number | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+
+  // 검색 / 필터 / 정렬
+  const [query, setQuery] = useState("");
+  const [fAccount, setFAccount] = useState<AccountType | "all">("all");
+  const [fLevel, setFLevel] = useState<number | "all">("all");
+  const [fConsent, setFConsent] = useState<"all" | "yes" | "no">("all");
+  const [sortKey, setSortKey] = useState<SortKey>("id");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -58,6 +88,70 @@ export default function AdminUsersClient({ currentUserId }: Props) {
   useEffect(() => {
     void load();
   }, [load]);
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir(key === "id" || key === "created_at" ? "desc" : "asc");
+    }
+  }
+
+  const view = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    let list = users.filter((u) => {
+      if (fAccount !== "all" && u.account_type !== fAccount) return false;
+      if (fLevel !== "all" && u.user_level !== fLevel) return false;
+      if (fConsent !== "all") {
+        const want = fConsent === "yes";
+        if (u.email_consent !== want) return false;
+      }
+      if (q) {
+        const hay = [
+          u.login_id,
+          u.email,
+          u.company ?? "",
+          u.job_title ?? "",
+          u.country ?? "",
+          countryLabel(u.country),
+        ]
+          .join(" ")
+          .toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+
+    const dir = sortDir === "asc" ? 1 : -1;
+    list = [...list].sort((a, b) => {
+      let av: string | number;
+      let bv: string | number;
+      switch (sortKey) {
+        case "email_consent":
+          av = a.email_consent ? 1 : 0;
+          bv = b.email_consent ? 1 : 0;
+          break;
+        case "user_level":
+        case "id":
+          av = a[sortKey];
+          bv = b[sortKey];
+          break;
+        case "country":
+          av = countryLabel(a.country);
+          bv = countryLabel(b.country);
+          break;
+        default:
+          av = String(a[sortKey] ?? "");
+          bv = String(b[sortKey] ?? "");
+      }
+      if (typeof av === "number" && typeof bv === "number") {
+        return (av - bv) * dir;
+      }
+      return String(av).localeCompare(String(bv)) * dir;
+    });
+    return list;
+  }, [users, query, fAccount, fLevel, fConsent, sortKey, sortDir]);
 
   function startEdit(u: User) {
     setEditingId(u.id);
@@ -123,9 +217,94 @@ export default function AdminUsersClient({ currentUserId }: Props) {
     }
   }
 
+  const filterActive =
+    query.trim() !== "" ||
+    fAccount !== "all" ||
+    fLevel !== "all" ||
+    fConsent !== "all";
+
   return (
-    <div className="space-y-6">
-      <CreateUserSection onCreated={load} onError={setError} />
+    <div className="space-y-4">
+      {/* 상단 툴바: 검색 + 필터 (왼쪽) / 회원 추가 (오른쪽) */}
+      <div className="flex items-start gap-3 flex-wrap">
+        <div className="flex-1 min-w-[240px] space-y-2">
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="회원 검색 (아이디 · 이메일 · 회사 · 직위 · 국적)"
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+          />
+          <div className="flex gap-2 flex-wrap">
+            <FilterSelect
+              label="회원 구분"
+              value={fAccount}
+              onChange={(v) => setFAccount(v as AccountType | "all")}
+              options={[
+                { value: "all", label: "전체" },
+                ...ACCOUNT_TYPES.map((t) => ({
+                  value: t,
+                  label: ACCOUNT_TYPE_LABELS[t],
+                })),
+              ]}
+            />
+            <FilterSelect
+              label="레벨"
+              value={fLevel === "all" ? "all" : String(fLevel)}
+              onChange={(v) => setFLevel(v === "all" ? "all" : Number(v))}
+              options={[
+                { value: "all", label: "전체" },
+                ...LEVEL_OPTIONS.map((o) => ({
+                  value: String(o.value),
+                  label: `${o.label} (${o.value})`,
+                })),
+              ]}
+            />
+            <FilterSelect
+              label="이메일 수신"
+              value={fConsent}
+              onChange={(v) => setFConsent(v as "all" | "yes" | "no")}
+              options={[
+                { value: "all", label: "전체" },
+                { value: "yes", label: "동의" },
+                { value: "no", label: "미동의" },
+              ]}
+            />
+            {filterActive && (
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setFAccount("all");
+                  setFLevel("all");
+                  setFConsent("all");
+                }}
+                className="text-xs text-gray-500 hover:text-(--brand) underline self-center"
+              >
+                필터 초기화
+              </button>
+            )}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowCreate((v) => !v)}
+          className="rounded-md bg-(--brand) text-white text-sm font-semibold px-4 py-2 hover:opacity-90 whitespace-nowrap"
+        >
+          {showCreate ? "닫기" : "+ 회원 추가"}
+        </button>
+      </div>
+
+      {showCreate && (
+        <CreateUserPanel
+          onCreated={async () => {
+            setShowCreate(false);
+            await load();
+          }}
+          onCancel={() => setShowCreate(false)}
+          onError={setError}
+        />
+      )}
 
       {error && (
         <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
@@ -135,7 +314,14 @@ export default function AdminUsersClient({ currentUserId }: Props) {
 
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         <div className="px-5 py-3 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-700">사용자 목록</h2>
+          <h2 className="text-sm font-semibold text-gray-700">
+            사용자 목록{" "}
+            <span className="text-gray-400 font-normal">
+              {filterActive
+                ? `(${view.length} / 총 ${users.length}명)`
+                : `(총 ${users.length}명)`}
+            </span>
+          </h2>
           <button
             type="button"
             onClick={load}
@@ -148,32 +334,63 @@ export default function AdminUsersClient({ currentUserId }: Props) {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
               <tr>
-                <Th>ID</Th>
-                <Th>아이디</Th>
-                <Th>이메일</Th>
-                <Th>회원 구분</Th>
-                <Th>레벨</Th>
-                <Th>이메일 수신</Th>
-                <Th>가입일</Th>
+                <SortTh k="id" label="ID" {...{ sortKey, sortDir, toggleSort }} />
+                <SortTh
+                  k="login_id"
+                  label="아이디"
+                  {...{ sortKey, sortDir, toggleSort }}
+                />
+                <SortTh
+                  k="email"
+                  label="이메일"
+                  {...{ sortKey, sortDir, toggleSort }}
+                />
+                <SortTh
+                  k="country"
+                  label="국적"
+                  {...{ sortKey, sortDir, toggleSort }}
+                />
+                <SortTh
+                  k="account_type"
+                  label="회원 구분"
+                  {...{ sortKey, sortDir, toggleSort }}
+                />
+                <SortTh
+                  k="user_level"
+                  label="레벨"
+                  {...{ sortKey, sortDir, toggleSort }}
+                />
+                <SortTh
+                  k="email_consent"
+                  label="이메일 수신"
+                  {...{ sortKey, sortDir, toggleSort }}
+                />
+                <SortTh
+                  k="created_at"
+                  label="가입일"
+                  {...{ sortKey, sortDir, toggleSort }}
+                />
                 <Th className="text-right pr-5">작업</Th>
               </tr>
             </thead>
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={8} className="text-center py-6 text-gray-400">
+                  <td colSpan={9} className="text-center py-6 text-gray-400">
                     불러오는 중...
                   </td>
                 </tr>
               )}
-              {!loading && users.length === 0 && (
+              {!loading && view.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="text-center py-6 text-gray-400">
-                    사용자가 없습니다.
+                  <td colSpan={9} className="text-center py-6 text-gray-400">
+                    {users.length === 0
+                      ? "사용자가 없습니다."
+                      : "조건에 맞는 사용자가 없습니다."}
                   </td>
                 </tr>
               )}
-              {users.map((u) => {
+              {view.map((u) => {
                 const isEditing = editingId === u.id;
                 const isSaving = savingId === u.id;
                 return (
@@ -199,6 +416,7 @@ export default function AdminUsersClient({ currentUserId }: Props) {
                         <span className="text-gray-700">{u.email}</span>
                       )}
                     </Td>
+                    <Td className="text-gray-700">{countryLabel(u.country)}</Td>
                     <Td>
                       {isEditing && editState ? (
                         <select
@@ -341,13 +559,13 @@ function levelLabel(level: number): string {
   return USER_LEVEL_LABELS[best];
 }
 
-interface CreateSectionProps {
+interface CreatePanelProps {
   onCreated: () => void | Promise<void>;
+  onCancel: () => void;
   onError: (msg: string | null) => void;
 }
 
-function CreateUserSection({ onCreated, onError }: CreateSectionProps) {
-  const [open, setOpen] = useState(false);
+function CreateUserPanel({ onCreated, onCancel, onError }: CreatePanelProps) {
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
@@ -355,15 +573,6 @@ function CreateUserSection({ onCreated, onError }: CreateSectionProps) {
   const [userLevel, setUserLevel] = useState<number>(USER_LEVELS.user);
   const [emailConsent, setEmailConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
-  function reset() {
-    setLoginId("");
-    setPassword("");
-    setEmail("");
-    setAccountType("personal");
-    setUserLevel(USER_LEVELS.user);
-    setEmailConsent(false);
-  }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -387,8 +596,6 @@ function CreateUserSection({ onCreated, onError }: CreateSectionProps) {
         onError(data.error ?? "생성에 실패했습니다.");
         return;
       }
-      reset();
-      setOpen(false);
       await onCreated();
     } catch {
       onError("네트워크 오류가 발생했습니다.");
@@ -399,104 +606,155 @@ function CreateUserSection({ onCreated, onError }: CreateSectionProps) {
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl">
-      <div className="px-5 py-3 border-b border-gray-200 flex items-center justify-between">
+      <div className="px-5 py-3 border-b border-gray-200">
         <h2 className="text-sm font-semibold text-gray-700">새 사용자 추가</h2>
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="text-xs text-(--brand) hover:underline"
-        >
-          {open ? "닫기" : "열기"}
-        </button>
       </div>
-      {open && (
-        <form onSubmit={onSubmit} className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField label="아이디">
+      <form onSubmit={onSubmit} className="p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <FormField label="아이디">
+          <input
+            type="text"
+            value={loginId}
+            onChange={(e) => setLoginId(e.target.value)}
+            placeholder="영문/숫자/_ 4-32자"
+            required
+            className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+          />
+        </FormField>
+        <FormField label="이메일">
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+          />
+        </FormField>
+        <FormField label="비밀번호">
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="8-128자"
+            required
+            className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+          />
+        </FormField>
+        <FormField label="회원 구분">
+          <select
+            value={accountType}
+            onChange={(e) => setAccountType(e.target.value as AccountType)}
+            className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+          >
+            {ACCOUNT_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {ACCOUNT_TYPE_LABELS[t]}
+              </option>
+            ))}
+          </select>
+        </FormField>
+        <FormField label="레벨">
+          <select
+            value={userLevel}
+            onChange={(e) => setUserLevel(Number(e.target.value))}
+            className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+          >
+            {LEVEL_OPTIONS.map((o) => (
+              <option key={o.key} value={o.value}>
+                {o.label} ({o.value})
+              </option>
+            ))}
+          </select>
+        </FormField>
+        <FormField label="이메일 수신 동의">
+          <label className="inline-flex items-center gap-2 text-sm">
             <input
-              type="text"
-              value={loginId}
-              onChange={(e) => setLoginId(e.target.value)}
-              placeholder="영문/숫자/_ 4-32자"
-              required
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
+              type="checkbox"
+              checked={emailConsent}
+              onChange={(e) => setEmailConsent(e.target.checked)}
+              className="h-4 w-4 accent-(--brand)"
             />
-          </FormField>
-          <FormField label="이메일">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
-            />
-          </FormField>
-          <FormField label="비밀번호">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="8-128자"
-              required
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
-            />
-          </FormField>
-          <FormField label="회원 구분">
-            <select
-              value={accountType}
-              onChange={(e) => setAccountType(e.target.value as AccountType)}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
-            >
-              {ACCOUNT_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {ACCOUNT_TYPE_LABELS[t]}
-                </option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="레벨">
-            <select
-              value={userLevel}
-              onChange={(e) => setUserLevel(Number(e.target.value))}
-              className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
-            >
-              {LEVEL_OPTIONS.map((o) => (
-                <option key={o.key} value={o.value}>
-                  {o.label} ({o.value})
-                </option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="이메일 수신 동의">
-            <label className="inline-flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={emailConsent}
-                onChange={(e) => setEmailConsent(e.target.checked)}
-                className="h-4 w-4 accent-(--brand)"
-              />
-              동의
-            </label>
-          </FormField>
-          <div className="md:col-span-2 flex justify-end">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="rounded-md bg-(--brand) text-white text-sm font-semibold px-5 py-2 hover:opacity-90 disabled:opacity-60"
-            >
-              {submitting ? "추가 중..." : "추가"}
-            </button>
-          </div>
-        </form>
-      )}
+            동의
+          </label>
+        </FormField>
+        <div className="md:col-span-2 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-md border border-gray-300 text-sm px-4 py-2 hover:bg-gray-50"
+          >
+            취소
+          </button>
+          <button
+            type="submit"
+            disabled={submitting}
+            className="rounded-md bg-(--brand) text-white text-sm font-semibold px-5 py-2 hover:opacity-90 disabled:opacity-60"
+          >
+            {submitting ? "추가 중..." : "추가"}
+          </button>
+        </div>
+      </form>
     </div>
+  );
+}
+
+interface FilterSelectProps {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+}
+
+function FilterSelect({ label, value, onChange, options }: FilterSelectProps) {
+  return (
+    <label className="inline-flex items-center gap-1.5 text-xs text-gray-600">
+      <span className="font-semibold">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="rounded border border-gray-300 px-2 py-1 text-xs bg-white"
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+interface SortThProps {
+  k: SortKey;
+  label: string;
+  sortKey: SortKey;
+  sortDir: SortDir;
+  toggleSort: (k: SortKey) => void;
+}
+
+function SortTh({ k, label, sortKey, sortDir, toggleSort }: SortThProps) {
+  const active = sortKey === k;
+  return (
+    <th className="text-left font-semibold px-4 py-2">
+      <button
+        type="button"
+        onClick={() => toggleSort(k)}
+        className={
+          "inline-flex items-center gap-1 hover:text-(--brand) " +
+          (active ? "text-(--brand)" : "")
+        }
+      >
+        <span>{label}</span>
+        <span className="text-[9px]">
+          {active ? (sortDir === "asc" ? "▲" : "▼") : "↕"}
+        </span>
+      </button>
+    </th>
   );
 }
 
 function Th({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <th
-      className={"text-left font-semibold px-4 py-2 " + (className ?? "")}
-    >
+    <th className={"text-left font-semibold px-4 py-2 " + (className ?? "")}>
       {children}
     </th>
   );

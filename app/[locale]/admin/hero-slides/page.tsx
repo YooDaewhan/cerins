@@ -7,11 +7,16 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default function AdminHeroSlidesPage() {
+interface Props {
+  params: Promise<{ locale: string }>;
+}
+
+export default async function AdminHeroSlidesPage({ params }: Props) {
+  const { locale } = await params;
   return (
     <div>
       <h2 className="text-lg font-semibold text-gray-800 mb-4">히어로 슬라이드 관리</h2>
-      <HeroSlidesAdminClient />
+      <HeroSlidesAdminClient locale={locale} />
     </div>
   );
 }

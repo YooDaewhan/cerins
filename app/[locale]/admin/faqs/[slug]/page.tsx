@@ -37,9 +37,11 @@ export default async function AdminFaqEditPage({ params }: Props) {
     };
   }
 
+  const isPrimary = locale === "ko";
   return (
     <PostEditorClient
       locale={locale}
+      isPrimary={isPrimary}
       mode="edit"
       initial={initial}
       apiBase="/api/admin/faqs"

@@ -42,11 +42,16 @@ function emptyDraft(locale: string, sort: number): DraftState {
   };
 }
 
-export default function HeroSlidesAdminClient() {
+export default function HeroSlidesAdminClient({
+  locale,
+}: {
+  locale: string;
+}) {
   const [data, setData] = useState<ApiData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filterLocale, setFilterLocale] = useState<string>("ko");
+  // 각 언어 관리자는 자기 언어(현재 URL 로케일)의 슬라이드만 관리한다.
+  const filterLocale = locale;
   const [editingId, setEditingId] = useState<number | null>(null);
   const [draft, setDraft] = useState<DraftState | null>(null);
   const [creating, setCreating] = useState(false);
@@ -193,28 +198,17 @@ export default function HeroSlidesAdminClient() {
       )}
 
       <div className="flex items-center gap-3 flex-wrap">
-        <span className="text-xs font-semibold text-gray-700">언어</span>
-        <div className="flex gap-1">
-          {data.locales.map((l) => (
-            <button
-              key={l.code}
-              type="button"
-              onClick={() => {
-                setFilterLocale(l.code);
-                cancelEdit();
-                cancelCreate();
-              }}
-              className={
-                "rounded px-3 py-1 text-xs font-semibold " +
-                (filterLocale === l.code
-                  ? "bg-(--brand) text-white"
-                  : "bg-white border border-gray-300 text-gray-600 hover:bg-gray-50")
-              }
-            >
-              {l.code.toUpperCase()}
-            </button>
-          ))}
-        </div>
+        <span className="text-xs font-semibold text-gray-700">편집 언어</span>
+        <span className="inline-flex items-center gap-1.5 rounded bg-(--brand)/10 px-2.5 py-1 text-xs font-semibold text-(--brand)">
+          <span className="uppercase font-mono">{locale}</span>
+          <span>
+            {data.locales.find((l) => l.code === locale)?.native_name ??
+              locale.toUpperCase()}
+          </span>
+        </span>
+        <span className="text-[11px] text-gray-400">
+          이 언어의 슬라이드만 표시·관리됩니다.
+        </span>
         <div className="ml-auto flex gap-2">
           <button
             type="button"

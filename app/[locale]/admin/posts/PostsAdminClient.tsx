@@ -28,10 +28,12 @@ interface ApiData {
 
 export default function PostsAdminClient({
   locale,
+  isPrimary,
   apiBase = "/api/admin/posts",
   listSlug = "posts",
 }: {
   locale: string;
+  isPrimary: boolean;
   apiBase?: string;
   listSlug?: string;
 }) {
@@ -65,6 +67,7 @@ export default function PostsAdminClient({
   }, [load]);
 
   async function deletePost(slug: string) {
+    if (!isPrimary) return;
     if (!confirm(`'${slug}' 글을 모든 언어판과 함께 삭제합니다.`)) return;
     setBusy(true);
     try {
@@ -95,6 +98,18 @@ export default function PostsAdminClient({
 
   return (
     <div className="space-y-4">
+      {!isPrimary && (
+        <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-gray-700">
+          <p className="font-semibold mb-1">
+            {locale.toUpperCase()} 언어판 편집
+          </p>
+          <ul className="list-disc list-inside space-y-0.5 text-gray-600">
+            <li>글 생성·삭제·slug는 한국어 관리자가 관리합니다.</li>
+            <li>여기서는 각 글의 <b>{locale.toUpperCase()}</b> 언어판만 입력·수정합니다.</li>
+          </ul>
+        </div>
+      )}
+
       {error && (
         <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
           {error}
@@ -113,12 +128,14 @@ export default function PostsAdminClient({
           >
             새로고침
           </button>
-          <Link
-            href={`${adminBase}/${listSlug}/new`}
-            className="rounded bg-(--brand) text-white px-3 py-1.5 text-xs font-semibold hover:opacity-90"
-          >
-            + 새 글
-          </Link>
+          {isPrimary && (
+            <Link
+              href={`${adminBase}/${listSlug}/new`}
+              className="rounded bg-(--brand) text-white px-3 py-1.5 text-xs font-semibold hover:opacity-90"
+            >
+              + 새 글
+            </Link>
+          )}
         </div>
       </div>
 
@@ -128,7 +145,6 @@ export default function PostsAdminClient({
             <tr>
               <th className="text-left font-semibold px-4 py-2">Slug</th>
               <th className="text-left font-semibold px-4 py-2">제목 (대표)</th>
-              <th className="text-left font-semibold px-4 py-2">언어판</th>
               <th className="text-left font-semibold px-4 py-2">발행일</th>
               <th className="text-left font-semibold px-4 py-2">공개</th>
               <th className="text-right font-semibold px-4 py-2 pr-5">작업</th>
@@ -137,7 +153,7 @@ export default function PostsAdminClient({
           <tbody>
             {data.posts.length === 0 && (
               <tr>
-                <td colSpan={6} className="text-center py-6 text-gray-400">
+                <td colSpan={5} className="text-center py-6 text-gray-400">
                   글이 없습니다.
                 </td>
               </tr>
@@ -164,18 +180,6 @@ export default function PostsAdminClient({
                       {primary?.summary}
                     </div>
                   </td>
-                  <td className="px-4 py-2">
-                    <div className="flex gap-1 flex-wrap">
-                      {localesAvailable.map((l) => (
-                        <span
-                          key={l}
-                          className="text-[10px] bg-(--brand)/10 text-(--brand) px-1.5 py-0.5 rounded font-mono uppercase"
-                        >
-                          {l}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
                   <td className="px-4 py-2 text-gray-700">
                     {primary?.published_at}
                   </td>
@@ -196,16 +200,18 @@ export default function PostsAdminClient({
                         href={`${adminBase}/${listSlug}/${encodeURIComponent(p.slug)}`}
                         className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-50"
                       >
-                        편집
+                        {isPrimary ? "편집" : "수정"}
                       </Link>
-                      <button
-                        type="button"
-                        onClick={() => deletePost(p.slug)}
-                        disabled={busy}
-                        className="rounded border border-red-300 text-red-600 px-2.5 py-1 text-xs hover:bg-red-50 disabled:opacity-60"
-                      >
-                        삭제
-                      </button>
+                      {isPrimary && (
+                        <button
+                          type="button"
+                          onClick={() => deletePost(p.slug)}
+                          disabled={busy}
+                          className="rounded border border-red-300 text-red-600 px-2.5 py-1 text-xs hover:bg-red-50 disabled:opacity-60"
+                        >
+                          삭제
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

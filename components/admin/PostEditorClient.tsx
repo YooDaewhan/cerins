@@ -1,18 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 
 const TiptapEditor = dynamic(() => import("./TiptapEditor"), { ssr: false });
 
-interface LocaleEntry {
-  code: string;
-  label: string;
-}
-
 interface FormState {
-  enabled: boolean;
   title: string;
   summary: string;
   content: string;
@@ -24,7 +19,6 @@ interface FormState {
 
 function emptyForm(): FormState {
   return {
-    enabled: false,
     title: "",
     summary: "",
     content: "",
@@ -60,6 +54,7 @@ export interface PostEditorInitial {
 
 interface Props {
   locale: string;
+  isPrimary: boolean;
   mode: "new" | "edit";
   initial?: PostEditorInitial;
   // 게시판 구분. 기본값은 뉴스와 동일하게 동작.
@@ -70,6 +65,7 @@ interface Props {
 
 export default function PostEditorClient({
   locale,
+  isPrimary,
   mode,
   initial,
   apiBase = "/api/admin/posts",
@@ -78,10 +74,27 @@ export default function PostEditorClient({
 }: Props) {
   const router = useRouter();
 
+  const adminBase = locale === "ko" ? "/admin" : `/${locale}/admin`;
+
   const [slug, setSlug] = useState(initial?.slug ?? "");
-  const [locales, setLocales] = useState<LocaleEntry[]>([]);
-  const [activeTab, setActiveTab] = useState<string>("ko");
-  const [forms, setForms] = useState<Record<string, FormState>>({});
+  const [localeName, setLocaleName] = useState<string>(locale.toUpperCase());
+  // 현재 언어판이 아직 존재하는지 (수정 vs 새로 만드는 번역).
+  const existedInitially = !!initial?.translations[locale];
+  const [form, setForm] = useState<FormState>(() => {
+    const t = initial?.translations[locale];
+    if (t) {
+      return {
+        title: t.title,
+        summary: t.summary,
+        content: t.content,
+        author: t.author ?? "",
+        thumbnail: t.thumbnail ?? "",
+        is_published: t.is_published,
+        published_at: t.published_at,
+      };
+    }
+    return emptyForm();
+  });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -91,88 +104,33 @@ export default function PostEditorClient({
         const res = await fetch("/api/admin/locales", { cache: "no-store" });
         if (!res.ok) return;
         const j = (await res.json()) as {
-          locales: { code: string; native_name: string; is_enabled: boolean }[];
+          locales: { code: string; native_name: string }[];
         };
-        const enabled = j.locales
-          .filter((l) => l.is_enabled)
-          .map((l) => ({ code: l.code, label: l.native_name }));
-        setLocales(enabled);
-        setForms((prev) => {
-          const next: Record<string, FormState> = { ...prev };
-          for (const l of enabled) {
-            if (next[l.code]) continue;
-            const t = initial?.translations[l.code];
-            if (t) {
-              next[l.code] = {
-                enabled: true,
-                title: t.title,
-                summary: t.summary,
-                content: t.content,
-                author: t.author ?? "",
-                thumbnail: t.thumbnail ?? "",
-                is_published: t.is_published,
-                published_at: t.published_at,
-              };
-            } else {
-              const base = emptyForm();
-              if (l.code === "ko") base.enabled = mode === "new";
-              next[l.code] = base;
-            }
-          }
-          return next;
-        });
+        const found = j.locales.find((l) => l.code === locale);
+        if (found) setLocaleName(found.native_name);
       } catch {
-        // ignore — 편집기 기본 화면은 여전히 열림.
+        // ignore — 코드 표기로 대체.
       }
     })();
-  }, [initial, mode]);
+  }, [locale]);
 
-  const adminBase = locale === "ko" ? "/admin" : `/${locale}/admin`;
-
-  const update = useCallback(
-    (code: string, patch: Partial<FormState>) => {
-      setForms((prev) => ({
-        ...prev,
-        [code]: { ...(prev[code] ?? emptyForm()), ...patch },
-      }));
-    },
-    [],
-  );
-
-  const enabledCount = useMemo(
-    () => locales.filter((l) => forms[l.code]?.enabled).length,
-    [forms, locales],
-  );
+  function update(patch: Partial<FormState>) {
+    setForm((prev) => ({ ...prev, ...patch }));
+  }
 
   async function handleSave() {
     setError(null);
-    if (enabledCount === 0) {
-      setError("최소 한 개 언어를 활성화하세요.");
+    if (!form.title.trim()) {
+      setError("제목은 필수입니다.");
+      return;
+    }
+    if (!form.summary.trim()) {
+      setError("요약은 필수입니다.");
       return;
     }
 
-    const translations: Record<string, unknown> = {};
-    if (mode === "edit") {
-      // explicitly null-out disabled locales that previously existed
-      const codes = new Set<string>([
-        ...locales.map((l) => l.code),
-        ...Object.keys(initial?.translations ?? {}),
-      ]);
-      for (const code of codes) {
-        const f = forms[code];
-        const existed = !!initial?.translations[code];
-        if (f?.enabled) {
-          translations[code] = serialize(f);
-        } else if (existed) {
-          translations[code] = null;
-        }
-      }
-    } else {
-      for (const l of locales) {
-        const f = forms[l.code];
-        if (f?.enabled) translations[l.code] = serialize(f);
-      }
-    }
+    // 현재 언어판 하나만 전송한다. 다른 언어는 서버에서 건드리지 않는다.
+    const translations = { [locale]: serialize(form) };
 
     setBusy(true);
     try {
@@ -208,7 +166,7 @@ export default function PostEditorClient({
   }
 
   async function handleDelete() {
-    if (!initial) return;
+    if (!initial || !isPrimary) return;
     if (!confirm(`'${initial.slug}' 글을 모든 언어판과 함께 삭제합니다.`))
       return;
     setBusy(true);
@@ -231,7 +189,29 @@ export default function PostEditorClient({
     }
   }
 
-  const active = forms[activeTab] ?? emptyForm();
+  // 새 글(구조) 생성은 한국어 관리자 전용.
+  if (mode === "new" && !isPrimary) {
+    return (
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-gray-800">새 {noun} 글</h2>
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-6 text-sm text-gray-700">
+          <p className="font-semibold mb-1">
+            새 글 작성은 한국어 관리자에서만 가능합니다.
+          </p>
+          <p className="text-gray-600">
+            한국어 관리자가 글을 먼저 만든 뒤, 이 화면({localeName})에서 해당
+            글의 {localeName} 언어판을 입력할 수 있습니다.
+          </p>
+          <Link
+            href={`${adminBase}/${listSlug}`}
+            className="inline-block mt-3 rounded border border-gray-300 px-3 py-1.5 text-xs hover:bg-white"
+          >
+            ← 목록으로
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -239,8 +219,12 @@ export default function PostEditorClient({
         <h2 className="text-lg font-semibold text-gray-800">
           {mode === "new" ? `새 ${noun} 글` : `${noun} 글 편집: ${initial?.slug}`}
         </h2>
+        <span className="inline-flex items-center gap-1.5 rounded bg-(--brand)/10 px-2 py-1 text-xs font-semibold text-(--brand)">
+          <span className="uppercase font-mono">{locale}</span>
+          <span>{localeName} 언어판</span>
+        </span>
         <div className="ml-auto flex gap-2">
-          {mode === "edit" && (
+          {mode === "edit" && isPrimary && (
             <button
               type="button"
               onClick={handleDelete}
@@ -268,13 +252,23 @@ export default function PostEditorClient({
         </div>
       </div>
 
+      {!isPrimary && (
+        <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-gray-700">
+          <p className="font-semibold mb-1">{localeName} 언어판 편집</p>
+          <ul className="list-disc list-inside space-y-0.5 text-gray-600">
+            <li>글 생성·삭제·slug는 한국어 관리자가 관리합니다.</li>
+            <li>여기서는 이 글의 <b>{localeName}</b> 언어판만 입력·수정합니다.</li>
+          </ul>
+        </div>
+      )}
+
       {error && (
         <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
           {error}
         </p>
       )}
 
-      {mode === "new" && (
+      {mode === "new" && isPrimary && (
         <div className="rounded-lg border border-gray-200 bg-white p-4">
           <label className="block text-xs font-semibold text-gray-700 mb-1">
             Slug (URL용, 비우면 다음 숫자가 자동 부여)
@@ -287,137 +281,86 @@ export default function PostEditorClient({
             className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm font-mono"
           />
           <p className="text-[11px] text-gray-400 mt-1">
-            소문자/숫자/-만 가능. 같은 slug에 5개 언어가 묶입니다.
+            소문자/숫자/-만 가능. 다른 언어판은 각 언어 관리자가 이 slug에 이어서
+            입력합니다.
           </p>
         </div>
       )}
 
-      <div className="flex border-b border-gray-200 flex-wrap">
-        {locales.map((l) => {
-          const isActive = activeTab === l.code;
-          const enabled = forms[l.code]?.enabled ?? false;
-          return (
-            <button
-              key={l.code}
-              type="button"
-              onClick={() => setActiveTab(l.code)}
-              className={`px-4 py-2 text-sm font-semibold border-b-2 -mb-px transition-colors flex items-center gap-1.5 ${
-                isActive
-                  ? "border-(--brand) text-(--brand)"
-                  : "border-transparent text-gray-500 hover:text-(--brand)"
-              }`}
-            >
-              <span>{l.label}</span>
-              <span className="text-[10px] uppercase font-mono text-gray-400">
-                {l.code}
-              </span>
-              {enabled && (
-                <span className="ml-1 w-1.5 h-1.5 rounded-full bg-green-500" />
-              )}
-            </button>
-          );
-        })}
-      </div>
+      {mode === "edit" && !existedInitially && (
+        <p className="text-xs bg-amber-50 border border-amber-200 text-amber-700 rounded px-3 py-2">
+          이 글에는 아직 {localeName} 언어판이 없습니다. 아래 내용을 입력하고
+          저장하면 {localeName} 언어판이 새로 만들어집니다.
+        </p>
+      )}
 
       <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-4">
-        <label className="inline-flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={active.enabled}
-            onChange={(e) => update(activeTab, { enabled: e.target.checked })}
-            className="h-4 w-4 accent-(--brand)"
-          />
-          <span className="font-semibold">
-            이 언어({(locales.find((l) => l.code === activeTab)?.label ?? activeTab)}) 사용
-          </span>
-          <span className="text-xs text-gray-400">
-            체크 해제 시 이 언어판은 저장되지 않거나 삭제됩니다.
-          </span>
-        </label>
-
-        <fieldset
-          disabled={!active.enabled}
-          className={active.enabled ? "" : "opacity-50 pointer-events-none"}
-        >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field label="제목">
-              <input
-                type="text"
-                value={active.title}
-                onChange={(e) =>
-                  update(activeTab, { title: e.target.value })
-                }
-                className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
-              />
-            </Field>
-            <Field label="작성자 표시명">
-              <input
-                type="text"
-                value={active.author}
-                onChange={(e) =>
-                  update(activeTab, { author: e.target.value })
-                }
-                placeholder="비우면 'CERINS Editorial' 표시"
-                className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
-              />
-            </Field>
-            <Field label="발행일 (YYYY-MM-DD)">
-              <input
-                type="date"
-                value={active.published_at}
-                onChange={(e) =>
-                  update(activeTab, { published_at: e.target.value })
-                }
-                className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
-              />
-            </Field>
-            <Field label="공개">
-              <label className="inline-flex items-center gap-2 text-sm pt-1.5">
-                <input
-                  type="checkbox"
-                  checked={active.is_published}
-                  onChange={(e) =>
-                    update(activeTab, { is_published: e.target.checked })
-                  }
-                  className="h-4 w-4 accent-(--brand)"
-                />
-                <span>사이트에 공개</span>
-              </label>
-            </Field>
-            <Field label="썸네일 이미지 URL (선택)" className="sm:col-span-2">
-              <input
-                type="text"
-                value={active.thumbnail}
-                onChange={(e) =>
-                  update(activeTab, { thumbnail: e.target.value })
-                }
-                placeholder="https://… (지금은 외부 URL만 지원)"
-                className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm font-mono"
-              />
-            </Field>
-            <Field label="요약 (목록·SEO에 사용)" className="sm:col-span-2">
-              <textarea
-                value={active.summary}
-                onChange={(e) =>
-                  update(activeTab, { summary: e.target.value })
-                }
-                rows={3}
-                className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
-              />
-            </Field>
-          </div>
-
-          <div className="mt-4">
-            <label className="block text-xs font-semibold text-gray-700 mb-1">
-              본문
-            </label>
-            <TiptapEditor
-              value={active.content}
-              onChange={(html) => update(activeTab, { content: html })}
-              placeholder="본문을 입력하세요…"
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="제목">
+            <input
+              type="text"
+              value={form.title}
+              onChange={(e) => update({ title: e.target.value })}
+              className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
             />
-          </div>
-        </fieldset>
+          </Field>
+          <Field label="작성자 표시명">
+            <input
+              type="text"
+              value={form.author}
+              onChange={(e) => update({ author: e.target.value })}
+              placeholder="비우면 'CERINS Editorial' 표시"
+              className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+            />
+          </Field>
+          <Field label="발행일 (YYYY-MM-DD)">
+            <input
+              type="date"
+              value={form.published_at}
+              onChange={(e) => update({ published_at: e.target.value })}
+              className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+            />
+          </Field>
+          <Field label="공개">
+            <label className="inline-flex items-center gap-2 text-sm pt-1.5">
+              <input
+                type="checkbox"
+                checked={form.is_published}
+                onChange={(e) => update({ is_published: e.target.checked })}
+                className="h-4 w-4 accent-(--brand)"
+              />
+              <span>사이트에 공개</span>
+            </label>
+          </Field>
+          <Field label="썸네일 이미지 URL (선택)" className="sm:col-span-2">
+            <input
+              type="text"
+              value={form.thumbnail}
+              onChange={(e) => update({ thumbnail: e.target.value })}
+              placeholder="https://… (지금은 외부 URL만 지원)"
+              className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm font-mono"
+            />
+          </Field>
+          <Field label="요약 (목록·SEO에 사용)" className="sm:col-span-2">
+            <textarea
+              value={form.summary}
+              onChange={(e) => update({ summary: e.target.value })}
+              rows={3}
+              className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+            />
+          </Field>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-gray-700 mb-1">
+            본문
+          </label>
+          <TiptapEditor
+            value={form.content}
+            onChange={(html) => update({ content: html })}
+            placeholder="본문을 입력하세요…"
+          />
+        </div>
       </div>
     </div>
   );
