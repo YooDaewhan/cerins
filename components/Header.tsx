@@ -114,68 +114,75 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
 
             {/* 데스크톱 네비 */}
             <nav className="hidden lg:flex items-center gap-1">
-              {menus.map((item) => {
+              {menus.map((item, idx) => {
                 const isOpen = openMenu === item.label;
                 const active = isActive(item.href);
+                const divider = idx > 0 ? (
+                  <span key={`divider-${item.id}`} className="w-px h-5 bg-black" aria-hidden />
+                ) : null;
 
                 if (item.children.length === 0) {
                   return (
-                    <Link
-                      key={item.id}
-                      href={item.href}
+                    <div key={item.id} className="flex items-center">
+                      {divider}
+                      <Link
+                        href={item.href}
+                        className={`group relative overflow-hidden px-6 py-6 text-base font-bold tracking-wider uppercase transition-colors duration-300 ${
+                          active
+                            ? "text-white"
+                            : "text-gray-700 group-hover:text-white hover:text-white"
+                        }`}
+                        onClick={() => setOpenMenu(null)}
+                      >
+                        {/* 왼쪽에서 오른쪽으로 채워지는 배경 */}
+                        <span
+                          className={`pointer-events-none absolute inset-0 bg-(--brand) origin-left transition-transform duration-300 ease-out ${
+                            active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                          }`}
+                        />
+                        <span className="relative z-10">{item.label}</span>
+                        {/* 활성 상태 흰색 밑줄 */}
+                        <span
+                          className={`pointer-events-none absolute left-5 right-5 bottom-3 z-10 h-0.5 bg-white origin-left transition-transform duration-300 ${
+                            active ? "scale-x-100" : "scale-x-0"
+                          }`}
+                        />
+                      </Link>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={item.id} className="flex items-center">
+                    {divider}
+                    <button
+                      type="button"
+                      aria-expanded={isOpen}
+                      onClick={() => setOpenMenu(isOpen ? null : item.label)}
+                      onMouseEnter={() => {
+                        if (openMenu) setOpenMenu(item.label);
+                      }}
                       className={`group relative overflow-hidden px-6 py-6 text-base font-bold tracking-wider uppercase transition-colors duration-300 ${
-                        active
+                        isOpen || active
                           ? "text-white"
-                          : "text-gray-700 group-hover:text-white hover:text-white"
+                          : "text-gray-700 hover:text-white"
                       }`}
-                      onClick={() => setOpenMenu(null)}
                     >
                       {/* 왼쪽에서 오른쪽으로 채워지는 배경 */}
                       <span
                         className={`pointer-events-none absolute inset-0 bg-(--brand) origin-left transition-transform duration-300 ease-out ${
-                          active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                          isOpen || active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
                         }`}
                       />
                       <span className="relative z-10">{item.label}</span>
                       {/* 활성 상태 흰색 밑줄 */}
                       <span
                         className={`pointer-events-none absolute left-5 right-5 bottom-3 z-10 h-0.5 bg-white origin-left transition-transform duration-300 ${
-                          active ? "scale-x-100" : "scale-x-0"
+                          isOpen || active ? "scale-x-100" : "scale-x-0"
                         }`}
                       />
-                    </Link>
-                  );
-                }
-
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    aria-expanded={isOpen}
-                    onClick={() => setOpenMenu(isOpen ? null : item.label)}
-                    onMouseEnter={() => {
-                      if (openMenu) setOpenMenu(item.label);
-                    }}
-                    className={`group relative overflow-hidden px-6 py-6 text-base font-bold tracking-wider uppercase transition-colors duration-300 ${
-                      isOpen || active
-                        ? "text-white"
-                        : "text-gray-700 hover:text-white"
-                    }`}
-                  >
-                    {/* 왼쪽에서 오른쪽으로 채워지는 배경 */}
-                    <span
-                      className={`pointer-events-none absolute inset-0 bg-(--brand) origin-left transition-transform duration-300 ease-out ${
-                        isOpen || active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
-                      }`}
-                    />
-                    <span className="relative z-10">{item.label}</span>
-                    {/* 활성 상태 흰색 밑줄 */}
-                    <span
-                      className={`pointer-events-none absolute left-5 right-5 bottom-3 z-10 h-0.5 bg-white origin-left transition-transform duration-300 ${
-                        isOpen || active ? "scale-x-100" : "scale-x-0"
-                      }`}
-                    />
-                  </button>
+                    </button>
+                  </div>
                 );
               })}
 
