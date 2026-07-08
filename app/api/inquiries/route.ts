@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPool } from "@/src/lib/db";
+import { sendMail } from "@/src/lib/mail";
 
 interface InquiryBody {
   name?: string;
@@ -63,6 +64,28 @@ export async function POST(req: Request) {
       ],
     );
     const insertId = (result as { insertId: number }).insertId;
+
+    try {
+      await sendMail({
+        subject: `[문의] ${subject}`,
+        replyTo: email,
+        text: [
+          `이름: ${name}`,
+          `회사: ${clip(body.company, 190) ?? "-"}`,
+          `부서: ${clip(body.department, 190) ?? "-"}`,
+          `국가: ${clip(body.country, 120) ?? "-"}`,
+          `이메일: ${email}`,
+          `웹사이트: ${clip(body.website, 255) ?? "-"}`,
+          `전화번호: ${clip(body.phone, 60) ?? "-"}`,
+          "",
+          "메시지:",
+          message,
+        ].join("\n"),
+      });
+    } catch (mailErr) {
+      console.error("inquiry notification mail error", mailErr);
+    }
+
     return NextResponse.json({ ok: true, id: insertId });
   } catch (err) {
     console.error("inquiry create error", err);

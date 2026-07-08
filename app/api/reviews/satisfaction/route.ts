@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { getPool } from "@/src/lib/db";
 import { getCurrentUser } from "@/src/lib/auth";
-import { normalizeRatings } from "@/src/lib/reviewTypes";
+import { normalizeRatings, SATISFACTION_ITEMS } from "@/src/lib/reviewTypes";
 import { USER_LEVELS } from "@/src/lib/userTypes";
+import { sendMail } from "@/src/lib/mail";
 
 interface Body {
   name?: string;
@@ -62,6 +63,27 @@ export async function POST(req: Request) {
       ],
     );
     const insertId = (result as { insertId: number }).insertId;
+    const reviewEmail = clip(body.email, 190) ?? user.email;
+
+    try {
+      await sendMail({
+        subject: `[고객 만족도] ${name}`,
+        replyTo: reviewEmail,
+        text: [
+          `이름: ${name}`,
+          `회사: ${clip(body.company, 190) ?? "-"}`,
+          `이메일: ${reviewEmail}`,
+          "",
+          ...SATISFACTION_ITEMS.map((item) => `${item.label}: ${ratings[item.key] ?? "-"}`),
+          "",
+          "코멘트:",
+          clip(body.comment, 5000) ?? "-",
+        ].join("\n"),
+      });
+    } catch (mailErr) {
+      console.error("satisfaction notification mail error", mailErr);
+    }
+
     return NextResponse.json({ ok: true, id: insertId });
   } catch (err) {
     console.error("satisfaction create error", err);
