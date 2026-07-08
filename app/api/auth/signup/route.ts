@@ -12,6 +12,9 @@ interface SignupBody {
   login_id?: string;
   password?: string;
   email?: string;
+  company?: string;
+  job_title?: string;
+  country?: string;
   email_consent?: boolean;
   account_type?: string;
 }
@@ -30,6 +33,9 @@ export async function POST(req: Request) {
   const login_id = (body.login_id ?? "").trim();
   const password = body.password ?? "";
   const email = (body.email ?? "").trim().toLowerCase();
+  const company = (body.company ?? "").trim() || null;
+  const job_title = (body.job_title ?? "").trim() || null;
+  const country = (body.country ?? "").trim() || null;
   const email_consent = body.email_consent === true ? 1 : 0;
   const account_type_raw = body.account_type ?? "personal";
 
@@ -48,6 +54,12 @@ export async function POST(req: Request) {
   if (!EMAIL_RE.test(email) || email.length > 190) {
     return NextResponse.json({ error: "이메일 형식이 올바르지 않습니다." }, { status: 400 });
   }
+  if ((company && company.length > 190) || (job_title && job_title.length > 190)) {
+    return NextResponse.json(
+      { error: "회사명/직위는 190자 이내여야 합니다." },
+      { status: 400 },
+    );
+  }
   if (!isAccountType(account_type_raw)) {
     return NextResponse.json(
       { error: "회원 구분 값이 올바르지 않습니다." },
@@ -57,16 +69,30 @@ export async function POST(req: Request) {
   const account_type: AccountType = account_type_raw;
 
   const pool = getPool();
+
+  if (country) {
+    const [countryRows] = await pool.execute(
+      "SELECT 1 FROM locales WHERE code = ? AND is_enabled = 1 LIMIT 1",
+      [country],
+    );
+    if ((countryRows as unknown[]).length === 0) {
+      return NextResponse.json({ error: "국가 값이 올바르지 않습니다." }, { status: 400 });
+    }
+  }
+
   const password_hash = await bcrypt.hash(password, 10);
 
   try {
     const [result] = await pool.execute(
-      `INSERT INTO users (login_id, password_hash, email, email_consent, account_type, user_level)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO users (login_id, password_hash, email, company, job_title, country, email_consent, account_type, user_level)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         login_id,
         password_hash,
         email,
+        company,
+        job_title,
+        country,
         email_consent,
         account_type,
         defaultLevelForAccountType(account_type),

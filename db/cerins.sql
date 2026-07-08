@@ -1269,6 +1269,8 @@ INSERT INTO site_assets (`key`, `value`) VALUES
 --   - login_id      : 사용자가 직접 입력하는 로그인용 ID (영문/숫자)
 --   - password_hash : bcrypt 해시 (평문 비밀번호 저장 금지)
 --   - email         : 이메일
+--   - company       : 회사명 (선택 입력)
+--   - job_title     : 직위 (선택 입력)
 --   - email_consent : 이메일 수신 동의 여부
 --   - account_type  : 'personal' | 'business' — 회원가입 시 선택
 --   - user_level    : 권한 레벨. 1=일반 회원, 3=기업 회원, 7=직원, 9=관리자
@@ -1279,6 +1281,9 @@ CREATE TABLE users (
   login_id      VARCHAR(64)  NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   email         VARCHAR(190) NOT NULL,
+  company       VARCHAR(190) NULL,
+  job_title     VARCHAR(190) NULL,
+  country       VARCHAR(8)   NULL,
   email_consent TINYINT(1)   NOT NULL DEFAULT 0,
   account_type  ENUM('personal','business') NOT NULL DEFAULT 'personal',
   user_level    INT          NOT NULL DEFAULT 1,
@@ -1287,7 +1292,8 @@ CREATE TABLE users (
   UNIQUE KEY uq_users_login_id (login_id),
   UNIQUE KEY uq_users_email    (email),
   INDEX idx_users_account_type (account_type),
-  INDEX idx_users_user_level   (user_level)
+  INDEX idx_users_user_level   (user_level),
+  CONSTRAINT fk_users_country FOREIGN KEY (country) REFERENCES locales(code) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 초기 관리자 계정 (로그인 ID: admin / 비밀번호: admin1234)

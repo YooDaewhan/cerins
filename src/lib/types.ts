@@ -164,6 +164,9 @@ export interface User {
   id: number;
   login_id: string;
   email: string;
+  company: string | null;
+  job_title: string | null;
+  country: string | null;
   email_consent: boolean;
   account_type: AccountType;
   user_level: number;

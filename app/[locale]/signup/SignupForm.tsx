@@ -8,18 +8,23 @@ import {
   ACCOUNT_TYPE_LABELS,
   type AccountType,
 } from "@/src/lib/userTypes";
+import type { Locale } from "@/src/lib/types";
 
 interface Props {
   loginHref: string;
   redirectTo: string;
+  countries: Locale[];
 }
 
-export default function SignupForm({ loginHref, redirectTo }: Props) {
+export default function SignupForm({ loginHref, redirectTo, countries }: Props) {
   const router = useRouter();
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [email, setEmail] = useState("");
+  const [company, setCompany] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
+  const [country, setCountry] = useState("");
   const [emailConsent, setEmailConsent] = useState(false);
   const [accountType, setAccountType] = useState<AccountType>("personal");
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +48,9 @@ export default function SignupForm({ loginHref, redirectTo }: Props) {
           login_id: loginId,
           password,
           email,
+          company,
+          job_title: jobTitle,
+          country,
           email_consent: emailConsent,
           account_type: accountType,
         }),
@@ -95,6 +103,26 @@ export default function SignupForm({ loginHref, redirectTo }: Props) {
         </div>
       </div>
 
+      <div>
+        <label htmlFor="country" className="block text-sm font-semibold text-gray-700 mb-1.5">
+          국가 <span className="text-gray-400 font-normal">(선택)</span>
+        </label>
+        <select
+          id="country"
+          value={country}
+          onChange={(e) => setCountry(e.target.value)}
+          autoComplete="country"
+          className="w-full rounded-md border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-(--brand) focus:border-transparent"
+        >
+          <option value="">국가를 선택하세요</option>
+          {countries.map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.native_name}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <Field
         id="login_id"
         label="아이디"
@@ -133,6 +161,24 @@ export default function SignupForm({ loginHref, redirectTo }: Props) {
         placeholder="you@example.com"
         autoComplete="email"
         required
+      />
+      <Field
+        id="company"
+        label="회사명"
+        type="text"
+        value={company}
+        onChange={setCompany}
+        placeholder="(선택)"
+        autoComplete="organization"
+      />
+      <Field
+        id="job_title"
+        label="직위"
+        type="text"
+        value={jobTitle}
+        onChange={setJobTitle}
+        placeholder="(선택)"
+        autoComplete="organization-title"
       />
 
       <label className="flex items-start gap-2 cursor-pointer select-none">

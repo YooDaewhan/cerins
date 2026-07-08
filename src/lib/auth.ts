@@ -7,6 +7,9 @@ interface UserRow {
   id: number;
   login_id: string;
   email: string;
+  company: string | null;
+  job_title: string | null;
+  country: string | null;
   email_consent: number;
   account_type: "personal" | "business";
   user_level: number;
@@ -19,6 +22,9 @@ function fromRow(row: UserRow): User {
     id: row.id,
     login_id: row.login_id,
     email: row.email,
+    company: row.company,
+    job_title: row.job_title,
+    country: row.country,
     email_consent: row.email_consent === 1,
     account_type: row.account_type,
     user_level: row.user_level,
@@ -32,7 +38,7 @@ export async function getCurrentUser(): Promise<User | null> {
   if (!uid) return null;
   const pool = getPool();
   const [rows] = await pool.execute(
-    `SELECT id, login_id, email, email_consent, account_type, user_level, created_at, updated_at
+    `SELECT id, login_id, email, company, job_title, country, email_consent, account_type, user_level, created_at, updated_at
        FROM users WHERE id = ? LIMIT 1`,
     [uid],
   );
