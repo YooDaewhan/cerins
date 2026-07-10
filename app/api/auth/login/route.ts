@@ -11,6 +11,7 @@ interface LoginBody {
 interface UserRow {
   id: number;
   password_hash: string;
+  country: string | null;
 }
 
 export async function POST(req: Request) {
@@ -34,7 +35,7 @@ export async function POST(req: Request) {
   const pool = getPool();
   try {
     const [rows] = await pool.execute(
-      `SELECT id, password_hash FROM users WHERE login_id = ? LIMIT 1`,
+      `SELECT id, password_hash, country FROM users WHERE login_id = ? LIMIT 1`,
       [login_id],
     );
     const list = rows as UserRow[];
@@ -53,7 +54,7 @@ export async function POST(req: Request) {
       );
     }
     await setSessionUserId(user.id);
-    return NextResponse.json({ ok: true, id: user.id });
+    return NextResponse.json({ ok: true, id: user.id, country: user.country });
   } catch (err) {
     console.error("login error", err);
     return NextResponse.json({ error: "서버 오류가 발생했습니다." }, { status: 500 });

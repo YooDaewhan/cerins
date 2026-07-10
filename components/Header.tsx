@@ -178,7 +178,7 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                       {divider}
                       <Link
                         href={item.href}
-                        className={`group relative overflow-hidden px-6 py-6 text-base font-bold tracking-wider uppercase transition-colors duration-300 ${
+                        className={`group relative overflow-hidden whitespace-nowrap px-6 py-6 text-base font-bold tracking-wider uppercase transition-colors duration-300 ${
                           active
                             ? "text-white"
                             : "text-gray-700 group-hover:text-white hover:text-white"
@@ -213,7 +213,7 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                       onMouseEnter={() => {
                         if (openMenu) setOpenMenu(item.label);
                       }}
-                      className={`group relative overflow-hidden px-6 py-6 text-base font-bold tracking-wider uppercase transition-colors duration-300 ${
+                      className={`group relative overflow-hidden whitespace-nowrap px-6 py-6 text-base font-bold tracking-wider uppercase transition-colors duration-300 ${
                         isOpen || active
                           ? "text-white"
                           : "text-gray-700 hover:text-white"
@@ -288,19 +288,28 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
 
             {/* 검색 (헤더 우측 끝, 네비와 분리) */}
             <form onSubmit={handleSearch} className="hidden lg:block shrink-0 ml-4">
-              <div className="relative">
+              <div className="relative flex items-center w-69 rounded-full bg-gray-100 border border-gray-200 focus-within:border-(--brand) focus-within:bg-white transition-all duration-300">
                 <input
                   type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="인증·국가 검색"
                   aria-label="인증 검색"
-                  className="w-44 rounded-full bg-gray-100 border border-gray-200 pl-4 pr-9 py-1.5 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:border-(--brand) focus:bg-white transition-all duration-300"
+                  className="flex-1 min-w-0 bg-transparent pl-4 pr-1 py-1.5 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
                 />
+                {/* ponytail: 상세검색 버튼 — 동작은 추후 연결 */}
+                <button
+                  type="button"
+                  aria-label="Advanced search"
+                  className="flex items-center gap-1 px-2.5 py-1 mr-1 text-xs font-bold text-gray-600 hover:text-(--brand) border border-gray-300 rounded-full hover:border-(--brand) transition-colors whitespace-nowrap"
+                >
+                  <span className="text-sm leading-none">+</span>
+                  Advanced
+                </button>
                 <button
                   type="submit"
                   aria-label="검색"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-full text-gray-500 hover:text-(--brand) transition-colors duration-300"
+                  className="w-7 h-7 mr-1 flex items-center justify-center rounded-full text-gray-500 hover:text-(--brand) transition-colors duration-300"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />

@@ -18,6 +18,7 @@ import {
 } from "@/src/lib/mockRepository";
 import { mapCountriesForSlug } from "@/components/worldGeo";
 import { isLocale } from "@/src/lib/i18n";
+import { getCurrentUser } from "@/src/lib/auth";
 import type { LocaleCode } from "@/src/lib/types";
 
 interface Props {
@@ -45,13 +46,22 @@ export default async function HomePage({ params }: Props) {
   if (!isLocale(locale)) notFound();
   const code = locale as LocaleCode;
 
-  const [slides, partners, posts, certCountries, heroTags] = await Promise.all([
+  const [slides, partners, posts, certCountries, heroTags, currentUser] = await Promise.all([
     getHomeSlides(code),
     listPartners(),
     getPosts("news", code),
     listCertificationCountries(code),
     listHeroTags(code, 20),
+    getCurrentUser(),
   ]);
+
+  const feedbackUser = currentUser
+    ? {
+        login_id: currentUser.login_id,
+        email: currentUser.email,
+        user_level: currentUser.user_level,
+      }
+    : null;
 
   const certSteps: Step[] | undefined = certCountries.length
     ? certCountries.map((c, i) => ({
@@ -72,7 +82,7 @@ export default async function HomePage({ params }: Props) {
   return (
     <>
       <div className={snapFull}>
-        <HeroSlider slides={slides} locale={code} tags={heroTags} />
+        <HeroSlider slides={slides} locale={code} tags={heroTags} feedbackUser={feedbackUser} />
       </div>
       <div className={snapFull}>
         <ServiceBento />

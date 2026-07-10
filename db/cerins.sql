@@ -1009,6 +1009,8 @@ CREATE TABLE posts (
   thumbnail    VARCHAR(512) NULL,
   author       VARCHAR(128) NULL,
   is_published TINYINT(1)   NOT NULL DEFAULT 1,
+  is_popup     TINYINT(1)   NOT NULL DEFAULT 0,
+  popup_type   TINYINT      NOT NULL DEFAULT 1,
   published_at DATE         NOT NULL,
   created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

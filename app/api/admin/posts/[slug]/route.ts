@@ -51,6 +51,8 @@ function validateTranslation(
       thumbnail: t.thumbnail ?? null,
       author: t.author ?? null,
       is_published: t.is_published !== false,
+      is_popup: t.is_popup === true,
+      popup_type: t.popup_type ?? 1,
       published_at,
     },
   };

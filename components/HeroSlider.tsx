@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import type { HeroSlide, HeroTag, LocaleCode } from "@/src/lib/types";
 import { isVideoUrl } from "@/src/lib/media";
+import FeedbackButton, { type FeedbackUser } from "@/components/FeedbackButton";
 
 const INTERVAL = 5500;
 const FLIP_DURATION = 1000;
@@ -33,6 +34,7 @@ interface HeroSliderProps {
   slides: HeroSlide[];
   locale: LocaleCode;
   tags?: HeroTag[];
+  feedbackUser?: FeedbackUser | null;
 }
 
 // ponytail: 태그 목록 크기 티어. 티어를 좁혀 정돈된 그리드 느낌 유지.
@@ -44,7 +46,7 @@ function localized(path: string, locale: LocaleCode): string {
   return "/" + locale + path;
 }
 
-export default function HeroSlider({ slides, locale, tags = [] }: HeroSliderProps) {
+export default function HeroSlider({ slides, locale, tags = [], feedbackUser = null }: HeroSliderProps) {
   const total = slides.length;
   const hasVideo = slides.some((s) => isVideoUrl(s.image));
 
@@ -418,6 +420,12 @@ export default function HeroSlider({ slides, locale, tags = [] }: HeroSliderProp
         <span className="mx-1 text-white/40">/</span>
         {String(total).padStart(2, "0")}
       </div>
+
+      {feedbackUser && (
+        <div className="absolute bottom-16 right-8 z-[10]">
+          <FeedbackButton currentUser={feedbackUser} />
+        </div>
+      )}
 
       <div className="hidden sm:flex absolute bottom-8 left-8 z-[10] items-center gap-2 text-white/40 text-[10px] tracking-[0.3em] uppercase">
         <div className="w-px h-6 bg-white/30 animate-[scrollHint_1.8s_ease-in-out_infinite]" />

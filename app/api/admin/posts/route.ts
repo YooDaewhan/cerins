@@ -49,6 +49,8 @@ function validateTranslation(
       thumbnail: t.thumbnail ?? null,
       author: t.author ?? null,
       is_published: t.is_published !== false,
+      is_popup: t.is_popup === true,
+      popup_type: t.popup_type ?? 1,
       published_at,
     },
   };
@@ -104,6 +106,19 @@ export async function POST(req: Request) {
       { error: "최소 한 개 언어의 번역을 입력해야 합니다." },
       { status: 400 },
     );
+  }
+
+  // 한국어(또는 최초로 입력된 언어) 내용을 다른 모든 언어의 기본값으로 복제한다.
+  // 그래야 각 언어 관리자가 빈 화면이 아니라 원문을 보고 번역·수정할 수 있다.
+  // 복제된 언어판은 미발행(draft)으로 넣어, 번역 전 한국어 원문이 공개 첫 화면에
+  // 노출되지 않게 한다. 번역가가 내용을 고치고 '공개'를 체크하면 그 언어로 노출된다.
+  const sourceLocale: LocaleCode = inputs.ko
+    ? "ko"
+    : (Object.keys(inputs)[0] as LocaleCode);
+  const base = inputs[sourceLocale]!;
+  for (const locale of SUPPORTED_POST_LOCALES) {
+    if (inputs[locale]) continue;
+    inputs[locale] = { ...base, is_published: false, is_popup: false };
   }
 
   let slug: string;

@@ -20,6 +20,8 @@ export interface AdminPostTranslation {
   thumbnail: string | null;
   author: string | null;
   is_published: boolean;
+  is_popup: boolean;
+  popup_type: number;
   published_at: string;
 }
 
@@ -39,6 +41,8 @@ interface PostRow extends RowDataPacket {
   thumbnail: string | null;
   author: string | null;
   is_published: number;
+  is_popup: number;
+  popup_type: number;
   published_at: string;
 }
 
@@ -52,6 +56,8 @@ function rowToTranslation(row: PostRow): AdminPostTranslation {
     thumbnail: row.thumbnail,
     author: row.author,
     is_published: row.is_published === 1,
+    is_popup: row.is_popup === 1,
+    popup_type: row.popup_type,
     published_at: row.published_at,
   };
 }
@@ -99,6 +105,9 @@ export interface PostTranslationInput {
   thumbnail?: string | null;
   author?: string | null;
   is_published: boolean;
+  // 뉴스 게시판만 사용. 미지정 시 팝업 아님(0)/타입 1. (FAQ 등 다른 게시판은 생략)
+  is_popup?: boolean;
+  popup_type?: number;
   published_at: string;
 }
 
@@ -159,6 +168,10 @@ export async function upsertPostGroup(
 
       const sanitized = sanitizePostHtml(input.content);
       const publishedFlag = input.is_published ? 1 : 0;
+      const popupFlag = input.is_popup ? 1 : 0;
+      const popupType = [1, 2, 3].includes(input.popup_type ?? 1)
+        ? (input.popup_type ?? 1)
+        : 1;
       const thumbnail =
         input.thumbnail && input.thumbnail.trim() ? input.thumbnail.trim() : null;
       const author =
@@ -168,7 +181,7 @@ export async function upsertPostGroup(
         await conn.execute(
           `UPDATE posts
              SET title = ?, summary = ?, content = ?, thumbnail = ?, author = ?,
-                 is_published = ?, published_at = ?
+                 is_published = ?, is_popup = ?, popup_type = ?, published_at = ?
            WHERE id = ?`,
           [
             input.title,
@@ -177,6 +190,8 @@ export async function upsertPostGroup(
             thumbnail,
             author,
             publishedFlag,
+            popupFlag,
+            popupType,
             input.published_at,
             existing.id,
           ],
@@ -189,8 +204,8 @@ export async function upsertPostGroup(
         const nextId = Number((maxRow[0] as { next_id: number }).next_id);
         await conn.execute(
           `INSERT INTO posts
-             (id, board_code, locale, slug, title, summary, content, thumbnail, author, is_published, published_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             (id, board_code, locale, slug, title, summary, content, thumbnail, author, is_published, is_popup, popup_type, published_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             nextId,
             boardCode,
@@ -202,6 +217,8 @@ export async function upsertPostGroup(
             thumbnail,
             author,
             publishedFlag,
+            popupFlag,
+            popupType,
             input.published_at,
           ],
         );

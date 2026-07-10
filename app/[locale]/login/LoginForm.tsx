@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { buildLocalizedPath, isLocale } from "@/src/lib/i18n";
 
 interface Props {
   signupHref: string;
@@ -26,12 +27,20 @@ export default function LoginForm({ signupHref, redirectTo }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ login_id: loginId, password }),
       });
-      const data = (await res.json()) as { ok?: boolean; error?: string };
+      const data = (await res.json()) as {
+        ok?: boolean;
+        error?: string;
+        country?: string | null;
+      };
       if (!res.ok || !data.ok) {
         setError(data.error ?? "로그인에 실패했습니다.");
         return;
       }
-      window.location.assign(redirectTo);
+      const target =
+        data.country && isLocale(data.country)
+          ? buildLocalizedPath(data.country, "/")
+          : redirectTo;
+      window.location.assign(target);
       return;
     } catch {
       setError("네트워크 오류가 발생했습니다.");

@@ -159,7 +159,10 @@ export default function PostsAdminClient({
               </tr>
             )}
             {data.posts.map((p) => {
+              // 목록엔 현재 관리자 언어판을 대표로 보여준다. 해당 언어판이
+              // 없을 때만 ko→en→아무거나 순으로 대체.
               const primary =
+                p.translations[locale as LocaleCode] ??
                 p.translations.ko ??
                 p.translations.en ??
                 Object.values(p.translations)[0];

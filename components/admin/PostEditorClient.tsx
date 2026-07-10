@@ -14,6 +14,8 @@ interface FormState {
   author: string;
   thumbnail: string;
   is_published: boolean;
+  is_popup: boolean;
+  popup_type: number;
   published_at: string;
 }
 
@@ -25,6 +27,8 @@ function emptyForm(): FormState {
     author: "",
     thumbnail: "",
     is_published: true,
+    is_popup: false,
+    popup_type: 1,
     published_at: todayIso(),
   };
 }
@@ -44,6 +48,8 @@ interface InitialTranslation {
   author: string | null;
   thumbnail: string | null;
   is_published: boolean;
+  is_popup?: boolean;
+  popup_type?: number;
   published_at: string;
 }
 
@@ -90,6 +96,8 @@ export default function PostEditorClient({
         author: t.author ?? "",
         thumbnail: t.thumbnail ?? "",
         is_published: t.is_published,
+        is_popup: t.is_popup ?? false,
+        popup_type: t.popup_type ?? 1,
         published_at: t.published_at,
       };
     }
@@ -332,6 +340,46 @@ export default function PostEditorClient({
               <span>사이트에 공개</span>
             </label>
           </Field>
+          {listSlug === "posts" && (
+            <Field label="팝업">
+              <div className="flex flex-wrap items-center gap-4 pt-1.5">
+                <label className="inline-flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={form.is_popup}
+                    onChange={(e) => update({ is_popup: e.target.checked })}
+                    className="h-4 w-4 accent-(--brand)"
+                  />
+                  <span>공개</span>
+                </label>
+                {form.is_popup && (
+                  <div className="inline-flex items-center gap-3">
+                    {[1, 2, 3].map((n) => (
+                      <label
+                        key={n}
+                        className="inline-flex items-center gap-1 text-sm"
+                      >
+                        <input
+                          type="radio"
+                          name="popup_type"
+                          checked={form.popup_type === n}
+                          onChange={() => update({ popup_type: n })}
+                          className="h-4 w-4 accent-(--brand)"
+                        />
+                        <span>{n}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {form.is_popup && (
+                <p className="text-[11px] text-gray-400 mt-1">
+                  사이트 진입 시 왼쪽에 팝업으로 노출됩니다. 타입 1=컬러 헤더,
+                  2=이미지 히어로, 3=사이드 강조.
+                </p>
+              )}
+            </Field>
+          )}
           <Field label="썸네일 이미지 URL (선택)" className="sm:col-span-2">
             <input
               type="text"
@@ -374,6 +422,8 @@ function serialize(f: FormState) {
     author: f.author.trim() ? f.author.trim() : null,
     thumbnail: f.thumbnail.trim() ? f.thumbnail.trim() : null,
     is_published: f.is_published,
+    is_popup: f.is_popup,
+    popup_type: f.popup_type,
     published_at: f.published_at,
   };
 }

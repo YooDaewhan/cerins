@@ -42,7 +42,7 @@ export default function LocationMap() {
             )}
           </div>
 
-          <div className="pl-4">
+          <div className="pl-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="rounded-xl overflow-hidden border border-gray-300 shadow-md">
               <iframe
                 src={embedUrl(loc)}
@@ -52,6 +52,11 @@ export default function LocationMap() {
                 referrerPolicy="no-referrer-when-downgrade"
                 allowFullScreen
               />
+            </div>
+            {/* ponytail: 사진 넣는 칸 — 이미지는 직접 하드코딩해서 넣으세요 */}
+            <div className="rounded-xl overflow-hidden border border-gray-300 shadow-md bg-gray-100 h-80 flex items-center justify-center text-gray-400">
+              {/* <img src="/uploads/your-photo.jpg" alt="" className="w-full h-full object-cover" /> */}
+              사진
             </div>
           </div>
         </div>

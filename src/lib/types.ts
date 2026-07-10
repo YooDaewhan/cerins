@@ -88,6 +88,9 @@ export interface Post {
   thumbnail?: string;
   author?: string;
   is_published: boolean;
+  // 사이트 진입 팝업 노출 여부 + 팝업 레이아웃 타입(1~3).
+  is_popup: boolean;
+  popup_type: number;
   published_at: string;
   created_at: string;
   updated_at: string;

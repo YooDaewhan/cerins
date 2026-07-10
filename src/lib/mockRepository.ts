@@ -306,6 +306,18 @@ export async function getPosts(boardCode: string, locale: LocaleCode): Promise<P
   return rows as unknown as Post[];
 }
 
+// 사이트 진입 팝업으로 지정된(공개 + 팝업 체크) 뉴스. 최신순.
+export async function getPopupPosts(
+  boardCode: string,
+  locale: LocaleCode,
+): Promise<Post[]> {
+  const [rows] = await getPool().query<RowDataPacket[]>(
+    "SELECT * FROM posts WHERE board_code = ? AND locale = ? AND is_published = 1 AND is_popup = 1 ORDER BY published_at DESC, id DESC",
+    [boardCode, locale],
+  );
+  return rows as unknown as Post[];
+}
+
 export async function getPostBySlug(
   boardCode: string,
   slug: string,

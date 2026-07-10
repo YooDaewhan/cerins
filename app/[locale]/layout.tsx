@@ -2,9 +2,11 @@ import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ThemeProvider from "@/components/ThemeProvider";
+import NewsPopup from "@/components/NewsPopup";
 import {
   getEnabledLocales,
   getMenus,
+  getPopupPosts,
 } from "@/src/lib/mockRepository";
 import { isLocale } from "@/src/lib/i18n";
 import { getCurrentUser } from "@/src/lib/auth";
@@ -26,10 +28,11 @@ export default async function LocaleLayout({
   if (!isLocale(locale)) notFound();
 
   const code = locale as LocaleCode;
-  const [menus, enabledLocales, currentUser] = await Promise.all([
+  const [menus, enabledLocales, currentUser, popupPosts] = await Promise.all([
     getMenus(code),
     getEnabledLocales(),
     getCurrentUser(),
+    getPopupPosts("news", code),
   ]);
 
   const headerUser = currentUser
@@ -49,6 +52,7 @@ export default async function LocaleLayout({
         currentUser={headerUser}
       />
       <main className="flex-1 pt-20">{children}</main>
+      <NewsPopup posts={popupPosts} locale={code} />
       <Footer
         menus={menus}
         locale={code}
