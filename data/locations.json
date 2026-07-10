@@ -29,13 +29,16 @@
       "label": "호치민, 베트남",
       "address": "Unit A4.4, 4th Floor, Block A, Jamona Heights, 210 Bui Van Ba Street, Tan Thuan Ward, Ho Chi Minh City, Vietnam",
       "tel": "+84 283 6202526",
-      "query": "Jamona Heights, 210 Bui Van Ba, Tan Thuan, Ho Chi Minh City, Vietnam"
+      "query": "Jamona Heights, 210 Bui Van Ba, Tan Thuan, Ho Chi Minh City, Vietnam",
+      "images": ["/headquarters/headquarters-vi1.png", "/headquarters/headquarters-vi2.png"]
     },
     {
       "label": "상하이, 중국",
       "address": "Room 218, No.3, Lane 1220, Yuqiao Road, Pudong New Area, Shanghai, China",
       "tel": "+86 021 5039 0399",
-      "query": "No.3 Lane 1220 Yuqiao Road, Pudong, Shanghai, China"
+      "query": "No.3 Lane 1220 Yuqiao Road, Pudong, Shanghai, China",
+      "mapProvider": "baidu",
+      "images": ["/headquarters/headquarters-ch1.png", "/headquarters/headquarters-ch2.png"]
     },
     {
       "label": "타슈켄트, 우즈베키스탄",
