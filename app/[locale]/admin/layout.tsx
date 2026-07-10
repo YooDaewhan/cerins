@@ -1,8 +1,9 @@
 import { notFound, redirect } from "next/navigation";
-import { isLocale, buildLocalizedPath } from "@/src/lib/i18n";
+import { isLocale, buildLocalizedPath, DEFAULT_LOCALE } from "@/src/lib/i18n";
 import { requireAdmin } from "@/src/lib/auth";
 import type { LocaleCode } from "@/src/lib/types";
 import AdminTabs from "./AdminTabs";
+import AdminLocaleSwitcher from "./AdminLocaleSwitcher";
 
 export const dynamic = "force-dynamic";
 
@@ -19,28 +20,43 @@ export default async function AdminLayout({ children, params }: Props) {
   const admin = await requireAdmin();
   if (!admin) redirect(buildLocalizedPath(code, "/login"));
 
+  const isPrimary = code === DEFAULT_LOCALE;
   const base = buildLocalizedPath(code, "/admin");
-  const tabs = [
-    { href: base, label: "회원" },
+
+  // 콘텐츠(언어별 번역이 있는) 탭 — 모든 언어 관리자에게 노출.
+  const contentTabs = [
     { href: `${base}/menus`, label: "메뉴" },
     { href: `${base}/pages`, label: "페이지" },
     { href: `${base}/posts`, label: "뉴스" },
     { href: `${base}/faqs`, label: "FAQ" },
     { href: `${base}/hero-slides`, label: "히어로 슬라이드" },
+  ];
+  // 전역(언어 무관) 관리 탭 — 한국어(기본) 관리자 전용.
+  const primaryOnlyTabs = [
+    { href: base, label: "회원" },
     { href: `${base}/partners`, label: "파트너" },
     { href: `${base}/locales`, label: "언어" },
     { href: `${base}/inquiries`, label: "문의" },
     { href: `${base}/satisfaction`, label: "고객만족도" },
     { href: `${base}/staff-evaluations`, label: "직원평가" },
   ];
+  const tabs = isPrimary
+    ? [primaryOnlyTabs[0], ...contentTabs, ...primaryOnlyTabs.slice(1)]
+    : contentTabs;
 
   return (
     <div className="min-h-[calc(100vh-8rem)] bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 pt-10 pb-2">
-        <h1 className="text-2xl font-bold text-(--brand)">CERINS 관리자</h1>
+        <div className="flex items-center gap-2 flex-wrap">
+          <h1 className="text-2xl font-bold text-(--brand)">CERINS 관리자</h1>
+          <span className="rounded bg-(--brand)/10 px-2 py-0.5 text-xs font-semibold text-(--brand) uppercase font-mono">
+            {code}
+          </span>
+        </div>
         <p className="text-sm text-gray-500 mt-1">
           로그인 중: <span className="font-semibold">{admin.login_id}</span>
         </p>
+        <AdminLocaleSwitcher />
         <AdminTabs tabs={tabs} />
       </div>
       <div className="max-w-6xl mx-auto px-4 py-6">{children}</div>

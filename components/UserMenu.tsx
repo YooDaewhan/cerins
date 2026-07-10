@@ -66,7 +66,7 @@ export default function UserMenu({ user, locale, variant = "desktop" }: Props) {
     return (
       <Link
         href={loginHref}
-        className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-white bg-(--brand) rounded-full hover:opacity-90 transition-opacity"
+        className="flex items-center justify-center gap-1.5 min-w-30 px-4 py-1.5 text-xs font-bold text-white bg-(--brand) rounded-full hover:opacity-90 transition-opacity"
       >
         로그인
       </Link>

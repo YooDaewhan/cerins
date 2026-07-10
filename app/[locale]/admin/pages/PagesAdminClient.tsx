@@ -54,7 +54,13 @@ const TEMPLATE_LABELS: Record<Template, string> = {
   simple: "단순",
 };
 
-export default function PagesAdminClient({ locale }: { locale: string }) {
+export default function PagesAdminClient({
+  locale,
+  isPrimary,
+}: {
+  locale: string;
+  isPrimary: boolean;
+}) {
   const router = useRouter();
   const [data, setData] = useState<ApiData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -138,6 +144,7 @@ export default function PagesAdminClient({ locale }: { locale: string }) {
   }, [createTemplate, topLevelByTemplate]);
 
   async function createPage() {
+    if (!isPrimary) return;
     if (!createSlug.trim()) {
       setError("slug을 입력하세요.");
       return;
@@ -178,6 +185,7 @@ export default function PagesAdminClient({ locale }: { locale: string }) {
 
   // 트리 행의 + 버튼: slug만 묻고 즉시 자식 페이지 생성 후 편집기로 이동.
   async function quickAddChild(parent: AdminPage) {
+    if (!isPrimary) return;
     const raw = window.prompt(
       `'${parent.slug}' 아래에 추가할 하위 페이지 slug 를 입력하세요\n` +
         `(예: gost-r, truc, fire-safety — 소문자/숫자/-만)`,
@@ -217,6 +225,7 @@ export default function PagesAdminClient({ locale }: { locale: string }) {
   }
 
   async function deletePage(p: AdminPage) {
+    if (!isPrimary) return;
     if (
       !confirm(
         `'${p.slug}' 페이지와 모든 언어판 번역을 삭제합니다. 계속할까요?`,
@@ -253,6 +262,18 @@ export default function PagesAdminClient({ locale }: { locale: string }) {
 
   return (
     <div className="space-y-4">
+      {!isPrimary && (
+        <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-gray-700">
+          <p className="font-semibold mb-1">
+            {locale.toUpperCase()} 언어판 번역
+          </p>
+          <ul className="list-disc list-inside space-y-0.5 text-gray-600">
+            <li>페이지 생성·삭제·구조(slug/템플릿/정렬)는 한국어 관리자가 관리합니다.</li>
+            <li>여기서는 각 페이지의 <b>{locale.toUpperCase()}</b> 언어판만 편집합니다.</li>
+          </ul>
+        </div>
+      )}
+
       {error && (
         <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
           {error}
@@ -281,17 +302,19 @@ export default function PagesAdminClient({ locale }: { locale: string }) {
           >
             새로고침
           </button>
-          <button
-            type="button"
-            onClick={() => setCreating((v) => !v)}
-            className="rounded bg-(--brand) text-white px-3 py-1.5 text-xs font-semibold hover:opacity-90"
-          >
-            {creating ? "닫기" : "+ 새 페이지"}
-          </button>
+          {isPrimary && (
+            <button
+              type="button"
+              onClick={() => setCreating((v) => !v)}
+              className="rounded bg-(--brand) text-white px-3 py-1.5 text-xs font-semibold hover:opacity-90"
+            >
+              {creating ? "닫기" : "+ 새 페이지"}
+            </button>
+          )}
         </div>
       </div>
 
-      {creating && (
+      {isPrimary && creating && (
         <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-3">
           <h3 className="text-sm font-semibold text-gray-800">새 페이지</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -397,14 +420,13 @@ export default function PagesAdminClient({ locale }: { locale: string }) {
               <th className="text-left font-semibold px-4 py-2">템플릿</th>
               <th className="text-left font-semibold px-4 py-2">정렬</th>
               <th className="text-left font-semibold px-4 py-2">공개</th>
-              <th className="text-left font-semibold px-4 py-2">번역 (언어)</th>
               <th className="text-right font-semibold px-4 py-2 pr-5">작업</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={7} className="text-center py-6 text-gray-400">
+                <td colSpan={6} className="text-center py-6 text-gray-400">
                   페이지가 없습니다.
                 </td>
               </tr>
@@ -443,24 +465,9 @@ export default function PagesAdminClient({ locale }: { locale: string }) {
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-2">
-                    <div className="flex gap-1 flex-wrap">
-                      {p.translation_locales.length === 0 && (
-                        <span className="text-[10px] text-gray-400">없음</span>
-                      )}
-                      {p.translation_locales.map((l) => (
-                        <span
-                          key={l}
-                          className="text-[10px] bg-(--brand)/10 text-(--brand) px-1.5 py-0.5 rounded font-mono uppercase"
-                        >
-                          {l}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
                   <td className="px-4 py-2 text-right pr-5 whitespace-nowrap">
                     <div className="inline-flex gap-1">
-                      {isNestableParent && (
+                      {isPrimary && isNestableParent && (
                         <button
                           type="button"
                           onClick={() => quickAddChild(p)}
@@ -475,15 +482,17 @@ export default function PagesAdminClient({ locale }: { locale: string }) {
                         href={`${adminBase}/pages/${p.id}`}
                         className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-50"
                       >
-                        편집
+                        {isPrimary ? "편집" : "수정"}
                       </Link>
-                      <button
-                        type="button"
-                        onClick={() => deletePage(p)}
-                        className="rounded border border-red-300 text-red-600 px-2.5 py-1 text-xs hover:bg-red-50"
-                      >
-                        삭제
-                      </button>
+                      {isPrimary && (
+                        <button
+                          type="button"
+                          onClick={() => deletePage(p)}
+                          className="rounded border border-red-300 text-red-600 px-2.5 py-1 text-xs hover:bg-red-50"
+                        >
+                          삭제
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

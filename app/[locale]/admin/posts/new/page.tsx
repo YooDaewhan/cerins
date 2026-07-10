@@ -13,5 +13,6 @@ interface Props {
 
 export default async function AdminPostsNewPage({ params }: Props) {
   const { locale } = await params;
-  return <PostEditorClient locale={locale} mode="new" />;
+  const isPrimary = locale === "ko";
+  return <PostEditorClient locale={locale} isPrimary={isPrimary} mode="new" />;
 }

@@ -13,11 +13,13 @@ interface Props {
 
 export default async function AdminFaqsPage({ params }: Props) {
   const { locale } = await params;
+  const isPrimary = locale === "ko";
   return (
     <div>
       <h2 className="text-lg font-semibold text-gray-800 mb-4">FAQ 관리</h2>
       <PostsAdminClient
         locale={locale}
+        isPrimary={isPrimary}
         apiBase="/api/admin/faqs"
         listSlug="faqs"
       />

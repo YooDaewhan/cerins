@@ -37,5 +37,13 @@ export default async function AdminPostEditPage({ params }: Props) {
     };
   }
 
-  return <PostEditorClient locale={locale} mode="edit" initial={initial} />;
+  const isPrimary = locale === "ko";
+  return (
+    <PostEditorClient
+      locale={locale}
+      isPrimary={isPrimary}
+      mode="edit"
+      initial={initial}
+    />
+  );
 }

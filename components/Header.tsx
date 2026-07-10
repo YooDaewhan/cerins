@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import type { Locale, LocaleCode, MenuNode } from "@/src/lib/types";
 import UserMenu, { type HeaderUser } from "@/components/UserMenu";
+import { buildLocalizedPath } from "@/src/lib/i18n";
 
 interface HeaderProps {
   menus: MenuNode[];
@@ -38,11 +39,20 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const [langOpen, setLangOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [query, setQuery] = useState("");
   const headerRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const router = useRouter();
   const [logoTick, setLogoTick] = useState(0);
 
   const enabledCodes = enabledLocales.map((l) => l.code);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = query.trim();
+    if (!q) return;
+    router.push(buildLocalizedPath(locale, `/search?q=${encodeURIComponent(q)}`));
+  };
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -115,11 +125,11 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
         } border-b border-gray-200/60`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            {/* 로고 */}
+          <div className="relative flex items-center justify-center h-20">
+            {/* 로고 — 다른 요소처럼 flex 흐름에 포함, 최소 너비만 지정하고 오른쪽 여백만 유지 */}
             <Link
               href={locale === DEFAULT_LOCALE ? "/" : `/${locale}`}
-              className="flex items-center"
+              className="flex items-center h-12 min-w-32 mr-6 shrink-0"
               onClick={() => setOpenMenu(null)}
             >
               <div className="relative h-14 w-[140px] overflow-hidden">
@@ -275,6 +285,29 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                 )}
               </div>
             </nav>
+
+            {/* 검색 (헤더 우측 끝, 네비와 분리) */}
+            <form onSubmit={handleSearch} className="hidden lg:block shrink-0 ml-4">
+              <div className="relative">
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="인증·국가 검색"
+                  aria-label="인증 검색"
+                  className="w-44 rounded-full bg-gray-100 border border-gray-200 pl-4 pr-9 py-1.5 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none focus:border-(--brand) focus:bg-white transition-all duration-300"
+                />
+                <button
+                  type="submit"
+                  aria-label="검색"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center rounded-full text-gray-500 hover:text-(--brand) transition-colors duration-300"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
+                  </svg>
+                </button>
+              </div>
+            </form>
 
             {/* 모바일 햄버거 */}
             <button

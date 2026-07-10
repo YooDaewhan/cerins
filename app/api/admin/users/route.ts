@@ -21,6 +21,9 @@ interface UserRow {
   id: number;
   login_id: string;
   email: string;
+  company: string | null;
+  job_title: string | null;
+  country: string | null;
   email_consent: number;
   account_type: AccountType;
   user_level: number;
@@ -38,13 +41,16 @@ export async function GET() {
   }
   const pool = getPool();
   const [rows] = await pool.execute(
-    `SELECT id, login_id, email, email_consent, account_type, user_level, created_at, updated_at
+    `SELECT id, login_id, email, company, job_title, country, email_consent, account_type, user_level, created_at, updated_at
        FROM users ORDER BY id DESC`,
   );
   const list = (rows as UserRow[]).map((r) => ({
     id: r.id,
     login_id: r.login_id,
     email: r.email,
+    company: r.company,
+    job_title: r.job_title,
+    country: r.country,
     email_consent: r.email_consent === 1,
     account_type: r.account_type,
     user_level: r.user_level,

@@ -56,11 +56,6 @@ interface ApiData {
   translations: PageTranslation[];
 }
 
-interface LocaleEntry {
-  code: string;
-  label: string;
-}
-
 function emptyTranslation(locale: string): PageTranslation {
   return {
     locale,
@@ -76,17 +71,19 @@ function emptyTranslation(locale: string): PageTranslation {
 export default function PageEditorClient({
   locale,
   pageId,
+  isPrimary,
 }: {
   locale: string;
   pageId: number;
+  isPrimary: boolean;
 }) {
   const router = useRouter();
   const [data, setData] = useState<ApiData | null>(null);
   const [allPages, setAllPages] = useState<AllPagesEntry[]>([]);
-  const [locales, setLocales] = useState<LocaleEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeLocale, setActiveLocale] = useState("ko");
+  // 각 언어 관리자는 자기 언어판만 편집한다 (현재 URL 로케일 고정).
+  const activeLocale = locale;
   const [drafts, setDrafts] = useState<Record<string, PageTranslation>>({});
   const [meta, setMeta] = useState<PageMeta | null>(null);
   const [savingMeta, setSavingMeta] = useState(false);
@@ -98,10 +95,9 @@ export default function PageEditorClient({
     setLoading(true);
     setError(null);
     try {
-      const [pageRes, listRes, localesRes] = await Promise.all([
+      const [pageRes, listRes] = await Promise.all([
         fetch(`/api/admin/pages/${pageId}`, { cache: "no-store" }),
         fetch(`/api/admin/pages`, { cache: "no-store" }),
-        fetch(`/api/admin/locales`, { cache: "no-store" }),
       ]);
       const json = (await pageRes.json()) as ApiData & { error?: string };
       if (!pageRes.ok) {
@@ -116,16 +112,6 @@ export default function PageEditorClient({
       if (listRes.ok) {
         const listJson = (await listRes.json()) as { pages: AllPagesEntry[] };
         setAllPages(listJson.pages);
-      }
-      if (localesRes.ok) {
-        const lj = (await localesRes.json()) as {
-          locales: { code: string; native_name: string; is_enabled: boolean }[];
-        };
-        setLocales(
-          lj.locales
-            .filter((l) => l.is_enabled)
-            .map((l) => ({ code: l.code, label: l.native_name })),
-        );
       }
     } catch {
       setError("네트워크 오류가 발생했습니다.");
@@ -201,7 +187,7 @@ export default function PageEditorClient({
   }
 
   async function saveMeta() {
-    if (!meta) return;
+    if (!meta || !isPrimary) return;
     setSavingMeta(true);
     setError(null);
     setNotice(null);
@@ -270,7 +256,7 @@ export default function PageEditorClient({
   }
 
   async function addChild() {
-    if (!meta) return;
+    if (!meta || !isPrimary) return;
     const raw = window.prompt(
       `'${meta.slug}' 아래에 추가할 하위 페이지 slug 를 입력하세요\n` +
         `(예: gost-r, truc, fire-safety — 소문자/숫자/-만)`,
@@ -311,7 +297,7 @@ export default function PageEditorClient({
   }
 
   async function deleteTranslation() {
-    if (!hasTranslation) return;
+    if (!hasTranslation || !isPrimary) return;
     if (!confirm(`${activeLocale.toUpperCase()} 언어판을 삭제할까요?`)) return;
     setSavingTrans(true);
     setError(null);
@@ -357,8 +343,6 @@ export default function PageEditorClient({
     );
   }
 
-  const existingLocales = new Set(data.translations.map((t) => t.locale));
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -384,6 +368,36 @@ export default function PageEditorClient({
         </p>
       )}
 
+      {!isPrimary ? (
+        <section className="rounded-lg border border-gray-200 bg-white p-4 space-y-2">
+          <h3 className="text-sm font-semibold text-gray-800">
+            페이지 메타{" "}
+            <span className="text-[11px] font-normal text-gray-400">
+              (구조는 한국어 관리자 전용 · 읽기 전용)
+            </span>
+          </h3>
+          <dl className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+            <div>
+              <dt className="text-gray-400">Slug</dt>
+              <dd className="font-mono text-gray-700">/{meta.slug}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-400">템플릿</dt>
+              <dd className="text-gray-700">{meta.template}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-400">정렬</dt>
+              <dd className="text-gray-700">{meta.sort_order}</dd>
+            </div>
+            <div>
+              <dt className="text-gray-400">공개</dt>
+              <dd className="text-gray-700">
+                {meta.is_published ? "공개" : "비공개"}
+              </dd>
+            </div>
+          </dl>
+        </section>
+      ) : (
       <section className="rounded-lg border border-gray-200 bg-white p-4 space-y-3">
         <h3 className="text-sm font-semibold text-gray-800">페이지 메타</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -483,6 +497,7 @@ export default function PageEditorClient({
           </button>
         </div>
       </section>
+      )}
 
       {isNestable && isTopLevel && (
         <section className="rounded-lg border border-gray-200 bg-white p-4 space-y-3">
@@ -490,18 +505,22 @@ export default function PageEditorClient({
             <h3 className="text-sm font-semibold text-gray-800">
               하위 페이지 ({children.length})
             </h3>
-            <button
-              type="button"
-              onClick={addChild}
-              disabled={addingChild}
-              className="rounded bg-(--brand) text-white px-3 py-1.5 text-xs font-semibold hover:opacity-90 disabled:opacity-60"
-            >
-              {addingChild ? "추가 중..." : "+ 하위 추가"}
-            </button>
+            {isPrimary && (
+              <button
+                type="button"
+                onClick={addChild}
+                disabled={addingChild}
+                className="rounded bg-(--brand) text-white px-3 py-1.5 text-xs font-semibold hover:opacity-90 disabled:opacity-60"
+              >
+                {addingChild ? "추가 중..." : "+ 하위 추가"}
+              </button>
+            )}
           </div>
           {children.length === 0 ? (
             <p className="text-xs text-gray-400">
-              하위 페이지가 없습니다. 우측 버튼으로 TRUC, GOST R 같은 항목을 추가하세요.
+              {isPrimary
+                ? "하위 페이지가 없습니다. 우측 버튼으로 TRUC, GOST R 같은 항목을 추가하세요."
+                : "하위 페이지가 없습니다."}
             </p>
           ) : (
             <ul className="divide-y divide-gray-100 border border-gray-100 rounded">
@@ -525,7 +544,7 @@ export default function PageEditorClient({
                     href={`${adminBase}/pages/${c.id}`}
                     className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-50"
                   >
-                    편집
+                    {isPrimary ? "편집" : "수정"}
                   </Link>
                 </li>
               ))}
@@ -535,29 +554,18 @@ export default function PageEditorClient({
       )}
 
       <section className="rounded-lg border border-gray-200 bg-white overflow-hidden">
-        <div className="border-b border-gray-200 bg-gray-50 px-4 py-2 flex gap-1 flex-wrap">
-          {locales.map((l) => {
-            const has = existingLocales.has(l.code);
-            const active = activeLocale === l.code;
-            return (
-              <button
-                key={l.code}
-                type="button"
-                onClick={() => setActiveLocale(l.code)}
-                className={
-                  "px-3 py-1.5 text-xs font-semibold rounded transition-colors " +
-                  (active
-                    ? "bg-(--brand) text-white"
-                    : has
-                      ? "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                      : "bg-white border border-dashed border-gray-300 text-gray-400 hover:text-gray-700")
-                }
-              >
-                {l.code.toUpperCase()}
-                {!has && <span className="ml-1 opacity-60">·비어있음</span>}
-              </button>
-            );
-          })}
+        <div className="border-b border-gray-200 bg-gray-50 px-4 py-2.5 flex items-center gap-2">
+          <span className="px-2.5 py-1 text-xs font-semibold rounded bg-(--brand) text-white uppercase">
+            {activeLocale}
+          </span>
+          <span className="text-sm font-semibold text-gray-700">
+            언어판 편집
+          </span>
+          {!hasTranslation && (
+            <span className="text-[11px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
+              아직 번역 없음
+            </span>
+          )}
         </div>
 
         <div className="p-4 space-y-4">
@@ -687,7 +695,7 @@ export default function PageEditorClient({
           </div>
 
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
-            {hasTranslation && (
+            {isPrimary && hasTranslation && (
               <button
                 type="button"
                 onClick={deleteTranslation}

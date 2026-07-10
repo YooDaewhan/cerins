@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { isLocale, buildLocalizedPath } from "@/src/lib/i18n";
+import { getEnabledLocales } from "@/src/lib/mockRepository";
 import type { LocaleCode } from "@/src/lib/types";
 import SignupForm from "./SignupForm";
 
@@ -16,6 +17,7 @@ export default async function SignupPage({ params }: Props) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const code = locale as LocaleCode;
+  const countries = await getEnabledLocales();
 
   return (
     <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4 py-16 bg-gray-50">
@@ -27,6 +29,7 @@ export default async function SignupPage({ params }: Props) {
         <SignupForm
           loginHref={buildLocalizedPath(code, "/login")}
           redirectTo={buildLocalizedPath(code, "/")}
+          countries={countries}
         />
       </div>
     </div>

@@ -138,12 +138,13 @@ export async function upsertPostGroup(
     const existingByLocale = new Map<LocaleCode, PostRow>();
     for (const row of existingRows) existingByLocale.set(row.locale, row);
 
-    // Iterate every locale that either exists in DB or was sent by the client —
-    // so newly-added locales (via 언어 admin) upsert, and null/missing entries delete.
-    const localeSet = new Set<LocaleCode>([
-      ...(Object.keys(translations) as LocaleCode[]),
-      ...existingByLocale.keys(),
-    ]);
+    // Only touch locales the client explicitly submitted. A value upserts that
+    // locale; an explicit `null` deletes it. Locales NOT present in the payload
+    // are left untouched — this lets a per-language admin save only their own
+    // locale without wiping the others (e.g. an EN admin must not delete KO).
+    const localeSet = new Set<LocaleCode>(
+      Object.keys(translations) as LocaleCode[],
+    );
     for (const locale of localeSet) {
       const input = translations[locale];
       const existing = existingByLocale.get(locale);

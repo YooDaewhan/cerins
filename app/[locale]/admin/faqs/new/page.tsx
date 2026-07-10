@@ -13,9 +13,11 @@ interface Props {
 
 export default async function AdminFaqsNewPage({ params }: Props) {
   const { locale } = await params;
+  const isPrimary = locale === "ko";
   return (
     <PostEditorClient
       locale={locale}
+      isPrimary={isPrimary}
       mode="new"
       apiBase="/api/admin/faqs"
       listSlug="faqs"
