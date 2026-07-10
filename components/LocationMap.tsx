@@ -8,6 +8,14 @@ interface MapLocation {
   email?: string;
   /** Optional search query for the map embed; falls back to `address`. */
   query?: string;
+  /** Chinese-language query for Baidu Maps — its geocoder doesn't resolve romanized/English addresses. */
+  baiduQuery?: string;
+  /**
+   * Exact iframe URL captured from a live map.baidu.com search (address bar after searching
+   * `baiduQuery`). Baidu's `/search/<query>` path alone doesn't reliably trigger the search —
+   * it needs `querytype=s`, `wd=`, city code, and viewport params that only a real search run produces.
+   */
+  baiduEmbedUrl?: string;
   /** Which map service to embed. Defaults to Google Maps. */
   mapProvider?: "google" | "baidu";
   /** Headquarters photos shown next to the map. */
@@ -17,12 +25,12 @@ interface MapLocation {
 const locations = (locationsData.locations ?? []) as MapLocation[];
 
 function embedUrl(loc: MapLocation) {
-  const q = loc.query ?? loc.address;
   if (loc.mapProvider === "baidu") {
-    // 바이두는 Google의 output=embed 같은 무료 임베드 API가 없어, 키 없이 쓸 수 있는
-    // 공개 지도 검색 페이지(map.baidu.com)를 그대로 iframe에 넣는 방식 사용.
+    if (loc.baiduEmbedUrl) return loc.baiduEmbedUrl;
+    const q = loc.baiduQuery ?? loc.query ?? loc.address;
     return `https://map.baidu.com/search/${encodeURIComponent(q)}`;
   }
+  const q = loc.query ?? loc.address;
   return `https://maps.google.com/maps?q=${encodeURIComponent(q)}&z=16&output=embed`;
 }
 

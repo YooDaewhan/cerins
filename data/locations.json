@@ -37,7 +37,9 @@
       "address": "Room 218, No.3, Lane 1220, Yuqiao Road, Pudong New Area, Shanghai, China",
       "tel": "+86 021 5039 0399",
       "query": "No.3 Lane 1220 Yuqiao Road, Pudong, Shanghai, China",
+      "baiduQuery": "上海市浦东新区御桥路1220弄3号218室",
       "mapProvider": "baidu",
+      "baiduEmbedUrl": "https://map.baidu.com/search/%E4%B8%8A%E6%B5%B7%E5%B8%82%E6%B5%A6%E4%B8%9C%E6%96%B0%E5%8C%BA%E5%BE%A1%E6%A1%A5%E8%B7%AF1220%E5%BC%84/@13532761.125,3631146,19z?querytype=s&da_src=shareurl&wd=%E4%B8%8A%E6%B5%B7%E5%B8%82%E6%B5%A6%E4%B8%9C%E6%96%B0%E5%8C%BA%E5%BE%A1%E6%A1%A5%E8%B7%AF1220%E5%BC%84&c=289&src=0&pn=0&sug=0&l=17&b=(13531762.507055834,3630705.1680964474;13533513.993756343,3632029.8219035557)&from=webmap&biz_forward=%7B%22scaler%22:1,%22styles%22:%22pl%22%7D&device_ratio=1",
       "images": ["/headquarters/headquarters-ch1.png", "/headquarters/headquarters-ch2.png"]
     },
     {
