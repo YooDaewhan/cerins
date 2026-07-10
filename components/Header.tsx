@@ -15,6 +15,9 @@ interface HeaderProps {
 
 const DEFAULT_LOCALE: LocaleCode = "ko";
 
+const LOGOS = ["/cerins-logo-color.jpg", "/cerins-logo-white.jpg"] as const;
+const LOGO_SWEEP_INTERVAL_MS = 10000;
+
 function buildLocalizedHref(target: LocaleCode, currentPathname: string, enabled: LocaleCode[]): string {
   // Strip a leading locale segment if present.
   const segments = currentPathname.split("/").filter(Boolean);
@@ -37,8 +40,19 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
   const [scrolled, setScrolled] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
+  const [logoTick, setLogoTick] = useState(0);
 
   const enabledCodes = enabledLocales.map((l) => l.code);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setLogoTick((v) => v + 1);
+    }, LOGO_SWEEP_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, []);
+
+  const logoOutIndex = logoTick === 0 ? 0 : (logoTick - 1) % LOGOS.length;
+  const logoInIndex = logoTick % LOGOS.length;
 
   useEffect(() => {
     function onScroll() {
@@ -108,8 +122,35 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
               className="flex items-center"
               onClick={() => setOpenMenu(null)}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/cerins-logo.jpg" alt="CERINS" className="h-14 w-auto" />
+              <div className="relative h-14 w-[140px] overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={LOGOS[logoInIndex]}
+                  alt="CERINS"
+                  className="absolute inset-0 h-14 w-auto object-contain object-left"
+                />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  key={logoTick}
+                  src={LOGOS[logoOutIndex]}
+                  alt="CERINS"
+                  className={`absolute inset-0 h-14 w-auto object-contain object-left ${
+                    logoTick > 0 ? "animate-logo-veil" : ""
+                  }`}
+                  style={{
+                    WebkitMaskImage:
+                      "linear-gradient(115deg, #000 0%, #000 42%, transparent 56%, transparent 100%)",
+                    maskImage:
+                      "linear-gradient(115deg, #000 0%, #000 42%, transparent 56%, transparent 100%)",
+                    WebkitMaskSize: "300% 100%",
+                    maskSize: "300% 100%",
+                    WebkitMaskRepeat: "no-repeat",
+                    maskRepeat: "no-repeat",
+                    WebkitMaskPosition: "0% 0%",
+                    maskPosition: "0% 0%",
+                  }}
+                />
+              </div>
             </Link>
 
             {/* 데스크톱 네비 */}
@@ -461,6 +502,19 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
         @keyframes megaIn {
           from { opacity: 0; transform: translateY(24px); }
           to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes logoVeil {
+          from {
+            -webkit-mask-position: 0% 0%;
+            mask-position: 0% 0%;
+          }
+          to {
+            -webkit-mask-position: 100% 0%;
+            mask-position: 100% 0%;
+          }
+        }
+        .animate-logo-veil {
+          animation: logoVeil 2600ms ease-in-out forwards;
         }
       `}</style>
     </>
