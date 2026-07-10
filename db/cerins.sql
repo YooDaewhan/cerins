@@ -136,6 +136,7 @@ CREATE TABLE page_translations (
   content          JSON         NOT NULL,
   meta_title       VARCHAR(255) NOT NULL,
   meta_description TEXT         NOT NULL,
+  meta_keywords    JSON         NOT NULL DEFAULT (JSON_ARRAY()),
   created_at       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY uq_page_locale (page_id, locale),

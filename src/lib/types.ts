@@ -14,6 +14,18 @@ export type PageTemplate =
   | "contact"
   | "simple";
 
+export type SearchScope = "all" | "certification" | "inspection";
+export type SearchOp = "and" | "or" | "not";
+export type SearchMode = "near" | "exact" | "begin";
+
+export interface SearchHit {
+  type: string; // 표시용 라벨 (인증/검사/뉴스/FAQ/페이지 …)
+  title: string;
+  href: string;
+  snippet: string | null;
+  context: string | null; // 상위 분류명 등 브레드크럼
+}
+
 export interface Locale {
   code: LocaleCode;
   name: string;
@@ -50,6 +62,7 @@ export interface PageTranslation {
   content: PageContentBlock[];
   meta_title: string;
   meta_description: string;
+  meta_keywords?: string[]; // 검색용 태그(JSON 배열). DB는 항상 반환, mock 시드는 생략 가능.
   created_at: string;
   updated_at: string;
 }

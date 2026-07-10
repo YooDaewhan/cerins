@@ -421,11 +421,9 @@ export default function HeroSlider({ slides, locale, tags = [], feedbackUser = n
         {String(total).padStart(2, "0")}
       </div>
 
-      {feedbackUser && (
-        <div className="absolute bottom-16 right-8 z-[10]">
-          <FeedbackButton currentUser={feedbackUser} />
-        </div>
-      )}
+      <div className="absolute bottom-16 right-8 z-[10]">
+        <FeedbackButton currentUser={feedbackUser} loginHref={localized("/login", locale)} />
+      </div>
 
       <div className="hidden sm:flex absolute bottom-8 left-8 z-[10] items-center gap-2 text-white/40 text-[10px] tracking-[0.3em] uppercase">
         <div className="w-px h-6 bg-white/30 animate-[scrollHint_1.8s_ease-in-out_infinite]" />

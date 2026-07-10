@@ -12,6 +12,7 @@ interface PutBody {
   content?: unknown;
   meta_title?: string;
   meta_description?: string;
+  meta_keywords?: unknown;
 }
 
 interface RouteContext {
@@ -38,6 +39,24 @@ function normalizeContent(raw: unknown): PageContentBlock[] | null {
     const body = (item as { body?: unknown }).body;
     if (typeof heading !== "string" || typeof body !== "string") return null;
     out.push({ heading, body });
+  }
+  return out;
+}
+
+// 검색용 태그: 문자열 배열로 정규화(공백제거·빈값제거·중복제거, 최대 30개).
+function normalizeKeywords(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const item of raw) {
+    if (typeof item !== "string") continue;
+    const t = item.trim();
+    if (!t) continue;
+    const key = t.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(t);
+    if (out.length >= 30) break; // ponytail: 태그 상한, 필요하면 상향
   }
   return out;
 }
@@ -71,6 +90,7 @@ export async function PUT(req: Request, ctx: RouteContext) {
   const hero_image = normalizeNullableString(body.hero_image);
   const meta_title = (body.meta_title ?? "").trim() || title;
   const meta_description = (body.meta_description ?? "").trim();
+  const meta_keywords = normalizeKeywords(body.meta_keywords);
   const content = normalizeContent(body.content) ?? [];
 
   const pool = getPool();
@@ -99,7 +119,7 @@ export async function PUT(req: Request, ctx: RouteContext) {
       await conn.execute(
         `UPDATE page_translations
             SET title = ?, subtitle = ?, hero_image = ?, content = ?,
-                meta_title = ?, meta_description = ?
+                meta_title = ?, meta_description = ?, meta_keywords = ?
           WHERE page_id = ? AND locale = ?`,
         [
           title,
@@ -108,6 +128,7 @@ export async function PUT(req: Request, ctx: RouteContext) {
           JSON.stringify(content),
           meta_title,
           meta_description,
+          JSON.stringify(meta_keywords),
           id,
           locale,
         ],
@@ -119,8 +140,8 @@ export async function PUT(req: Request, ctx: RouteContext) {
       const newId = Number((maxRow[0] as { next_id: number }).next_id);
       await conn.execute(
         `INSERT INTO page_translations
-           (id, page_id, locale, title, subtitle, hero_image, content, meta_title, meta_description)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           (id, page_id, locale, title, subtitle, hero_image, content, meta_title, meta_description, meta_keywords)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           newId,
           id,
@@ -131,6 +152,7 @@ export async function PUT(req: Request, ctx: RouteContext) {
           JSON.stringify(content),
           meta_title,
           meta_description,
+          JSON.stringify(meta_keywords),
         ],
       );
     }

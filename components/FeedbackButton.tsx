@@ -14,16 +14,19 @@ export interface FeedbackUser {
   login_id: string;
   email: string;
   user_level: number;
+  company?: string | null;
+  job_title?: string | null;
 }
 
 interface Props {
   currentUser: FeedbackUser | null;
+  // 비로그인 상태에서 버튼을 누르면 이동할 로그인 페이지 경로.
+  loginHref: string;
 }
 
-function kindForLevel(level: number): ReviewKind | null {
-  if (level === USER_LEVELS.staff) return "staff";
-  if (level === USER_LEVELS.user || level === USER_LEVELS.business) return "satisfaction";
-  return null;
+// 직원은 직원 평가, 그 외(비로그인 포함)는 고객 만족도.
+function kindForLevel(level: number): ReviewKind {
+  return level === USER_LEVELS.staff ? "staff" : "satisfaction";
 }
 
 // 버튼 라벨은 Get a Quote 와 동일하게 영어로.
@@ -31,17 +34,23 @@ function labelFor(kind: ReviewKind): string {
   return kind === "staff" ? "Staff Evaluation" : "Customer Satisfaction";
 }
 
-export default function FeedbackButton({ currentUser }: Props) {
+export default function FeedbackButton({ currentUser, loginHref }: Props) {
   const [open, setOpen] = useState(false);
 
-  const kind = currentUser ? kindForLevel(currentUser.user_level) : null;
-  if (!currentUser || !kind) return null;
+  // 로그인 여부와 무관하게 항상 노출. 비로그인 시 라벨은 고객 만족도.
+  const kind = currentUser ? kindForLevel(currentUser.user_level) : "satisfaction";
 
   return (
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          if (!currentUser) {
+            window.location.assign(loginHref);
+            return;
+          }
+          setOpen(true);
+        }}
         className="group inline-flex items-center gap-2 px-6 py-3 bg-(--brand) hover:opacity-90 text-white text-sm font-bold tracking-wider uppercase rounded-full transition-opacity"
       >
         {labelFor(kind)}
@@ -55,7 +64,7 @@ export default function FeedbackButton({ currentUser }: Props) {
         </svg>
       </button>
 
-      {open && (
+      {open && currentUser && (
         <FeedbackModal
           kind={kind}
           currentUser={currentUser}
@@ -80,8 +89,8 @@ function FeedbackModal({
   const endpoint = kind === "staff" ? "/api/reviews/staff" : "/api/reviews/satisfaction";
 
   const [name, setName] = useState(currentUser.login_id);
-  const [company, setCompany] = useState("");
-  const [department, setDepartment] = useState("");
+  const [company, setCompany] = useState(currentUser.company ?? "");
+  const [department, setDepartment] = useState(currentUser.job_title ?? "");
   const [email, setEmail] = useState(currentUser.email);
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [comment, setComment] = useState("");

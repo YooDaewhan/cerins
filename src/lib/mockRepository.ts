@@ -21,6 +21,10 @@ import type {
   PageWithTranslation,
   Partner,
   Post,
+  SearchHit,
+  SearchMode,
+  SearchOp,
+  SearchScope,
   SiteAssets,
 } from "@/src/lib/types";
 
@@ -463,6 +467,184 @@ export async function listChildPages(
     locale,
     parentId,
   );
+}
+
+// ── Advanced search ─────────────────────────────────────────────────────────
+// ponytail: 전체 문서를 메모리에 올려 JS로 평가한다. 페이지/게시글이 수백 건
+// 규모라 충분하고, 조건마다 검색범위/매칭모드가 달라도 자연스럽게 처리된다.
+// 데이터가 커지면 FULLTEXT 인덱스 또는 검색엔진으로 교체.
+
+const TEMPLATE_LABEL: Record<PageTemplate, string> = {
+  home: "홈",
+  about: "회사소개",
+  certification: "인증",
+  inspection: "검사",
+  services: "서비스",
+  news_list: "뉴스",
+  faq_list: "FAQ",
+  contact: "문의",
+  simple: "페이지",
+};
+
+export interface SearchCondition {
+  op: SearchOp; // 앞 조건과의 결합 (첫 조건은 무시)
+  scope: SearchScope; // 이 조건이 뒤질 범위
+  text: string;
+  mode: SearchMode; // 이 조건의 매칭 방식
+}
+
+interface SearchDoc {
+  scopeKey: PageTemplate | "post"; // 검색범위 판정용
+  typeLabel: string;
+  title: string;
+  href: string;
+  snippet: string | null;
+  context: string | null;
+  haystack: string; // 소문자 검색 대상 텍스트
+  tokens: string[]; // 소문자 토큰 (~로 시작 판정용)
+}
+
+function toText(v: unknown): string {
+  if (typeof v === "string") return v;
+  if (Array.isArray(v)) return v.map(toText).join(" ");
+  if (v && typeof v === "object") return Object.values(v).map(toText).join(" ");
+  return v == null ? "" : String(v);
+}
+
+function makeHaystack(parts: unknown[]): { haystack: string; tokens: string[] } {
+  const text = parts.map(toText).join(" ").toLowerCase();
+  return { haystack: text, tokens: text.split(/[\s\-_/,.()[\]"']+/).filter(Boolean) };
+}
+
+function inScope(doc: SearchDoc, scope: SearchScope): boolean {
+  if (scope === "all") return true;
+  return doc.scopeKey === scope; // certification | inspection
+}
+
+function textMatch(doc: SearchDoc, text: string, mode: SearchMode): boolean {
+  const t = text.trim().toLowerCase();
+  if (!t) return true;
+  if (mode === "exact") return doc.haystack.includes(t);
+  if (mode === "begin") return doc.tokens.some((tok) => tok.startsWith(t));
+  return t.split(/\s+/).every((w) => doc.haystack.includes(w)); // near: 단어별 모두 포함
+}
+
+// 조건들을 왼쪽→오른쪽 결합: OR=또는, NOT=제외, 그 외 AND. 각 조건은 자기 범위/모드로 판정.
+function matchDoc(doc: SearchDoc, conds: SearchCondition[]): boolean {
+  const one = (c: SearchCondition) => inScope(doc, c.scope) && textMatch(doc, c.text, c.mode);
+  let res = one(conds[0]);
+  for (let i = 1; i < conds.length; i++) {
+    const m = one(conds[i]);
+    if (conds[i].op === "or") res = res || m;
+    else if (conds[i].op === "not") res = res && !m;
+    else res = res && m;
+  }
+  return res;
+}
+
+export async function searchSite(opts: {
+  conditions: SearchCondition[];
+  locale: LocaleCode;
+}): Promise<SearchHit[]> {
+  const { locale } = opts;
+  const conditions = opts.conditions.filter((c) => c.text.trim());
+  if (conditions.length === 0) return [];
+  const pool = getPool();
+
+  const docs: SearchDoc[] = [];
+
+  // 페이지 (모든 템플릿) --------------------------------------------------------
+  {
+    const [pageRows] = await pool.query<RowDataPacket[]>(
+      "SELECT id, slug, template, parent_id FROM pages WHERE is_published = 1 ORDER BY sort_order",
+    );
+    const pages = pageRows as unknown as Array<{
+      id: number;
+      slug: string;
+      template: PageTemplate;
+      parent_id: number | null;
+    }>;
+    const slugById = new Map<number, string>();
+    for (const p of pages) slugById.set(p.id, p.slug);
+
+    const ids = pages.map((p) => p.id);
+    const transByPage = new Map<number, RowDataPacket>();
+    if (ids.length) {
+      const [transRows] = await pool.query<RowDataPacket[]>(
+        "SELECT * FROM page_translations WHERE page_id IN (?) AND locale IN (?)",
+        [ids, [locale, DEFAULT_LOCALE]],
+      );
+      // 요청 로케일 우선, 없으면 기본 로케일.
+      for (const t of transRows as RowDataPacket[]) {
+        const existing = transByPage.get(t.page_id);
+        if (!existing || (t.locale === locale && existing.locale !== locale)) {
+          transByPage.set(t.page_id, t);
+        }
+      }
+    }
+
+    for (const p of pages) {
+      const t = transByPage.get(p.id);
+      if (!t) continue;
+      const parentSlug = p.parent_id != null ? slugById.get(p.parent_id) ?? null : null;
+      const { haystack, tokens } = makeHaystack([
+        t.title,
+        t.subtitle,
+        t.meta_title,
+        t.meta_description,
+        t.meta_keywords,
+        t.content,
+      ]);
+      docs.push({
+        scopeKey: p.template,
+        typeLabel: TEMPLATE_LABEL[p.template],
+        title: t.title,
+        href: pathForPage(p, locale, parentSlug),
+        snippet: t.subtitle || t.meta_description || null,
+        context: parentSlug,
+        haystack,
+        tokens,
+      });
+    }
+  }
+
+  // 게시글 (뉴스/FAQ) ----------------------------------------------------------
+  {
+    const [postRows] = await pool.query<RowDataPacket[]>(
+      "SELECT board_code, slug, title, summary, content FROM posts WHERE is_published = 1 AND locale = ? ORDER BY published_at DESC",
+      [locale],
+    );
+    for (const r of postRows as unknown as Array<{
+      board_code: string;
+      slug: string;
+      title: string;
+      summary: string;
+      content: string;
+    }>) {
+      const { haystack, tokens } = makeHaystack([r.title, r.summary, r.content]);
+      docs.push({
+        scopeKey: "post",
+        typeLabel: r.board_code === "faq" ? "FAQ" : "뉴스",
+        title: r.title,
+        href: buildLocalizedPathImpl(locale, `/${r.board_code}/${r.slug}`),
+        snippet: r.summary || null,
+        context: null,
+        haystack,
+        tokens,
+      });
+    }
+  }
+
+  return docs
+    .filter((doc) => matchDoc(doc, conditions))
+    .slice(0, 100) // ponytail: 상한
+    .map((doc) => ({
+      type: doc.typeLabel,
+      title: doc.title,
+      href: doc.href,
+      snippet: doc.snippet,
+      context: doc.context,
+    }));
 }
 
 export async function getParentSlug(parentId: number | null): Promise<string | null> {

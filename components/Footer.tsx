@@ -20,6 +20,7 @@ function localized(path: string, locale: LocaleCode): string {
 export default function Footer({ menus, locale, currentUser }: FooterProps) {
   const contactHref = localized("/contact", locale);
   const newsHref = localized("/news", locale);
+  const loginHref = localized("/login", locale);
 
   return (
     <footer className="snap-start snap-always bg-[#1e1e1e] text-white relative">
@@ -57,7 +58,7 @@ export default function Footer({ menus, locale, currentUser }: FooterProps) {
                 />
               </svg>
             </Link>
-            <FeedbackButton currentUser={currentUser} />
+            <FeedbackButton currentUser={currentUser} loginHref={loginHref} />
           </div>
         </div>
       </div>

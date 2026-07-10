@@ -43,6 +43,7 @@ interface TransRow extends RowDataPacket {
   content: string | PageContentBlock[];
   meta_title: string;
   meta_description: string;
+  meta_keywords: string | string[] | null;
   created_at: string;
   updated_at: string;
 }
@@ -67,6 +68,20 @@ function normalizeContent(raw: string | PageContentBlock[]): PageContentBlock[] 
     }
   }
   return [];
+}
+
+function normalizeKeywords(raw: string | string[] | null): string[] {
+  const arr =
+    typeof raw === "string"
+      ? (() => {
+          try {
+            return JSON.parse(raw);
+          } catch {
+            return [];
+          }
+        })()
+      : raw;
+  return Array.isArray(arr) ? arr.filter((s): s is string => typeof s === "string") : [];
 }
 
 export async function GET(_req: Request, ctx: RouteContext) {
@@ -111,6 +126,7 @@ export async function GET(_req: Request, ctx: RouteContext) {
       content: normalizeContent(t.content),
       meta_title: t.meta_title,
       meta_description: t.meta_description,
+      meta_keywords: normalizeKeywords(t.meta_keywords),
     })),
   });
 }

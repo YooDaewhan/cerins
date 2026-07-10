@@ -62,6 +62,8 @@ export default async function LocaleLayout({
                 login_id: currentUser.login_id,
                 email: currentUser.email,
                 user_level: currentUser.user_level,
+                company: currentUser.company,
+                job_title: currentUser.job_title,
               }
             : null
         }

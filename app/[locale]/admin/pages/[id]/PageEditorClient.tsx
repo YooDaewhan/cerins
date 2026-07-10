@@ -49,6 +49,7 @@ interface PageTranslation {
   content: ContentBlock[];
   meta_title: string;
   meta_description: string;
+  meta_keywords: string[];
 }
 
 interface ApiData {
@@ -65,6 +66,7 @@ function emptyTranslation(locale: string): PageTranslation {
     content: [],
     meta_title: "",
     meta_description: "",
+    meta_keywords: [],
   };
 }
 
@@ -90,6 +92,7 @@ export default function PageEditorClient({
   const [savingTrans, setSavingTrans] = useState(false);
   const [addingChild, setAddingChild] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [tagInput, setTagInput] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -165,6 +168,33 @@ export default function PageEditorClient({
     }));
   }
 
+  function addTags(raw: string) {
+    const parts = raw.split(",").map((s) => s.trim()).filter(Boolean);
+    if (parts.length === 0) return;
+    const seen = new Set(draft.meta_keywords.map((t) => t.toLowerCase()));
+    const next = [...draft.meta_keywords];
+    for (const p of parts) {
+      if (seen.has(p.toLowerCase())) continue;
+      seen.add(p.toLowerCase());
+      next.push(p);
+    }
+    patchDraft({ meta_keywords: next });
+    setTagInput("");
+  }
+
+  function onTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      addTags(tagInput);
+    } else if (e.key === "Backspace" && !tagInput && draft.meta_keywords.length > 0) {
+      patchDraft({ meta_keywords: draft.meta_keywords.slice(0, -1) });
+    }
+  }
+
+  function removeTag(idx: number) {
+    patchDraft({ meta_keywords: draft.meta_keywords.filter((_, i) => i !== idx) });
+  }
+
   function patchBlock(idx: number, patch: Partial<ContentBlock>) {
     const next = draft.content.map((b, i) => (i === idx ? { ...b, ...patch } : b));
     patchDraft({ content: next });
@@ -238,6 +268,7 @@ export default function PageEditorClient({
             content: draft.content,
             meta_title: draft.meta_title,
             meta_description: draft.meta_description,
+            meta_keywords: draft.meta_keywords,
           }),
         },
       );
@@ -614,6 +645,42 @@ export default function PageEditorClient({
                 }
                 className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
               />
+            </Field>
+            <Field label="메타 태그 (상세검색 키워드)">
+              <div className="flex flex-wrap items-center gap-1.5 rounded border border-gray-300 px-2 py-1.5 focus-within:border-(--brand)">
+                {draft.meta_keywords.map((tag, i) => (
+                  <span
+                    key={`${tag}-${i}`}
+                    className="inline-flex items-center gap-1 rounded bg-(--brand)/10 text-(--brand) text-xs font-medium px-2 py-0.5"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => removeTag(i)}
+                      className="leading-none text-sm hover:text-red-600"
+                      aria-label={`${tag} 태그 삭제`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+                <input
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={onTagKeyDown}
+                  onBlur={() => tagInput.trim() && addTags(tagInput)}
+                  placeholder={
+                    draft.meta_keywords.length === 0
+                      ? "Enter 또는 쉼표로 태그 추가"
+                      : ""
+                  }
+                  className="flex-1 min-w-[8rem] bg-transparent text-sm outline-none"
+                />
+              </div>
+              <p className="text-[11px] text-gray-400 mt-1">
+                상세검색에 사용될 키워드입니다. Enter 또는 쉼표로 추가, ✕로 삭제.
+              </p>
             </Field>
           </div>
 

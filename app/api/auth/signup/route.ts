@@ -54,7 +54,13 @@ export async function POST(req: Request) {
   if (!EMAIL_RE.test(email) || email.length > 190) {
     return NextResponse.json({ error: "이메일 형식이 올바르지 않습니다." }, { status: 400 });
   }
-  if ((company && company.length > 190) || (job_title && job_title.length > 190)) {
+  if (!company || !job_title || !country) {
+    return NextResponse.json(
+      { error: "국가·회사명·직위는 필수 입력 항목입니다." },
+      { status: 400 },
+    );
+  }
+  if (company.length > 190 || job_title.length > 190) {
     return NextResponse.json(
       { error: "회사명/직위는 190자 이내여야 합니다." },
       { status: 400 },

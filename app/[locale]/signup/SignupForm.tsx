@@ -105,13 +105,14 @@ export default function SignupForm({ loginHref, redirectTo, countries }: Props) 
 
       <div>
         <label htmlFor="country" className="block text-sm font-semibold text-gray-700 mb-1.5">
-          국가 <span className="text-gray-400 font-normal">(선택)</span>
+          국가
         </label>
         <select
           id="country"
           value={country}
           onChange={(e) => setCountry(e.target.value)}
           autoComplete="country"
+          required
           className="w-full rounded-md border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-(--brand) focus:border-transparent"
         >
           <option value="">국가를 선택하세요</option>
@@ -168,8 +169,8 @@ export default function SignupForm({ loginHref, redirectTo, countries }: Props) 
         type="text"
         value={company}
         onChange={setCompany}
-        placeholder="(선택)"
         autoComplete="organization"
+        required
       />
       <Field
         id="job_title"
@@ -177,8 +178,8 @@ export default function SignupForm({ loginHref, redirectTo, countries }: Props) 
         type="text"
         value={jobTitle}
         onChange={setJobTitle}
-        placeholder="(선택)"
         autoComplete="organization-title"
+        required
       />
 
       <label className="flex items-start gap-2 cursor-pointer select-none">

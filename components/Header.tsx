@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { Locale, LocaleCode, MenuNode } from "@/src/lib/types";
 import UserMenu, { type HeaderUser } from "@/components/UserMenu";
+import AdvancedSearchModal from "@/components/AdvancedSearchModal";
 import { buildLocalizedPath } from "@/src/lib/i18n";
 
 interface HeaderProps {
@@ -40,6 +41,7 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
   const [langOpen, setLangOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [query, setQuery] = useState("");
+  const [advOpen, setAdvOpen] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter();
@@ -297,10 +299,10 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                   aria-label="인증 검색"
                   className="flex-1 min-w-0 bg-transparent pl-4 pr-1 py-1.5 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
                 />
-                {/* ponytail: 상세검색 버튼 — 동작은 추후 연결 */}
                 <button
                   type="button"
                   aria-label="Advanced search"
+                  onClick={() => setAdvOpen(true)}
                   className="flex items-center gap-1 px-2.5 py-1 mr-1 text-xs font-bold text-gray-600 hover:text-(--brand) border border-gray-300 rounded-full hover:border-(--brand) transition-colors whitespace-nowrap"
                 >
                   <span className="text-sm leading-none">+</span>
@@ -317,6 +319,12 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                 </button>
               </div>
             </form>
+
+            <AdvancedSearchModal
+              locale={locale}
+              open={advOpen}
+              onClose={() => setAdvOpen(false)}
+            />
 
             {/* 모바일 햄버거 */}
             <button
