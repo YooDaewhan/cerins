@@ -16,7 +16,11 @@ import {
  * 이동한다. 각 로케일이 곧 "편집 언어"가 되므로, 언어를 바꾸면 그 언어를
  * 담당하는 관리자 화면으로 전환된다. 한국어(기본)만 구조를 관리한다.
  */
-export default function AdminLocaleSwitcher() {
+export default function AdminLocaleSwitcher({
+  addLocaleHref,
+}: {
+  addLocaleHref?: string;
+}) {
   const pathname = usePathname();
   const { locale: current, rest } = splitLocaleFromPath(pathname);
   const enabled = locales
@@ -57,6 +61,16 @@ export default function AdminLocaleSwitcher() {
             </Link>
           );
         })}
+        {addLocaleHref && (
+          <Link
+            href={addLocaleHref}
+            className="inline-flex items-center gap-1 rounded border border-dashed border-gray-300 px-2.5 py-1 text-xs font-semibold text-gray-500 transition-colors hover:border-(--brand) hover:text-(--brand)"
+            title="언어 추가·관리"
+          >
+            <span aria-hidden>+</span>
+            <span>언어 추가</span>
+          </Link>
+        )}
       </div>
       <span className="text-[11px] text-gray-400">
         {current === DEFAULT_LOCALE

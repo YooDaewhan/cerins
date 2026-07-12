@@ -20,53 +20,51 @@ export interface FeedbackUser {
 
 interface Props {
   currentUser: FeedbackUser | null;
-  // 비로그인 상태에서 버튼을 누르면 이동할 로그인 페이지 경로.
-  loginHref: string;
+  // 직원이 아닌 방문자(고객/비로그인)를 문의 페이지로 보낼 때 사용할 경로.
+  contactHref: string;
 }
 
-// 직원은 직원 평가, 그 외(비로그인 포함)는 고객 만족도.
-function kindForLevel(level: number): ReviewKind {
-  return level === USER_LEVELS.staff ? "staff" : "satisfaction";
-}
-
-// 버튼 라벨은 Get a Quote 와 동일하게 영어로.
-function labelFor(kind: ReviewKind): string {
-  return kind === "staff" ? "Staff Evaluation" : "Customer Satisfaction";
-}
-
-export default function FeedbackButton({ currentUser, loginHref }: Props) {
+// 평가 팝업은 직원 전용. 그 외(고객/비로그인)는 설문 없이 문의 페이지로 이동.
+export default function FeedbackButton({ currentUser, contactHref }: Props) {
   const [open, setOpen] = useState(false);
 
-  // 로그인 여부와 무관하게 항상 노출. 비로그인 시 라벨은 고객 만족도.
-  const kind = currentUser ? kindForLevel(currentUser.user_level) : "satisfaction";
+  const isStaff = currentUser?.user_level === USER_LEVELS.staff;
 
+  const arrow = (
+    <svg
+      className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+    </svg>
+  );
+
+  const className =
+    "group inline-flex items-center gap-2 px-6 py-3 bg-(--brand) hover:opacity-90 text-white text-sm font-bold tracking-wider uppercase rounded-full transition-opacity";
+
+  // 고객/비로그인: 만족도 설문 팝업 없이 문의 페이지로 이동.
+  if (!isStaff) {
+    return (
+      <a href={contactHref} className={className}>
+        Contact Us
+        {arrow}
+      </a>
+    );
+  }
+
+  // 직원: 직원 평가 팝업.
   return (
     <>
-      <button
-        type="button"
-        onClick={() => {
-          if (!currentUser) {
-            window.location.assign(loginHref);
-            return;
-          }
-          setOpen(true);
-        }}
-        className="group inline-flex items-center gap-2 px-6 py-3 bg-(--brand) hover:opacity-90 text-white text-sm font-bold tracking-wider uppercase rounded-full transition-opacity"
-      >
-        {labelFor(kind)}
-        <svg
-          className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-        </svg>
+      <button type="button" onClick={() => setOpen(true)} className={className}>
+        Staff Evaluation
+        {arrow}
       </button>
 
       {open && currentUser && (
         <FeedbackModal
-          kind={kind}
+          kind="staff"
           currentUser={currentUser}
           onClose={() => setOpen(false)}
         />

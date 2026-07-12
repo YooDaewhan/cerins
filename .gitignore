@@ -20,6 +20,9 @@
 # production
 /build
 
+# 비공개 업로드 저장소 (의뢰 첨부파일 — 공개 서빙 금지)
+/private-uploads/
+
 # misc
 .DS_Store
 *.pem

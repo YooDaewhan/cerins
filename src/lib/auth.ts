@@ -1,6 +1,6 @@
 import { getPool } from "@/src/lib/db";
 import { getSessionUserId } from "@/src/lib/session";
-import { isAdminLevel } from "@/src/lib/userTypes";
+import { isAdminLevel, isStaffLevel } from "@/src/lib/userTypes";
 import type { User } from "@/src/lib/types";
 
 interface UserRow {
@@ -50,5 +50,18 @@ export async function requireAdmin(): Promise<User | null> {
   const user = await getCurrentUser();
   if (!user) return null;
   if (!isAdminLevel(user.user_level)) return null;
+  return user;
+}
+
+// 로그인한 사용자면 통과(고객 포함). 의뢰 등록/마이페이지 등에 사용.
+export async function requireUser(): Promise<User | null> {
+  return getCurrentUser();
+}
+
+// 직원(7) 또는 관리자(9)만 통과. 의뢰 처리 액션에 사용.
+export async function requireStaff(): Promise<User | null> {
+  const user = await getCurrentUser();
+  if (!user) return null;
+  if (!isStaffLevel(user.user_level)) return null;
   return user;
 }

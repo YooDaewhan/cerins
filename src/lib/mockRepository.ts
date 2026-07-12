@@ -352,11 +352,18 @@ export async function getSiteAssets(): Promise<SiteAssets> {
   for (const row of rows as unknown as Array<{ key: string; value: string }>) {
     map[row.key] = row.value;
   }
-  return { default_hero_image: map.default_hero_image ?? "" };
+  return {
+    default_hero_image: map.default_hero_image ?? "",
+    hero_video: map.hero_video ?? "",
+  };
 }
 
 export async function getDefaultHeroImage(): Promise<string> {
   return (await getSiteAssets()).default_hero_image;
+}
+
+export async function getHeroVideo(): Promise<string> {
+  return (await getSiteAssets()).hero_video;
 }
 
 // ── Partners / hero slides ─────────────────────────────────────────────────

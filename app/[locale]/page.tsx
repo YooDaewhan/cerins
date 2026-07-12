@@ -9,6 +9,7 @@ import PartnerSlider from "@/components/PartnerSlider";
 import NewsRoom from "@/components/NewsRoom";
 import {
   getAlternateUrls,
+  getHeroVideo,
   getHomeSlides,
   getPageWithTranslation,
   getPosts,
@@ -46,14 +47,16 @@ export default async function HomePage({ params }: Props) {
   if (!isLocale(locale)) notFound();
   const code = locale as LocaleCode;
 
-  const [slides, partners, posts, certCountries, heroTags, currentUser] = await Promise.all([
-    getHomeSlides(code),
-    listPartners(),
-    getPosts("news", code),
-    listCertificationCountries(code),
-    listHeroTags(code, 20),
-    getCurrentUser(),
-  ]);
+  const [slides, partners, posts, certCountries, heroTags, heroVideo, currentUser] =
+    await Promise.all([
+      getHomeSlides(code),
+      listPartners(),
+      getPosts("news", code),
+      listCertificationCountries(code),
+      listHeroTags(code, 20),
+      getHeroVideo(),
+      getCurrentUser(),
+    ]);
 
   const feedbackUser = currentUser
     ? {
@@ -84,7 +87,7 @@ export default async function HomePage({ params }: Props) {
   return (
     <>
       <div className={snapFull}>
-        <HeroSlider slides={slides} locale={code} tags={heroTags} feedbackUser={feedbackUser} />
+        <HeroSlider slides={slides} locale={code} tags={heroTags} feedbackUser={feedbackUser} heroVideo={heroVideo} />
       </div>
       <div className={snapFull}>
         <ServiceBento />

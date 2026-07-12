@@ -35,6 +35,8 @@ interface HeroSliderProps {
   locale: LocaleCode;
   tags?: HeroTag[];
   feedbackUser?: FeedbackUser | null;
+  // 우하단 상시 노출 소개 동영상(관리자에서 관리). 비어 있으면 자리표시자만 표시.
+  heroVideo?: string;
 }
 
 // ponytail: 태그 목록 크기 티어. 티어를 좁혀 정돈된 그리드 느낌 유지.
@@ -46,7 +48,7 @@ function localized(path: string, locale: LocaleCode): string {
   return "/" + locale + path;
 }
 
-export default function HeroSlider({ slides, locale, tags = [], feedbackUser = null }: HeroSliderProps) {
+export default function HeroSlider({ slides, locale, tags = [], feedbackUser = null, heroVideo = "" }: HeroSliderProps) {
   const total = slides.length;
   const hasVideo = slides.some((s) => isVideoUrl(s.image));
 
@@ -282,7 +284,7 @@ export default function HeroSlider({ slides, locale, tags = [], feedbackUser = n
               }}
             >
               <a
-                href={localized("/contact", locale)}
+                href={localized("/requests", locale)}
                 className="group inline-flex items-center gap-2 px-7 py-3.5 bg-(--brand) text-white text-sm font-semibold rounded-full hover:bg-(--brand-dark) transition-all duration-300 shadow-[0_8px_24px_rgba(180,18,58,0.35)] hover:shadow-[0_12px_28px_rgba(180,18,58,0.45)] hover:-translate-y-0.5"
               >
                 Get a Quote
@@ -332,14 +334,28 @@ export default function HeroSlider({ slides, locale, tags = [], feedbackUser = n
                 </div>
               )}
 
-              {/* 동영상 재생 공간 — 우선 검은 배경으로 자리만 확보 */}
+              {/* 우하단 상시 소개 동영상. 관리자에서 링크/업로드로 관리. 없으면 검은 자리표시자. */}
+              {/* 동영상은 absolute 로 흐름에서 빼내야 원본 크기가 auto 그리드 열 너비를
+                  밀어내지 않고 박스(aspect-video) 크기에 맞춰 들어간다. */}
               <div
-                className="w-full min-w-[360px] ml-auto aspect-video rounded-xl bg-black border border-white/15 overflow-hidden"
+                className="relative w-full min-w-[360px] ml-auto aspect-video rounded-xl bg-black border border-white/15 overflow-hidden"
                 style={{
                   animation: "tagFloat 0.6s cubic-bezier(.2,.7,.2,1) 0.4s both",
                 }}
                 aria-label="동영상 재생 영역"
-              />
+              >
+                {heroVideo && (
+                  <video
+                    src={heroVideo}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="auto"
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -422,7 +438,7 @@ export default function HeroSlider({ slides, locale, tags = [], feedbackUser = n
       </div>
 
       <div className="absolute bottom-16 right-8 z-[10]">
-        <FeedbackButton currentUser={feedbackUser} loginHref={localized("/login", locale)} />
+        <FeedbackButton currentUser={feedbackUser} contactHref={localized("/contact", locale)} />
       </div>
 
       <div className="hidden sm:flex absolute bottom-8 left-8 z-[10] items-center gap-2 text-white/40 text-[10px] tracking-[0.3em] uppercase">

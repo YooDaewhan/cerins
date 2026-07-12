@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test": "node --import tsx --test tests/**/*.test.ts"
   },
   "dependencies": {
     "@tiptap/extension-image": "^3.27.0",
@@ -36,6 +37,7 @@
     "@types/react-dom": "^19",
     "@types/sanitize-html": "^2.16.1",
     "tailwindcss": "^4",
+    "tsx": "^4.19.2",
     "typescript": "^5"
   }
 }

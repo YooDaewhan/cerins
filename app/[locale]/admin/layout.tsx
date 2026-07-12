@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { isLocale, buildLocalizedPath, DEFAULT_LOCALE } from "@/src/lib/i18n";
 import { requireAdmin } from "@/src/lib/auth";
 import type { LocaleCode } from "@/src/lib/types";
-import AdminTabs from "./AdminTabs";
+import AdminTabs, { type TabGroup } from "./AdminTabs";
 import AdminLocaleSwitcher from "./AdminLocaleSwitcher";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +23,7 @@ export default async function AdminLayout({ children, params }: Props) {
   const isPrimary = code === DEFAULT_LOCALE;
   const base = buildLocalizedPath(code, "/admin");
 
-  // 콘텐츠(언어별 번역이 있는) 탭 — 모든 언어 관리자에게 노출.
+  // 사이트에 노출되는 콘텐츠(언어별 번역이 있는) 탭 — 모든 언어 관리자에게 노출.
   const contentTabs = [
     { href: `${base}/menus`, label: "메뉴" },
     { href: `${base}/pages`, label: "페이지" },
@@ -31,18 +31,29 @@ export default async function AdminLayout({ children, params }: Props) {
     { href: `${base}/faqs`, label: "FAQ" },
     { href: `${base}/hero-slides`, label: "히어로 슬라이드" },
   ];
-  // 전역(언어 무관) 관리 탭 — 한국어(기본) 관리자 전용.
-  const primaryOnlyTabs = [
-    { href: base, label: "회원" },
-    { href: `${base}/partners`, label: "파트너" },
-    { href: `${base}/locales`, label: "언어" },
-    { href: `${base}/inquiries`, label: "문의" },
-    { href: `${base}/satisfaction`, label: "고객만족도" },
-    { href: `${base}/staff-evaluations`, label: "직원평가" },
-  ];
-  const tabs = isPrimary
-    ? [primaryOnlyTabs[0], ...contentTabs, ...primaryOnlyTabs.slice(1)]
-    : contentTabs;
+  // 파트너는 전역(언어 무관) 데이터라 한국어(기본) 관리자 전용이지만,
+  // 성격상 사이트 콘텐츠 그룹에 함께 묶어 노출한다.
+  const partnersTab = { href: `${base}/partners`, label: "파트너" };
+
+  // 도메인 기준 3그룹: 콘텐츠 / 업무 / 설정.
+  // 콘텐츠 그룹만 모든 언어 관리자에게, 업무·설정은 한국어(기본) 관리자 전용.
+  const contentGroup: TabGroup = {
+    label: "콘텐츠",
+    tabs: isPrimary ? [...contentTabs, partnersTab] : contentTabs,
+  };
+  const opsGroup: TabGroup = {
+    label: "업무",
+    tabs: [
+      { href: `${base}/requests`, label: "의뢰 관리" },
+      { href: base, label: "회원" },
+      { href: `${base}/inquiries`, label: "문의" },
+      { href: `${base}/satisfaction`, label: "고객만족도" },
+      { href: `${base}/staff-evaluations`, label: "직원평가" },
+    ],
+  };
+  const groups: TabGroup[] = isPrimary
+    ? [contentGroup, opsGroup]
+    : [contentGroup];
 
   return (
     <div className="min-h-[calc(100vh-8rem)] bg-gray-50">
@@ -56,8 +67,8 @@ export default async function AdminLayout({ children, params }: Props) {
         <p className="text-sm text-gray-500 mt-1">
           로그인 중: <span className="font-semibold">{admin.login_id}</span>
         </p>
-        <AdminLocaleSwitcher />
-        <AdminTabs tabs={tabs} />
+        <AdminLocaleSwitcher addLocaleHref={isPrimary ? `${base}/locales` : undefined} />
+        <AdminTabs groups={groups} rootHref={base} />
       </div>
       <div className="max-w-6xl mx-auto px-4 py-6">{children}</div>
     </div>

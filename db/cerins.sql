@@ -1265,7 +1265,8 @@ CREATE TABLE site_assets (
 
 INSERT INTO site_assets (`key`, `value`) VALUES
   ('default_hero_image',
-   'https://images.unsplash.com/photo-1494412574643-ff11b0a5c1c3?w=1400&q=80&auto=format&fit=crop');
+   'https://images.unsplash.com/photo-1494412574643-ff11b0a5c1c3?w=1400&q=80&auto=format&fit=crop'),
+  ('hero_video', '');
 
 -- ---------------------------------------------------------------------
 -- 10. users (회원가입 / 로그인)
@@ -1358,6 +1359,401 @@ CREATE TABLE staff_evaluations (
   CONSTRAINT fk_staff_eval_user FOREIGN KEY (user_id)
     REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================================
+-- 고객 의뢰 / 업무 프로세스 (2026-07-10-service-requests.sql 와 동일)
+-- =====================================================================
+
+CREATE TABLE service_requests (
+  id               BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  request_number   VARCHAR(32)  NULL,
+  customer_user_id BIGINT       NULL,
+  assignee_user_id BIGINT       NULL,
+  category         VARCHAR(32)  NOT NULL,
+  service_type     VARCHAR(48)  NOT NULL,
+  company_name     VARCHAR(190) NOT NULL,
+  contact_name     VARCHAR(190) NOT NULL,
+  contact_phone    VARCHAR(60)  NOT NULL,
+  contact_email    VARCHAR(190) NOT NULL,
+  title            VARCHAR(255) NOT NULL,
+  description      TEXT         NOT NULL,
+  workflow_step    INT          NOT NULL DEFAULT 0,
+  status           VARCHAR(48)  NOT NULL DEFAULT 'REQUESTED',
+  submitted_at     DATETIME     NULL,
+  assigned_at      DATETIME     NULL,
+  completed_at     DATETIME     NULL,
+  created_at       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_service_requests_request_number (request_number),
+  INDEX idx_sr_customer (customer_user_id),
+  INDEX idx_sr_assignee (assignee_user_id),
+  INDEX idx_sr_status (status),
+  INDEX idx_sr_service_type (service_type),
+  INDEX idx_sr_created_at (created_at),
+  CONSTRAINT fk_sr_customer FOREIGN KEY (customer_user_id)
+    REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_sr_assignee FOREIGN KEY (assignee_user_id)
+    REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE request_number_seq (
+  year_2   INT         NOT NULL,
+  prefix   VARCHAR(16) NOT NULL,
+  last_seq INT         NOT NULL DEFAULT 0,
+  PRIMARY KEY (year_2, prefix)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE request_files (
+  id                  BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  service_request_id  BIGINT       NOT NULL,
+  file_type           VARCHAR(48)  NOT NULL,
+  -- 동적 제출서류 항목 연결(스크랩 India 등). 일반 첨부에는 NULL.
+  service_document_requirement_id BIGINT       NULL,
+  display_name_snapshot           VARCHAR(190) NULL,
+  original_name       VARCHAR(255) NOT NULL,
+  stored_name         VARCHAR(255) NOT NULL,
+  storage_path        VARCHAR(512) NOT NULL,
+  mime_type           VARCHAR(190) NOT NULL,
+  extension           VARCHAR(16)  NOT NULL,
+  file_size           BIGINT       NOT NULL DEFAULT 0,
+  uploaded_by         BIGINT       NULL,
+  is_customer_visible TINYINT(1)   NOT NULL DEFAULT 1,
+  created_at          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_rf_request (service_request_id),
+  INDEX idx_rf_type (service_request_id, file_type),
+  CONSTRAINT fk_rf_request FOREIGN KEY (service_request_id)
+    REFERENCES service_requests(id) ON DELETE CASCADE,
+  CONSTRAINT fk_rf_uploader FOREIGN KEY (uploaded_by)
+    REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE request_status_histories (
+  id                 BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  service_request_id BIGINT       NOT NULL,
+  actor_user_id      BIGINT       NULL,
+  action             VARCHAR(48)  NOT NULL,
+  from_step          INT          NULL,
+  to_step            INT          NULL,
+  from_status        VARCHAR(48)  NULL,
+  to_status          VARCHAR(48)  NULL,
+  message            TEXT         NULL,
+  metadata_json      JSON         NULL,
+  created_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_rsh_request (service_request_id),
+  INDEX idx_rsh_created (service_request_id, created_at),
+  CONSTRAINT fk_rsh_request FOREIGN KEY (service_request_id)
+    REFERENCES service_requests(id) ON DELETE CASCADE,
+  CONSTRAINT fk_rsh_actor FOREIGN KEY (actor_user_id)
+    REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE quotations (
+  id                 BIGINT        NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  service_request_id BIGINT        NOT NULL,
+  currency           VARCHAR(8)    NOT NULL DEFAULT 'KRW',
+  total_amount       DECIMAL(15,2) NOT NULL DEFAULT 0,
+  deposit_amount     DECIMAL(15,2) NOT NULL DEFAULT 0,
+  balance_amount     DECIMAL(15,2) NOT NULL DEFAULT 0,
+  notes              TEXT          NULL,
+  created_by         BIGINT        NULL,
+  sent_at            DATETIME      NULL,
+  created_at         DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at         DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_quotations_request (service_request_id),
+  CONSTRAINT fk_q_request FOREIGN KEY (service_request_id)
+    REFERENCES service_requests(id) ON DELETE CASCADE,
+  CONSTRAINT fk_q_creator FOREIGN KEY (created_by)
+    REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE quotation_items (
+  id           BIGINT        NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  quotation_id BIGINT        NOT NULL,
+  item_type    VARCHAR(48)   NULL,
+  item_name    VARCHAR(190)  NOT NULL,
+  quantity     DECIMAL(15,2) NOT NULL DEFAULT 0,
+  unit_price   DECIMAL(15,2) NOT NULL DEFAULT 0,
+  amount       DECIMAL(15,2) NOT NULL DEFAULT 0,
+  memo         VARCHAR(255)  NULL,
+  sort_order   INT           NOT NULL DEFAULT 0,
+  created_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_qi_quotation (quotation_id),
+  CONSTRAINT fk_qi_quotation FOREIGN KEY (quotation_id)
+    REFERENCES quotations(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE payments (
+  id                 BIGINT        NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  service_request_id BIGINT        NOT NULL,
+  payment_type       VARCHAR(32)   NOT NULL,
+  expected_amount    DECIMAL(15,2) NULL,
+  -- 외부 인증기관 정산 입금(제품검사 등)용 확장 컬럼(고객 선금/잔금에는 NULL).
+  currency                  VARCHAR(8)    NULL,
+  paid_amount               DECIMAL(15,2) NULL,
+  payer_organization_name   VARCHAR(190)  NULL,
+  external_reference_number VARCHAR(120)  NULL,
+  received_account          VARCHAR(190)  NULL,
+  depositor_name     VARCHAR(190)  NOT NULL,
+  sender_account     VARCHAR(190)  NULL,
+  payment_date       DATE          NULL,
+  memo               VARCHAR(255)  NULL,
+  status             VARCHAR(16)   NOT NULL DEFAULT 'PENDING',
+  submitted_by       BIGINT        NULL,
+  submitted_at       DATETIME      NULL,
+  confirmed_by       BIGINT        NULL,
+  confirmed_at       DATETIME      NULL,
+  rejection_reason   TEXT          NULL,
+  created_at         DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at         DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_pay_request (service_request_id),
+  INDEX idx_pay_type (service_request_id, payment_type),
+  CONSTRAINT fk_pay_request FOREIGN KEY (service_request_id)
+    REFERENCES service_requests(id) ON DELETE CASCADE,
+  CONSTRAINT fk_pay_submitter FOREIGN KEY (submitted_by)
+    REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_pay_confirmer FOREIGN KEY (confirmed_by)
+    REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE request_messages (
+  id                  BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  service_request_id  BIGINT       NOT NULL,
+  author_user_id      BIGINT       NULL,
+  message_type        VARCHAR(48)  NOT NULL,
+  message             TEXT         NOT NULL,
+  is_customer_visible TINYINT(1)   NOT NULL DEFAULT 1,
+  created_at          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_rm_request (service_request_id),
+  INDEX idx_rm_visible (service_request_id, is_customer_visible),
+  CONSTRAINT fk_rm_request FOREIGN KEY (service_request_id)
+    REFERENCES service_requests(id) ON DELETE CASCADE,
+  CONSTRAINT fk_rm_author FOREIGN KEY (author_user_id)
+    REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------
+-- CEC India 인증 프로세스 상세 (2026-07-11-cec-india)
+--   cec_inspections : 검사 일정(예정/실제) + 장소/메모. 의뢰당 1행(upsert).
+--   cec_valuations  : 가격평가(append-only, 최신 id = 현재 평가).
+-- ---------------------------------------------------------------------
+CREATE TABLE cec_inspections (
+  id                  BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  service_request_id  BIGINT       NOT NULL,
+  requested_start_date DATE        NULL,
+  requested_end_date   DATE        NULL,
+  requested_start_time TIME        NULL,
+  requested_end_time   TIME        NULL,
+  site_contact_name   VARCHAR(190) NULL,
+  site_contact_phone  VARCHAR(60)  NULL,
+  planned_start_date  DATE         NULL,
+  planned_end_date    DATE         NULL,
+  planned_days        INT          NULL,
+  actual_start_date   DATE         NULL,
+  actual_end_date     DATE         NULL,
+  actual_days         INT          NULL,
+  inspection_location VARCHAR(255) NULL,
+  inspection_memo     TEXT         NULL,
+  created_at          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_cec_inspection_request (service_request_id),
+  CONSTRAINT fk_cec_insp_request FOREIGN KEY (service_request_id)
+    REFERENCES service_requests(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE cec_valuations (
+  id                    BIGINT        NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  service_request_id    BIGINT        NOT NULL,
+  valuation_amount      DECIMAL(15,2) NOT NULL DEFAULT 0,
+  valuation_currency    VARCHAR(8)    NOT NULL DEFAULT 'USD',
+  valuation_description  TEXT         NULL,
+  surcharge_applied     TINYINT(1)    NOT NULL DEFAULT 0,
+  surcharge_rate        DECIMAL(6,5)  NOT NULL DEFAULT 0.00500,
+  surcharge_amount      DECIMAL(15,2) NOT NULL DEFAULT 0,
+  notes                 TEXT          NULL,
+  created_by            BIGINT        NULL,
+  customer_confirmed_at DATETIME      NULL,
+  created_at            DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at            DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_cec_val_request (service_request_id),
+  INDEX idx_cec_val_latest (service_request_id, id),
+  CONSTRAINT fk_cec_val_request FOREIGN KEY (service_request_id)
+    REFERENCES service_requests(id) ON DELETE CASCADE,
+  CONSTRAINT fk_cec_val_creator FOREIGN KEY (created_by)
+    REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------
+-- 제품검사(Product Inspection) 상세 (2026-07-11-product-inspection)
+--   product_inspections : 검사 일정(예정/실제, 시간대) + 처리자/시각 + 외부기관 리포트 정보.
+--   (payments 확장 컬럼은 위 payments CREATE TABLE 에 인라인 반영됨)
+-- ---------------------------------------------------------------------
+CREATE TABLE product_inspections (
+  id                            BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  service_request_id            BIGINT       NOT NULL,
+
+  planned_start_date            DATE         NULL,
+  planned_end_date              DATE         NULL,
+  planned_start_time            TIME         NULL,
+  planned_end_time              TIME         NULL,
+
+  actual_start_date             DATE         NULL,
+  actual_end_date               DATE         NULL,
+  actual_start_time             TIME         NULL,
+  actual_end_time               TIME         NULL,
+
+  inspection_location           VARCHAR(255) NULL,
+
+  schedule_confirmed_at         DATETIME     NULL,
+  schedule_confirmed_by         BIGINT       NULL,
+  inspection_started_at         DATETIME     NULL,
+  inspection_started_by         BIGINT       NULL,
+  inspection_completed_at       DATETIME     NULL,
+  inspection_completed_by       BIGINT       NULL,
+  report_submitted_at           DATETIME     NULL,
+  report_submitted_by           BIGINT       NULL,
+
+  -- 다른 인증기관 리포트 제출 정보(내부용).
+  external_agency_name          VARCHAR(190) NULL,
+  external_agency_department    VARCHAR(190) NULL,
+  external_agency_contact_name  VARCHAR(190) NULL,
+  external_agency_contact_email VARCHAR(190) NULL,
+  external_agency_contact_phone VARCHAR(60)  NULL,
+  external_reference_number     VARCHAR(120) NULL,
+  report_submission_method      VARCHAR(16)  NULL,  -- EMAIL / PORTAL / OFFLINE / OTHER
+
+  customer_visible_memo         TEXT         NULL,
+  internal_memo                 TEXT         NULL,
+
+  created_at                    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at                    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_pi_request (service_request_id),
+  CONSTRAINT fk_pi_request FOREIGN KEY (service_request_id)
+    REFERENCES service_requests(id) ON DELETE CASCADE,
+  CONSTRAINT fk_pi_schedule_by FOREIGN KEY (schedule_confirmed_by)
+    REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_pi_started_by FOREIGN KEY (inspection_started_by)
+    REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_pi_completed_by FOREIGN KEY (inspection_completed_by)
+    REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_pi_report_by FOREIGN KEY (report_submitted_by)
+    REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------
+-- 검사 → 스크랩(인도) (Scrap India) 상세 + 동적 제출서류 (2026-07-12-scrap-india)
+--   scrap_inspections             : 검사 일정(요청/확정/실제) + 현장 담당자 + 처리자/시각 + 메모.
+--   scrap_dgft_registrations      : DGFT 등록 문서/신청/등록번호/증빙 처리 정보.
+--   service_document_requirements : 서비스별·단계별 고객 제출서류 항목(동적).
+--   (request_files 의 동적 서류 연결 컬럼은 위 request_files CREATE TABLE 에 인라인 반영,
+--    FK 는 service_document_requirements 생성 후 아래에서 추가)
+-- ---------------------------------------------------------------------
+CREATE TABLE scrap_inspections (
+  id                              BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  service_request_id              BIGINT       NOT NULL,
+
+  -- 고객이 신청한 요청 일정/장소(step 0).
+  requested_start_date            DATE         NULL,
+  requested_end_date              DATE         NULL,
+  requested_start_time            TIME         NULL,
+  requested_end_time              TIME         NULL,
+  requested_location              VARCHAR(255) NULL,
+  requested_location_detail       VARCHAR(255) NULL,
+
+  -- 담당자가 확정한 검사 일정/장소(step 3).
+  confirmed_start_date            DATE         NULL,
+  confirmed_end_date              DATE         NULL,
+  confirmed_start_time            TIME         NULL,
+  confirmed_end_time              TIME         NULL,
+  confirmed_location              VARCHAR(255) NULL,
+
+  -- 실제 현장검사 일정.
+  actual_start_date               DATE         NULL,
+  actual_end_date                 DATE         NULL,
+  actual_start_time               TIME         NULL,
+  actual_end_time                 TIME         NULL,
+
+  -- 현장 담당자(고객측 현장 연락처).
+  site_contact_name               VARCHAR(190) NULL,
+  site_contact_phone              VARCHAR(60)  NULL,
+
+  -- 처리자/처리시각.
+  schedule_confirmed_at           DATETIME     NULL,
+  schedule_confirmed_by           BIGINT       NULL,
+  inspection_started_at           DATETIME     NULL,
+  inspection_started_by           BIGINT       NULL,
+  inspection_completed_at         DATETIME     NULL,
+  inspection_completed_by         BIGINT       NULL,
+  customer_documents_submitted_at DATETIME     NULL,
+  customer_documents_confirmed_at DATETIME     NULL,
+  customer_documents_confirmed_by BIGINT       NULL,
+
+  customer_visible_memo           TEXT         NULL,
+  internal_memo                   TEXT         NULL,
+
+  created_at                      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at                      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_scrap_request (service_request_id),
+  CONSTRAINT fk_scrap_request FOREIGN KEY (service_request_id)
+    REFERENCES service_requests(id) ON DELETE CASCADE,
+  CONSTRAINT fk_scrap_schedule_by FOREIGN KEY (schedule_confirmed_by)
+    REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_scrap_started_by FOREIGN KEY (inspection_started_by)
+    REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_scrap_completed_by FOREIGN KEY (inspection_completed_by)
+    REFERENCES users(id) ON DELETE SET NULL,
+  CONSTRAINT fk_scrap_docs_by FOREIGN KEY (customer_documents_confirmed_by)
+    REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE scrap_dgft_registrations (
+  id                        BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  service_request_id        BIGINT       NOT NULL,
+
+  document_prepared_at      DATE         NULL,  -- DGFT 등록 문서 작성일
+  registration_submitted_at DATE         NULL,  -- DGFT 등록 신청일
+  registration_confirmed_at DATE         NULL,  -- DGFT 등록 완료(확인)일
+  registration_number       VARCHAR(120) NULL,  -- DGFT 등록번호
+  external_reference_number VARCHAR(120) NULL,  -- 외부 접수번호
+  registered_by             BIGINT       NULL,  -- 등록 담당자(직원)
+  registration_status       VARCHAR(32)  NOT NULL DEFAULT 'PREPARING', -- PREPARING/IN_PROGRESS/REGISTERED/BLOCKED
+  customer_visible_memo     TEXT         NULL,
+  internal_memo             TEXT         NULL,
+
+  created_at                DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at                DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_scrap_dgft_request (service_request_id),
+  CONSTRAINT fk_scrap_dgft_request FOREIGN KEY (service_request_id)
+    REFERENCES service_requests(id) ON DELETE CASCADE,
+  CONSTRAINT fk_scrap_dgft_registered_by FOREIGN KEY (registered_by)
+    REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE service_document_requirements (
+  id                 BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  service_type       VARCHAR(48)  NOT NULL,   -- 예: 'SCRAP_INDIA'
+  workflow_step      INT          NOT NULL,   -- 예: 5 (고객 서류 제출 단계)
+  document_code      VARCHAR(64)  NOT NULL,   -- 내부 식별 코드(서비스+단계 내 유일)
+  display_name       VARCHAR(190) NOT NULL,   -- 고객에게 보이는 서류명(관리자 입력)
+  description        VARCHAR(500) NULL,
+  is_required        TINYINT(1)   NOT NULL DEFAULT 1,
+  allows_multiple    TINYINT(1)   NOT NULL DEFAULT 0,
+  allowed_extensions VARCHAR(190) NULL,        -- 쉼표구분(.pdf,.jpg). NULL 이면 공통 업로드 정책 사용.
+  max_file_size      BIGINT       NULL,        -- 바이트. NULL 이면 공통 MAX_UPLOAD_BYTES 사용.
+  sort_order         INT          NOT NULL DEFAULT 0,
+  is_active          TINYINT(1)   NOT NULL DEFAULT 1,
+  created_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_sdr_code (service_type, workflow_step, document_code),
+  INDEX idx_sdr_lookup (service_type, workflow_step, is_active, sort_order)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- request_files → service_document_requirements FK (컬럼은 request_files 정의에 인라인됨).
+ALTER TABLE request_files
+  ADD CONSTRAINT fk_rf_doc_requirement FOREIGN KEY (service_document_requirement_id)
+    REFERENCES service_document_requirements(id) ON DELETE SET NULL;
 
 -- =====================================================================
 -- 끝.

@@ -436,15 +436,51 @@ export default function PagesAdminClient({
                 p.depth === 0 &&
                 NESTABLE_TEMPLATES.includes(p.template) &&
                 p.slug !== p.template; // 인덱스(/certification 자체) 제외
+              // 3계층 분류: 섹션 인덱스 / 상위 페이지 / 하위 페이지.
+              const isChild = p.depth === 1;
+              const isSectionRoot =
+                p.depth === 0 &&
+                p.slug === p.template &&
+                NESTABLE_TEMPLATES.includes(p.template);
               return (
-                <tr key={p.id} className="border-t border-gray-100 align-top">
-                  <td className="px-4 py-2 text-gray-500">{p.id}</td>
-                  <td className="px-4 py-2 font-mono text-gray-800">
-                    {p.depth === 1 && (
-                      <span className="text-gray-300 mr-1">└</span>
-                    )}
-                    <span className={p.depth === 1 ? "text-gray-600" : ""}>
-                      {p.slug}
+                <tr
+                  key={p.id}
+                  className={
+                    "border-t align-top " +
+                    (isSectionRoot
+                      ? "border-gray-200 bg-gray-50/70"
+                      : isChild
+                        ? "border-gray-50"
+                        : "border-gray-100")
+                  }
+                >
+                  <td className="px-4 py-2 text-gray-400 text-xs">{p.id}</td>
+                  <td className="px-4 py-2 font-mono">
+                    <span
+                      className="inline-flex items-center"
+                      style={{ paddingLeft: isChild ? 24 : 0 }}
+                    >
+                      {isChild && (
+                        <span className="text-gray-300 mr-1.5 select-none">
+                          └─
+                        </span>
+                      )}
+                      <span
+                        className={
+                          isChild
+                            ? "font-normal text-gray-500"
+                            : isSectionRoot
+                              ? "font-bold text-gray-900"
+                              : "font-semibold text-gray-700"
+                        }
+                      >
+                        {p.slug}
+                      </span>
+                      {isSectionRoot && (
+                        <span className="ml-2 rounded bg-(--brand)/10 px-1.5 py-0.5 text-[10px] font-semibold text-(--brand) font-sans">
+                          인덱스
+                        </span>
+                      )}
                     </span>
                   </td>
                   <td className="px-4 py-2 text-gray-700">

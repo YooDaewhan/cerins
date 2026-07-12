@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/src/lib/auth";
 import {
   ACCOUNT_TYPE_LABELS,
   isAdminLevel,
+  isStaffLevel,
   userLevelLabel,
 } from "@/src/lib/userTypes";
 import type { LocaleCode } from "@/src/lib/types";
@@ -32,6 +33,7 @@ export default async function MyPage({ params }: Props) {
   }
 
   const isAdmin = isAdminLevel(user.user_level);
+  const isStaff = isStaffLevel(user.user_level) && !isAdmin;
 
   return (
     <div className="min-h-[calc(100vh-8rem)] px-4 py-12 bg-gray-50">
@@ -81,6 +83,20 @@ export default async function MyPage({ params }: Props) {
           </dl>
 
           <div className="mt-6 pt-5 border-t border-gray-100 flex flex-wrap items-center gap-2">
+            <Link
+              href={buildLocalizedPath(code, "/mypage/requests")}
+              className="rounded-md border border-(--brand) text-(--brand) text-sm font-semibold px-4 py-2 hover:bg-(--brand)/5"
+            >
+              내 의뢰
+            </Link>
+            {isStaff && (
+              <Link
+                href={buildLocalizedPath(code, "/staff/requests")}
+                className="rounded-md border border-gray-300 text-sm font-semibold px-4 py-2 hover:bg-gray-50"
+              >
+                담당 의뢰
+              </Link>
+            )}
             {isAdmin && (
               <Link
                 href={buildLocalizedPath(code, "/admin")}

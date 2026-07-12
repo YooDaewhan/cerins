@@ -12,10 +12,19 @@ function hasLocalePrefix(pathname: string): boolean {
   );
 }
 
+// Standalone pages that live outside the localized [locale] tree.
+const STANDALONE_PREFIXES = ["/process"];
+
+function isStandalone(pathname: string): boolean {
+  return STANDALONE_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(prefix + "/"),
+  );
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (hasLocalePrefix(pathname)) {
+  if (hasLocalePrefix(pathname) || isStandalone(pathname)) {
     return NextResponse.next();
   }
 

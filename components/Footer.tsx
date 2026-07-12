@@ -19,8 +19,8 @@ function localized(path: string, locale: LocaleCode): string {
 
 export default function Footer({ menus, locale, currentUser }: FooterProps) {
   const contactHref = localized("/contact", locale);
+  const requestsHref = localized("/requests", locale);
   const newsHref = localized("/news", locale);
-  const loginHref = localized("/login", locale);
 
   return (
     <footer className="snap-start snap-always bg-[#1e1e1e] text-white relative">
@@ -40,7 +40,7 @@ export default function Footer({ menus, locale, currentUser }: FooterProps) {
           </h3>
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <Link
-              href={contactHref}
+              href={requestsHref}
               className="group inline-flex items-center gap-2 px-6 py-3 bg-(--brand) hover:opacity-90 text-white text-sm font-bold tracking-wider uppercase rounded-full transition-opacity"
             >
               Get a Quote
@@ -58,7 +58,7 @@ export default function Footer({ menus, locale, currentUser }: FooterProps) {
                 />
               </svg>
             </Link>
-            <FeedbackButton currentUser={currentUser} loginHref={loginHref} />
+            <FeedbackButton currentUser={currentUser} contactHref={contactHref} />
           </div>
         </div>
       </div>

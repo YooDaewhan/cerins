@@ -238,6 +238,8 @@ export default function HeroSlidesAdminClient({
         />
       )}
 
+      <HeroVideoCard onError={setError} />
+
       <ul className="space-y-2">
         {filtered.length === 0 && !creating && (
           <li className="rounded border border-dashed border-gray-300 p-6 text-center text-sm text-gray-400">
@@ -320,6 +322,144 @@ export default function HeroSlidesAdminClient({
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+// 메인 히어로 우하단에 상시 노출되는 단일 소개 동영상.
+// 슬라이드와 달리 전 언어 공통·1개 고정이므로 목록 맨 위에 예외적으로 올린다.
+function HeroVideoCard({ onError }: { onError: (msg: string | null) => void }) {
+  const [videoUrl, setVideoUrl] = useState("");
+  const [draftUrl, setDraftUrl] = useState("");
+  const [editing, setEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/site-assets", { cache: "no-store" });
+      const json = (await res.json()) as {
+        assets?: Record<string, string>;
+        error?: string;
+      };
+      if (!res.ok || !json.assets) {
+        onError(json.error ?? "동영상 설정을 불러오지 못했습니다.");
+        return;
+      }
+      setVideoUrl(json.assets.hero_video ?? "");
+    } catch {
+      onError("네트워크 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }, [onError]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  function startEdit() {
+    setDraftUrl(videoUrl);
+    setEditing(true);
+  }
+
+  async function save() {
+    setSaving(true);
+    onError(null);
+    try {
+      const res = await fetch("/api/admin/site-assets", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "hero_video", value: draftUrl.trim() }),
+      });
+      const json = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !json.ok) {
+        onError(json.error ?? "저장에 실패했습니다.");
+        return;
+      }
+      setVideoUrl(draftUrl.trim());
+      setEditing(false);
+    } catch {
+      onError("네트워크 오류가 발생했습니다.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="rounded-lg border border-(--brand)/40 bg-(--brand)/5 overflow-hidden">
+      <div className="flex gap-4 p-3">
+        <div className="w-28 h-20 flex-shrink-0 rounded border border-gray-200 bg-black overflow-hidden">
+          {videoUrl ? (
+            <video
+              src={videoUrl}
+              className="w-full h-full object-cover"
+              muted
+              playsInline
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-[10px] text-white/50">
+              동영상 없음
+            </div>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] bg-(--brand) text-white px-1.5 py-0.5 rounded font-semibold">
+              고정
+            </span>
+            <span className="text-xs font-mono text-gray-500">전 언어 공통</span>
+          </div>
+          <p className="text-sm font-semibold text-gray-800 mt-1">
+            메인 슬라이드 소개 동영상
+          </p>
+          <p className="text-xs text-gray-500 line-clamp-1">
+            히어로 우측 하단에 상시 노출됩니다. 링크 또는 파일 업로드로 교체하세요.
+          </p>
+        </div>
+        <div className="flex flex-col gap-1">
+          {!editing && (
+            <button
+              type="button"
+              onClick={startEdit}
+              disabled={loading}
+              className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-50 disabled:opacity-60"
+            >
+              {loading ? "..." : "수정"}
+            </button>
+          )}
+        </div>
+      </div>
+      {editing && (
+        <div className="border-t border-(--brand)/20 bg-white/60 px-4 py-4 space-y-3">
+          <Field label="소개 동영상 (링크 또는 업로드)">
+            <MediaInput
+              url={draftUrl}
+              onChange={setDraftUrl}
+              accept="video/mp4,video/webm,video/ogg"
+              helpText="영상(mp4/webm/ogv)만 사용하세요. 외부 URL도 그대로 사용할 수 있습니다."
+            />
+          </Field>
+          <div className="flex justify-end gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              className="rounded border border-gray-300 px-3 py-1.5 text-xs hover:bg-gray-50"
+            >
+              취소
+            </button>
+            <button
+              type="button"
+              onClick={save}
+              disabled={saving}
+              className="rounded bg-(--brand) text-white px-4 py-1.5 text-xs font-semibold hover:opacity-90 disabled:opacity-60"
+            >
+              {saving ? "저장 중..." : "저장"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

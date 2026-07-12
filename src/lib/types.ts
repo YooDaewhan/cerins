@@ -172,6 +172,8 @@ export interface AlternateUrl {
 // MySQL future table: site_assets (key/value image catalog managed in admin).
 export interface SiteAssets {
   default_hero_image: string;
+  // 메인 히어로 우하단에 상시 노출되는 단일 소개 동영상(링크/업로드). 없으면 빈 문자열.
+  hero_video: string;
 }
 
 import type { AccountType } from "@/src/lib/userTypes";

@@ -68,3 +68,13 @@ export function userLevelLabel(level: number): string {
 export function isAdminLevel(level: number): boolean {
   return level >= ADMIN_USER_LEVEL;
 }
+
+// 직원 이상(직원 7 또는 관리자 9). 의뢰 처리 권한 판정에 사용.
+export function isStaffLevel(level: number): boolean {
+  return level >= USER_LEVELS.staff;
+}
+
+// 고객(일반/기업 회원). 의뢰 등록 주체.
+export function isCustomerLevel(level: number): boolean {
+  return level === USER_LEVELS.user || level === USER_LEVELS.business;
+}
