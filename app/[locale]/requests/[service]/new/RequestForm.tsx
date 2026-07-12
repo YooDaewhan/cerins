@@ -10,7 +10,6 @@ import {
 
 interface Props {
   serviceType: ServiceType;
-  josTemplateUrl: string | null;
   defaults: { company_name: string; contact_name: string; contact_email: string };
   listHref: string;
   detailHrefBase: string;
@@ -18,7 +17,6 @@ interface Props {
 
 export default function RequestForm({
   serviceType,
-  josTemplateUrl,
   defaults,
   detailHrefBase,
 }: Props) {
@@ -112,21 +110,7 @@ export default function RequestForm({
 
       {/* 첨부파일 */}
       <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold text-gray-800">첨부파일</h2>
-          {josTemplateUrl && (
-            <a
-              href={josTemplateUrl}
-              className="text-xs font-semibold text-(--brand) underline"
-              download
-            >
-              JOS 양식 다운로드
-            </a>
-          )}
-        </div>
-        {!josTemplateUrl && (
-          <p className="text-xs text-gray-400">JOS 양식 경로가 설정되지 않았습니다. (관리자 설정 필요)</p>
-        )}
+        <h2 className="text-sm font-bold text-gray-800">첨부파일</h2>
         <div className="space-y-3">
           {REQUEST_FILE_TYPES.map((t) => {
             const meta = REQUEST_FILE_META[t];
@@ -150,7 +134,7 @@ export default function RequestForm({
           })}
         </div>
         <p className="text-[11px] text-gray-400">
-          * 메뉴얼, 도면, JOS는 필수입니다. 각 항목은 여러 파일을 올릴 수 있습니다.
+          * 메뉴얼, 도면은 필수입니다. 각 항목은 여러 파일을 올릴 수 있습니다.
         </p>
       </section>
 

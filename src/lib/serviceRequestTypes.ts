@@ -201,7 +201,7 @@ export const REQUEST_FILE_META: Record<
   EXISTING_CERTIFICATE: { label: "기 발급 인증서", required: false },
   TEST_REPORT: { label: "테스트 리포트", required: false },
   AUTHORIZATION: { label: "권한위임계약서", required: false },
-  JOS: { label: "JOS", required: true },
+  JOS: { label: "JOS", required: false },
   OTHER: { label: "기타 자료", required: false },
 };
 

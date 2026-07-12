@@ -8,7 +8,6 @@ import {
   SERVICE_TYPE_LABELS,
   IMPLEMENTED_SERVICE_TYPES,
 } from "@/src/lib/serviceRequestTypes";
-import { getJosTemplateUrl } from "@/src/lib/requestSettings";
 import RequestForm from "./RequestForm";
 import CecRequestForm from "./CecRequestForm";
 import ProductInspectionRequestForm from "./ProductInspectionRequestForm";
@@ -82,7 +81,6 @@ export default async function NewRequestPage({ params }: Props) {
         ) : (
           <RequestForm
             serviceType={serviceType}
-            josTemplateUrl={getJosTemplateUrl()}
             defaults={{
               company_name: user.company ?? "",
               contact_name: user.login_id,
