@@ -76,6 +76,14 @@ export async function POST(req: Request) {
 
   const pool = getPool();
 
+  const [verificationRows] = await pool.execute(
+    "SELECT 1 FROM email_verifications WHERE email = ? AND verified_at IS NOT NULL LIMIT 1",
+    [email],
+  );
+  if ((verificationRows as unknown[]).length === 0) {
+    return NextResponse.json({ error: "이메일 인증을 먼저 완료해 주세요." }, { status: 400 });
+  }
+
   if (country) {
     const [countryRows] = await pool.execute(
       "SELECT 1 FROM locales WHERE code = ? AND is_enabled = 1 LIMIT 1",
