@@ -36,6 +36,7 @@ function buildLocalizedHref(target: LocaleCode, currentPathname: string, enabled
 
 export default function Header({ menus, locale, enabledLocales, currentUser }: HeaderProps) {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const [hovered, setHovered] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const [langOpen, setLangOpen] = useState(false);
@@ -85,35 +86,13 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setOpenMenu(null);
     }
-    if (openMenu) {
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
-      document.body.style.overflow = "hidden";
-      if (headerRef.current) {
-        headerRef.current.style.paddingRight = `${scrollbarWidth}px`;
-      }
-      document.addEventListener("keydown", onKey);
-    } else {
-      document.body.style.overflow = "";
-      document.body.style.paddingRight = "";
-      if (headerRef.current) {
-        headerRef.current.style.paddingRight = "";
-      }
-    }
-    return () => {
-      document.body.style.overflow = "";
-      document.body.style.paddingRight = "";
-      if (headerRef.current) {
-        headerRef.current.style.paddingRight = "";
-      }
-      document.removeEventListener("keydown", onKey);
-    };
+    if (openMenu) document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
   }, [openMenu]);
 
   const isActive = (path: string) =>
     pathname === path || pathname.startsWith(path + "/");
 
-  const activeItem = menus.find((n) => n.label === openMenu);
   const currentLocale = enabledLocales.find((l) => l.code === locale);
 
   return (
@@ -166,10 +145,15 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
             </Link>
 
             {/* 데스크톱 네비 */}
-            <nav className="hidden lg:flex items-center gap-1">
+            <nav
+              className="hidden lg:flex items-center gap-1"
+              onMouseLeave={() => setHovered(null)}
+            >
               {menus.map((item, idx) => {
                 const isOpen = openMenu === item.label;
                 const active = isActive(item.href);
+                // 마우스가 올라간 항목이 있으면 그 항목만, 없으면 활성/열린 항목만 배경 표시 → 배경은 항상 한 개.
+                const filled = hovered ? hovered === item.label : isOpen || active;
                 const divider = idx > 0 ? (
                   <span key={`divider-${item.id}`} className="w-px h-5 bg-black" aria-hidden />
                 ) : null;
@@ -180,17 +164,16 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                       {divider}
                       <Link
                         href={item.href}
+                        onMouseEnter={() => setHovered(item.label)}
                         className={`group relative overflow-hidden whitespace-nowrap px-6 py-6 text-base font-bold tracking-wider uppercase transition-colors duration-300 ${
-                          active
-                            ? "text-white"
-                            : "text-gray-700 group-hover:text-white hover:text-white"
+                          filled ? "text-white" : "text-gray-700"
                         }`}
                         onClick={() => setOpenMenu(null)}
                       >
                         {/* 왼쪽에서 오른쪽으로 채워지는 배경 */}
                         <span
                           className={`pointer-events-none absolute inset-0 bg-(--brand) origin-left transition-transform duration-300 ease-out ${
-                            active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                            filled ? "scale-x-100" : "scale-x-0"
                           }`}
                         />
                         <span className="relative z-10">{item.label}</span>
@@ -206,25 +189,24 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                 }
 
                 return (
-                  <div key={item.id} className="flex items-center">
+                  <div key={item.id} className="relative flex items-center">
                     {divider}
                     <button
                       type="button"
                       aria-expanded={isOpen}
                       onClick={() => setOpenMenu(isOpen ? null : item.label)}
                       onMouseEnter={() => {
+                        setHovered(item.label);
                         if (openMenu) setOpenMenu(item.label);
                       }}
                       className={`group relative overflow-hidden whitespace-nowrap px-6 py-6 text-base font-bold tracking-wider uppercase transition-colors duration-300 ${
-                        isOpen || active
-                          ? "text-white"
-                          : "text-gray-700 hover:text-white"
+                        filled ? "text-white" : "text-gray-700"
                       }`}
                     >
                       {/* 왼쪽에서 오른쪽으로 채워지는 배경 */}
                       <span
                         className={`pointer-events-none absolute inset-0 bg-(--brand) origin-left transition-transform duration-300 ease-out ${
-                          isOpen || active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
+                          filled ? "scale-x-100" : "scale-x-0"
                         }`}
                       />
                       <span className="relative z-10">{item.label}</span>
@@ -235,6 +217,26 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                         }`}
                       />
                     </button>
+
+                    {/* 간단한 드롭다운 — 가로로 한 줄 */}
+                    {isOpen && (
+                      <div className="absolute top-full left-0 z-[110] mt-2 flex items-stretch divide-x divide-gray-100 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-[0_16px_40px_rgba(10,31,68,0.14)] animate-[ddIn_.22s_cubic-bezier(.2,.7,.2,1)_both]">
+                        {/* 상단 브랜드 액센트 */}
+                        <span className="pointer-events-none absolute inset-x-0 top-0 z-10 h-0.5 bg-gradient-to-r from-(--brand) via-[#d6325a] to-(--brand)" />
+                        {item.children.map((child, ci) => (
+                          <Link
+                            key={child.id}
+                            href={child.href}
+                            onClick={() => setOpenMenu(null)}
+                            style={{ animation: `ddItemIn .3s cubic-bezier(.2,.7,.2,1) ${0.04 + ci * 0.04}s both` }}
+                            className="group flex items-center gap-2.5 whitespace-nowrap px-6 py-4 text-sm font-semibold tracking-wide uppercase text-gray-600 transition-colors duration-200 hover:bg-[#fff5f6] hover:text-(--brand)"
+                          >
+                            <span className="h-1 w-1 shrink-0 rounded-full bg-gray-300 transition-all duration-300 group-hover:w-4 group-hover:bg-(--brand)" />
+                            {child.label}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -415,142 +417,22 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
         </div>
       </header>
 
-      {/* ── 메가 패널 ── */}
-      <div
-        aria-hidden={!openMenu}
-        className={`fixed top-20 left-0 right-0 z-[95] transition-all duration-500 ease-[cubic-bezier(.2,.7,.2,1)] ${
-          openMenu
-            ? "opacity-100 pointer-events-auto"
-            : "opacity-0 pointer-events-none"
-        }`}
-        style={{ height: "calc(80vh)" }}
-      >
-        <div className="relative h-full grid grid-cols-1 lg:grid-cols-2 bg-[#15161b] overflow-hidden">
-          <div className="relative hidden lg:block overflow-hidden">
-            {menus
-              .filter((m) => m.mega_image_url)
-              .map((m) => (
-                <div
-                  key={m.id}
-                  className="absolute inset-0 bg-cover bg-center transition-opacity duration-700"
-                  style={{
-                    backgroundImage: `url('${m.mega_image_url}')`,
-                    opacity: openMenu === m.label ? 1 : 0,
-                    transform: openMenu === m.label ? "scale(1)" : "scale(1.05)",
-                    transition: "opacity 700ms ease, transform 8s ease-out",
-                  }}
-                />
-              ))}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#15161b]/40" />
-            <div className="absolute bottom-10 left-10 z-10 text-white/80">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-px bg-(--brand)" />
-                <span className="text-[10px] tracking-[0.3em] font-semibold uppercase text-(--brand)">
-                  CERINS
-                </span>
-              </div>
-              <div className="font-mono text-xs text-white/50">
-                Global Certification & Inspection
-              </div>
-            </div>
-          </div>
-
-          <div className="relative h-full flex flex-col px-8 sm:px-14 py-12 lg:py-16 overflow-y-auto">
-            <div
-              className="mb-10 lg:mb-14"
-              style={{
-                animation: openMenu
-                  ? "megaIn 0.55s cubic-bezier(.2,.7,.2,1) 0.05s both"
-                  : "none",
-              }}
-            >
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-0.5 bg-(--brand)" />
-                <span className="text-[10px] tracking-[0.4em] font-bold uppercase text-(--brand)">
-                  Menu
-                </span>
-              </div>
-              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-(--brand) tracking-tight uppercase">
-                {openMenu}
-              </h2>
-            </div>
-
-            <ul className="flex-1 space-y-1">
-              {activeItem?.children.map((child, idx) => (
-                <li
-                  key={child.id}
-                  style={{
-                    animation: openMenu
-                      ? `megaIn 0.55s cubic-bezier(.2,.7,.2,1) ${0.1 + idx * 0.06}s both`
-                      : "none",
-                  }}
-                >
-                  <Link
-                    href={child.href}
-                    onClick={() => setOpenMenu(null)}
-                    className="group flex items-center gap-4 py-3 border-b border-white/10 text-white hover:text-(--brand) transition-colors"
-                  >
-                    <span className="text-[10px] font-mono text-white/30 group-hover:text-(--brand) transition-colors w-6">
-                      {String(idx + 1).padStart(2, "0")}
-                    </span>
-                    <span className="text-base sm:text-lg font-semibold tracking-wide uppercase flex-1">
-                      {child.label}
-                    </span>
-                    <svg
-                      className="w-5 h-5 text-white/30 -translate-x-2 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-(--brand) transition-all duration-300"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-
-            <div
-              className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-3"
-              style={{
-                animation: openMenu
-                  ? "megaIn 0.55s cubic-bezier(.2,.7,.2,1) 0.4s both"
-                  : "none",
-              }}
-            >
-              <Link
-                href={locale === DEFAULT_LOCALE ? "/contact" : `/${locale}/contact`}
-                className="group flex items-center justify-between gap-4 px-6 py-4 bg-(--brand) hover:bg-(--brand-dark) text-white text-sm font-bold tracking-wider uppercase transition-colors"
-              >
-                CERINS Brochure
-                <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-              <Link
-                href={locale === DEFAULT_LOCALE ? "/contact" : `/${locale}/contact`}
-                className="group flex items-center justify-between gap-4 px-6 py-4 bg-(--brand) hover:bg-(--brand-dark) text-white text-sm font-bold tracking-wider uppercase transition-colors"
-              >
-                Terms & Conditions
-                <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div
-        onClick={() => setOpenMenu(null)}
-        aria-hidden
-        className={`fixed inset-0 z-[80] bg-black/50 backdrop-blur-sm transition-opacity duration-500 ${
-          openMenu ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
-      />
+      {/* 드롭다운 바깥 클릭 시 닫기 (투명) */}
+      {openMenu && (
+        <div
+          onClick={() => setOpenMenu(null)}
+          aria-hidden
+          className="fixed inset-0 z-[90]"
+        />
+      )}
 
       <style>{`
-        @keyframes megaIn {
-          from { opacity: 0; transform: translateY(24px); }
+        @keyframes ddIn {
+          from { opacity: 0; transform: translateY(-8px) scale(0.985); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes ddItemIn {
+          from { opacity: 0; transform: translateY(-6px); }
           to   { opacity: 1; transform: translateY(0); }
         }
         @keyframes logoVeil {

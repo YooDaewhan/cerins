@@ -6,29 +6,14 @@ import { isVideoUrl } from "@/src/lib/media";
 import FeedbackButton, { type FeedbackUser } from "@/components/FeedbackButton";
 
 const INTERVAL = 5500;
-const FLIP_DURATION = 1000;
-const FLIP_STAGGER = 70;
-const COLS: number = 6;
-const ROWS: number = 4;
 const DEFAULT_LOCALE: LocaleCode = "ko";
 
-// ponytail: 순서 함수만 다른 5개 웨이브 패턴, 플립마다 무작위로 골라 씀
-const PATTERN_FNS: Array<(col: number, row: number) => number> = [
-  (c, r) => c + r, // 대각선 ↘
-  (c, r) => COLS - 1 - c + r, // 대각선 ↙
-  (c, r) => Math.abs(c - (COLS - 1) / 2) + Math.abs(r - (ROWS - 1) / 2), // 중앙 → 바깥
-  (c, r) => COLS - 1 - c + (ROWS - 1 - r), // 우하단 → 좌상단
-  (c, r) => r, // 위 → 아래 (가로줄 순차)
-  (c, r) => c, // 왼쪽 → 오른쪽 (세로줄 순차)
-];
-
-const TILE_PATTERNS = PATTERN_FNS.map((fn) => {
-  const tiles = Array.from({ length: ROWS }).flatMap((_, r) =>
-    Array.from({ length: COLS }).map((_, c) => ({ col: c, row: r, unit: fn(c, r) })),
-  );
-  const maxUnit = Math.max(...tiles.map((t) => t.unit));
-  return { tiles, maxUnit };
-});
+// ponytail: 히어로 우측 표시용 — 왼쪽 줄은 인증 종류, 오른쪽 줄은 국가.
+// major 는 크게, minor 는 하단에 작게 나열.
+const CERT_MAJOR = ["TRCU", "GOST", "계측기", "방폭", "화재"];
+const CERT_MINOR = ["ISE", "RTN", "위생등록", "의료기기", "기타인증"];
+const COUNTRY_MAJOR = ["RUS", "KAZ", "INDIA"];
+const COUNTRY_MINOR = ["UZB", "AZE", "VNM", "UKR", "KOR"];
 
 interface HeroSliderProps {
   slides: HeroSlide[];
@@ -39,67 +24,38 @@ interface HeroSliderProps {
   heroVideo?: string;
 }
 
-// ponytail: 태그 목록 크기 티어. 티어를 좁혀 정돈된 그리드 느낌 유지.
-// 인덱스 기반 결정론적 선택으로 SSR/CSR 일치.
-const TAG_SIZES = ["text-base", "text-lg", "text-base", "text-xl"];
-
 function localized(path: string, locale: LocaleCode): string {
   if (locale === DEFAULT_LOCALE) return path;
   return "/" + locale + path;
 }
 
-export default function HeroSlider({ slides, locale, tags = [], feedbackUser = null, heroVideo = "" }: HeroSliderProps) {
+export default function HeroSlider({ slides, locale, feedbackUser = null, heroVideo = "" }: HeroSliderProps) {
   const total = slides.length;
-  const hasVideo = slides.some((s) => isVideoUrl(s.image));
 
-  const shownTags = tags;
-
-  const [flipCount, setFlipCount] = useState(0);
-  const [frontIdx, setFrontIdx] = useState(0);
-  const [backIdx, setBackIdx] = useState(total > 1 ? 1 : 0);
-  const [flipping, setFlipping] = useState(false);
-  const [displayIdx, setDisplayIdx] = useState(0);
+  const [current, setCurrent] = useState(0);
   const [progress, setProgress] = useState(0);
-  const [patternIdx, setPatternIdx] = useState(0);
   const rafRef = useRef<number | null>(null);
   const startRef = useRef<number>(0);
 
-  const current = flipCount % 2 === 0 ? frontIdx : backIdx;
-  const totalFlip = TILE_PATTERNS[patternIdx].maxUnit * FLIP_STAGGER + FLIP_DURATION;
+  const displayIdx = current;
 
   const goTo = useCallback(
     (idx: number) => {
-      if (flipping || total === 0) return;
+      if (total === 0) return;
       const clamped = ((idx % total) + total) % total;
       if (clamped === current) return;
-      if (flipCount % 2 === 0) setBackIdx(clamped);
-      else setFrontIdx(clamped);
-      setFlipping(true);
-      setFlipCount((f) => f + 1);
+      setCurrent(clamped);
       setProgress(0);
-      setPatternIdx((p) => {
-        const next = Math.floor(Math.random() * (TILE_PATTERNS.length - 1));
-        return next >= p ? next + 1 : next;
-      });
       startRef.current = performance.now();
     },
-    [flipping, flipCount, total, current],
+    [total, current],
   );
 
   const prev = useCallback(() => goTo(current - 1), [current, goTo]);
   const next = useCallback(() => goTo(current + 1), [current, goTo]);
 
   useEffect(() => {
-    if (!flipping) return;
-    const t = setTimeout(() => {
-      setFlipping(false);
-      setDisplayIdx(current);
-    }, totalFlip);
-    return () => clearTimeout(t);
-  }, [flipping, current, totalFlip]);
-
-  useEffect(() => {
-    if (total === 0 || flipping) return;
+    if (total === 0) return;
     startRef.current = performance.now();
     const tick = (now: number) => {
       const elapsed = now - startRef.current;
@@ -116,7 +72,7 @@ export default function HeroSlider({ slides, locale, tags = [], feedbackUser = n
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [flipping, total, current, goTo]);
+  }, [total, current, goTo]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -137,106 +93,39 @@ export default function HeroSlider({ slides, locale, tags = [], feedbackUser = n
 
   return (
     <section className="relative w-full h-full overflow-hidden select-none">
-      {hasVideo ? (
-        // ponytail: 비디오 슬라이드는 타일 분할 불가 → 크로스페이드 폴백
-        slides.map((s, i) => {
-          const active = i === current;
-          const isVideo = isVideoUrl(s.image);
-          return (
-            <div
-              key={s.id}
-              className="absolute inset-0 transition-opacity duration-[1200ms] ease-out"
-              style={{
-                opacity: active ? 1 : 0,
-                zIndex: active ? 1 : 0,
-                backgroundColor: s.fallback,
-              }}
-              aria-hidden={!active}
-            >
-              {isVideo ? (
-                <video
-                  src={s.image}
-                  className="absolute inset-0 w-full h-full object-cover"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  preload="auto"
-                />
-              ) : (
-                <div
-                  className="absolute inset-0 bg-cover bg-center"
-                  style={{ backgroundImage: `url('${s.image}')` }}
-                />
-              )}
-            </div>
-          );
-        })
-      ) : (
-        <div
-          className="absolute inset-0 z-[1]"
-          style={{
-            perspective: "1400px",
-            backgroundColor: slides[current].fallback,
-          }}
-        >
-          {TILE_PATTERNS[patternIdx].tiles.map(({ col, row, unit }) => {
-            const delay = unit * FLIP_STAGGER;
-            const bgPosX =
-              COLS === 1 ? "50%" : `${(col / (COLS - 1)) * 100}%`;
-            const bgPosY =
-              ROWS === 1 ? "50%" : `${(row / (ROWS - 1)) * 100}%`;
-            const bgSize = `${COLS * 100}% ${ROWS * 100}%`;
-            return (
+      {slides.map((s, i) => {
+        const active = i === current;
+        const isVideo = isVideoUrl(s.image);
+        return (
+          <div
+            key={s.id}
+            className="absolute inset-0 transition-opacity duration-[1200ms] ease-out"
+            style={{
+              opacity: active ? 1 : 0,
+              zIndex: active ? 1 : 0,
+              backgroundColor: s.fallback,
+            }}
+            aria-hidden={!active}
+          >
+            {isVideo ? (
+              <video
+                src={s.image}
+                className="absolute inset-0 w-full h-full object-cover"
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="auto"
+              />
+            ) : (
               <div
-                key={`${col}-${row}`}
-                className="absolute"
-                style={{
-                  left: `${(col / COLS) * 100}%`,
-                  top: `${(row / ROWS) * 100}%`,
-                  width: `calc(${100 / COLS}% + 0.5px)`,
-                  height: `calc(${100 / ROWS}% + 0.5px)`,
-                  transformStyle: "preserve-3d",
-                }}
-              >
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    transformStyle: "preserve-3d",
-                    transform: `rotateY(${flipCount * 180}deg)`,
-                    transition: `transform ${FLIP_DURATION}ms cubic-bezier(0.5,0,0.3,1) ${delay}ms`,
-                  }}
-                >
-                  <div
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      backfaceVisibility: "hidden",
-                      WebkitBackfaceVisibility: "hidden",
-                      backgroundImage: `url('${slides[frontIdx].image}')`,
-                      backgroundSize: bgSize,
-                      backgroundPosition: `${bgPosX} ${bgPosY}`,
-                    }}
-                  />
-                  <div
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      backfaceVisibility: "hidden",
-                      WebkitBackfaceVisibility: "hidden",
-                      transform: "rotateY(180deg)",
-                      backgroundImage: `url('${slides[backIdx].image}')`,
-                      backgroundSize: bgSize,
-                      backgroundPosition: `${bgPosX} ${bgPosY}`,
-                    }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+                className="absolute inset-0 bg-cover bg-center"
+                style={{ backgroundImage: `url('${s.image}')` }}
+              />
+            )}
+          </div>
+        );
+      })}
 
       <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/20 z-[2]" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent z-[2]" />
@@ -308,31 +197,58 @@ export default function HeroSlider({ slides, locale, tags = [], feedbackUser = n
               >
                 Our Services
               </a>
+              <FeedbackButton currentUser={feedbackUser} contactHref={localized("/contact", locale)} />
             </div>
             </div>
 
             <div className="hidden lg:flex flex-col gap-7 content-center justify-center lg:mt-28">
-              {shownTags.length > 0 && (
-                <div className="grid grid-cols-2 gap-x-10 gap-y-3.5 justify-items-end text-right">
-                  {shownTags.map((t, i) => {
-                    const size = TAG_SIZES[(i * 3 + 1) % TAG_SIZES.length];
-                    const accent = i % 5 === 0;
-                    return (
-                      <a
-                        key={`${t.href}-${i}`}
-                        href={t.href}
-                        className={`group flex items-baseline gap-2 ${size} leading-none whitespace-nowrap transition-colors duration-300 hover:text-(--brand) ${accent ? "text-white/90 font-semibold" : "text-white/55 font-medium"}`}
-                        style={{
-                          animation: `tagFloat 0.6s cubic-bezier(.2,.7,.2,1) ${0.28 + i * 0.035}s both`,
-                        }}
-                      >
-                        <span className="w-0 h-px bg-(--brand) transition-all duration-300 group-hover:w-4" />
-                        {t.title}
-                      </a>
-                    );
-                  })}
+              <div className="grid grid-cols-2 gap-x-12 justify-items-end text-right">
+                {/* 왼쪽 줄: 인증 종류 */}
+                <div className="flex flex-col items-end gap-2">
+                  {CERT_MAJOR.map((label, i) => (
+                    <span
+                      key={label}
+                      className="text-xl font-semibold text-white/90 leading-none whitespace-nowrap"
+                      style={{
+                        animation: `tagFloat 0.6s cubic-bezier(.2,.7,.2,1) ${0.28 + i * 0.04}s both`,
+                      }}
+                    >
+                      {label}
+                    </span>
+                  ))}
+                  <span
+                    className="mt-2 max-w-[150px] text-[11px] font-medium leading-relaxed text-white/45"
+                    style={{
+                      animation: `tagFloat 0.6s cubic-bezier(.2,.7,.2,1) ${0.28 + CERT_MAJOR.length * 0.04}s both`,
+                    }}
+                  >
+                    {CERT_MINOR.join(" · ")}
+                  </span>
                 </div>
-              )}
+
+                {/* 오른쪽 줄: 국가 */}
+                <div className="flex flex-col items-end gap-2">
+                  {COUNTRY_MAJOR.map((label, i) => (
+                    <span
+                      key={label}
+                      className="text-xl font-semibold text-white/90 leading-none whitespace-nowrap"
+                      style={{
+                        animation: `tagFloat 0.6s cubic-bezier(.2,.7,.2,1) ${0.32 + i * 0.04}s both`,
+                      }}
+                    >
+                      {label}
+                    </span>
+                  ))}
+                  <span
+                    className="mt-2 max-w-[150px] text-[11px] font-medium leading-relaxed text-white/45"
+                    style={{
+                      animation: `tagFloat 0.6s cubic-bezier(.2,.7,.2,1) ${0.32 + COUNTRY_MAJOR.length * 0.04}s both`,
+                    }}
+                  >
+                    {COUNTRY_MINOR.join(" · ")}
+                  </span>
+                </div>
+              </div>
 
               {/* 우하단 상시 소개 동영상. 관리자에서 링크/업로드로 관리. 없으면 검은 자리표시자. */}
               {/* 동영상은 absolute 로 흐름에서 빼내야 원본 크기가 auto 그리드 열 너비를
@@ -340,6 +256,7 @@ export default function HeroSlider({ slides, locale, tags = [], feedbackUser = n
               <div
                 className="relative w-full min-w-[360px] ml-auto aspect-video rounded-xl bg-black border border-white/15 overflow-hidden"
                 style={{
+                  transform: "translateX(30%)",
                   animation: "tagFloat 0.6s cubic-bezier(.2,.7,.2,1) 0.4s both",
                 }}
                 aria-label="동영상 재생 영역"
@@ -435,10 +352,6 @@ export default function HeroSlider({ slides, locale, tags = [], feedbackUser = n
         </span>
         <span className="mx-1 text-white/40">/</span>
         {String(total).padStart(2, "0")}
-      </div>
-
-      <div className="absolute bottom-16 right-8 z-[10]">
-        <FeedbackButton currentUser={feedbackUser} contactHref={localized("/contact", locale)} />
       </div>
 
       <div className="hidden sm:flex absolute bottom-8 left-8 z-[10] items-center gap-2 text-white/40 text-[10px] tracking-[0.3em] uppercase">
