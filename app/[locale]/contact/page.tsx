@@ -64,6 +64,7 @@ export default async function ContactPage({ params }: Props) {
         email: currentUser.email,
         company: currentUser.company ?? "",
         country: currentUser.country ?? "",
+        jobTitle: currentUser.job_title ?? "",
       }
     : null;
 

@@ -7,7 +7,9 @@ interface InquiryBody {
   name?: string;
   company?: string;
   email?: string;
+  phone?: string;
   country?: string;
+  department?: string;
   subject?: string;
   message?: string;
 }
@@ -35,6 +37,8 @@ export async function POST(req: Request) {
   const message = clip(body.message, 5000);
   const company = clip(body.company, 190);
   const country = clip(body.country, 120);
+  const phone = clip(body.phone, 60);
+  const department = clip(body.department, 190);
   const rawCategory = clip(body.category, 40);
   const category = rawCategory && CATEGORIES.includes(rawCategory) ? rawCategory : "기타";
 
@@ -51,9 +55,9 @@ export async function POST(req: Request) {
   try {
     const pool = getPool();
     const [result] = await pool.execute(
-      `INSERT INTO inquiries (category, name, company, email, country, subject, message)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [category, name, company, email, country, subject, message],
+      `INSERT INTO inquiries (category, name, company, email, phone, country, department, subject, message)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [category, name, company, email, phone, country, department, subject, message],
     );
     const insertId = (result as { insertId: number }).insertId;
 
@@ -65,7 +69,9 @@ export async function POST(req: Request) {
           `분류: ${category}`,
           `아이디: ${name}`,
           `회사: ${company ?? "-"}`,
+          `직위: ${department ?? "-"}`,
           `이메일: ${email}`,
+          `전화번호: ${phone ?? "-"}`,
           `국가: ${country ?? "-"}`,
           "",
           "메시지:",

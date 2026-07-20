@@ -10,6 +10,7 @@ interface Member {
   email: string;
   company: string;
   country: string;
+  jobTitle: string;
 }
 
 interface FormData {
@@ -17,7 +18,9 @@ interface FormData {
   company: string;
   name: string;
   email: string;
+  phone: string;
   country: string;
+  department: string;
   subject: string;
   message: string;
 }
@@ -28,7 +31,9 @@ export default function ContactForm({ member }: { member?: Member | null }) {
     company: member?.company ?? "",
     name: member?.name ?? "",
     email: member?.email ?? "",
+    phone: "",
     country: member?.country ?? "",
+    department: member?.jobTitle ?? "",
     subject: "",
     message: "",
   };
@@ -113,20 +118,34 @@ export default function ContactForm({ member }: { member?: Member | null }) {
         </div>
       </div>
 
-      {/* 국가: 입력칸 없이 회원정보 값을 그대로 저장 */}
+      {/* 국가·직위(department): 입력칸 없이 회원정보 값을 그대로 저장 */}
       <input type="hidden" name="country" value={form.country} />
+      <input type="hidden" name="department" value={form.department} />
 
-      <div>
-        <label className={labelClass}>Email *</label>
-        <input
-          type="email"
-          name="email"
-          required
-          value={form.email}
-          onChange={handleChange}
-          placeholder="your@email.com"
-          className={inputClass}
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div>
+          <label className={labelClass}>Email *</label>
+          <input
+            type="email"
+            name="email"
+            required
+            value={form.email}
+            onChange={handleChange}
+            placeholder="your@email.com"
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Phone</label>
+          <input
+            type="tel"
+            name="phone"
+            value={form.phone}
+            onChange={handleChange}
+            placeholder="+82-2-1234-5678"
+            className={inputClass}
+          />
+        </div>
       </div>
 
       <div>
