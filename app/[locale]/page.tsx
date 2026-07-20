@@ -58,6 +58,20 @@ export default async function HomePage({ params }: Props) {
       getCurrentUser(),
     ]);
 
+  const fixedCertSlugs = [
+    "russia-trcu",
+    "russia-gost-r",
+    "russia-metrology",
+    "russia-trcu-ex",
+    "russia-fire-safety",
+  ];
+  const fixedCerts = await Promise.all(
+    fixedCertSlugs.map(async (slug) => {
+      const p = await getPageWithTranslation(slug, code);
+      return { slug, title: p?.translation.title ?? slug };
+    }),
+  );
+
   const feedbackUser = currentUser
     ? {
         login_id: currentUser.login_id,
@@ -87,7 +101,7 @@ export default async function HomePage({ params }: Props) {
   return (
     <>
       <div className={snapFull}>
-        <HeroSlider slides={slides} locale={code} tags={heroTags} feedbackUser={feedbackUser} heroVideo={heroVideo} />
+        <HeroSlider slides={slides} locale={code} tags={heroTags} fixedCerts={fixedCerts} feedbackUser={feedbackUser} heroVideo={heroVideo} />
       </div>
       <div className={snapFull}>
         <ServiceBento />

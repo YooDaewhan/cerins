@@ -8,8 +8,9 @@ import FeedbackButton, { type FeedbackUser } from "@/components/FeedbackButton";
 const INTERVAL = 5500;
 const DEFAULT_LOCALE: LocaleCode = "ko";
 
-// ponytail: 히어로 우측 왼쪽 줄 표시용 국가. major 는 크게, minor 는 하단에 작게.
-// 오른쪽 줄(인증/검사 항목)은 tags prop 실데이터를 링크로 렌더.
+// 왼쪽 큰 글씨 5개는 서버(page.tsx)에서 슬러그별 제목을 채워 fixedCerts prop 으로 전달.
+
+// 히어로 우측 오른쪽 줄 표시용 국가. major 는 크게, minor 는 하단에 작게.
 const COUNTRY_MAJOR = ["RUS", "KAZ", "INDIA"];
 const COUNTRY_MINOR = ["UZB", "AZE", "VNM", "UKR", "KOR"];
 
@@ -17,6 +18,8 @@ interface HeroSliderProps {
   slides: HeroSlide[];
   locale: LocaleCode;
   tags?: HeroTag[];
+  // 왼쪽 큰 글씨 5개 — 언어판 제목 + 슬러그. 서버에서 채워 전달.
+  fixedCerts?: { title: string; slug: string }[];
   feedbackUser?: FeedbackUser | null;
   // 우하단 상시 노출 소개 동영상(관리자에서 관리). 비어 있으면 자리표시자만 표시.
   heroVideo?: string;
@@ -27,7 +30,7 @@ function localized(path: string, locale: LocaleCode): string {
   return "/" + locale + path;
 }
 
-export default function HeroSlider({ slides, locale, tags = [], feedbackUser = null, heroVideo = "" }: HeroSliderProps) {
+export default function HeroSlider({ slides, locale, tags = [], fixedCerts = [], feedbackUser = null, heroVideo = "" }: HeroSliderProps) {
   const total = slides.length;
 
   const [current, setCurrent] = useState(0);
@@ -212,23 +215,22 @@ export default function HeroSlider({ slides, locale, tags = [], feedbackUser = n
 
             <div className="hidden lg:flex flex-col gap-7 content-center justify-center lg:mt-28">
               <div className="grid grid-cols-2 gap-x-16 justify-items-end text-right">
-                {/* 왼쪽 줄: 인증/검사 항목 — 실데이터 링크, 새로고침마다 랜덤.
-                    앞 5개는 크게(세로), 다음 5개는 작게(좌→우 가로). */}
+                {/* 왼쪽 줄: 큰 글씨 5개는 고정 슬러그, 작은 줄(좌→우 가로)은 새로고침마다 랜덤. */}
                 <div className="flex flex-col items-end gap-4">
-                  {shownTags.slice(0, 5).map((t, i) => (
+                  {fixedCerts.map((c, i) => (
                     <a
-                      key={t.href}
-                      href={t.href}
+                      key={c.slug}
+                      href={localized(`/certification/russia/${c.slug}`, locale)}
                       className="text-xl font-semibold text-white/90 leading-none whitespace-nowrap hover:text-white transition-colors"
                       style={{
                         animation: `tagFloat 0.6s cubic-bezier(.2,.7,.2,1) ${0.28 + i * 0.04}s both`,
                       }}
                     >
-                      {t.title}
+                      {c.title}
                     </a>
                   ))}
                   <div className="mt-4 flex flex-wrap justify-end gap-x-3 gap-y-1 max-w-[240px]">
-                    {shownTags.slice(5, 10).map((t, i) => (
+                    {shownTags.slice(0, 5).map((t, i) => (
                       <a
                         key={t.href}
                         href={t.href}

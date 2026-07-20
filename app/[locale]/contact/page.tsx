@@ -31,6 +31,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 const PRIMARY_LABELS = new Set(["Head Office", "Telephone", "Email", "Business Hours"]);
 
+const CONTACT_DIRECTORY = [
+  { label: "본사", email: "korcerins@cerins.net", tel: "+82 2 337 4611" },
+  { label: "러시아 세린스", email: "ruscerins@cerins.net", tel: "+7 499 957 84 05" },
+  { label: "카자흐스탄 세린스", email: "kazcerins@cerins.net", tel: "+7 727 220 68 25" },
+  { label: "인도 세린스", email: null, tel: "+91 9033 790 007" },
+  { label: "베트남 세린스", email: "vncerins@cerins.net", tel: "+84 283 6202526" },
+  { label: "중국 세린스", email: "chncerins@cerins.net", tel: "+86 021 5039 0399" },
+  { label: "우즈베키스탄 세린스", email: "uzbcerins@cerins.net", tel: "+998 95 194 3747" },
+];
+
 const ICON_BY_HEADING: Record<string, "location" | "phone" | "email" | "clock"> = {
   "Head Office": "location",
   Telephone: "phone",
@@ -47,7 +57,6 @@ export default async function ContactPage({ params }: Props) {
   if (!page) notFound();
 
   const primary = page.translation.content.filter((b) => PRIMARY_LABELS.has(b.heading));
-  const regional = page.translation.content.filter((b) => !PRIMARY_LABELS.has(b.heading));
 
   return (
     <>
@@ -83,17 +92,15 @@ export default async function ContactPage({ params }: Props) {
               ))}
             </div>
 
-            {regional.length > 0 && (
-              <div className="border-t border-gray-100 pt-6 space-y-4">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Regional Offices</p>
-                {regional.map((block) => (
-                  <div key={block.heading}>
-                    <p className="text-sm font-semibold text-(--brand)">{block.heading}</p>
-                    <p className="text-xs text-gray-500">{block.body}</p>
-                  </div>
+            <div className="border-t border-gray-100 pt-6 space-y-4">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Regional Offices</p>
+              <OfficeItem {...CONTACT_DIRECTORY[0]} />
+              <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                {CONTACT_DIRECTORY.slice(1).map((office) => (
+                  <OfficeItem key={office.label} {...office} />
                 ))}
               </div>
-            )}
+            </div>
           </div>
 
           <div className="lg:col-span-2 bg-white border border-gray-300 shadow-md rounded-xl p-8">
@@ -106,6 +113,32 @@ export default async function ContactPage({ params }: Props) {
         </div>
       </div>
     </>
+  );
+}
+
+function OfficeItem({
+  label,
+  email,
+  tel,
+}: {
+  label: string;
+  email: string | null;
+  tel: string;
+}) {
+  return (
+    <div>
+      <p className="text-sm font-semibold text-(--brand)">{label}</p>
+      {email ? (
+        <a href={`mailto:${email}`} className="block text-xs text-gray-500 hover:text-(--brand) transition-colors">
+          {email}
+        </a>
+      ) : (
+        <p className="text-xs text-gray-400">(추가예정)</p>
+      )}
+      <a href={`tel:${tel.replace(/\s/g, "")}`} className="block text-xs text-gray-500 hover:text-(--brand) transition-colors">
+        {tel}
+      </a>
+    </div>
   );
 }
 
