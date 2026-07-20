@@ -14,6 +14,7 @@ interface Row {
   id: number;
   created_at: string;
   // inquiry
+  category?: string | null;
   name?: string;
   company?: string | null;
   department?: string | null;
@@ -127,6 +128,11 @@ export default function FeedbackAdminClient({ kind, endpoint }: Props) {
 
               {kind === "inquiry" ? (
                 <div>
+                  {r.category && (
+                    <span className="inline-block mb-1.5 text-[11px] font-semibold text-(--brand) bg-(--brand)/10 rounded px-2 py-0.5">
+                      {r.category}
+                    </span>
+                  )}
                   <p className="text-sm font-semibold text-(--brand) mb-1">{r.subject}</p>
                   <p className="text-sm text-gray-600 whitespace-pre-line">{r.message}</p>
                   {r.website && (

@@ -3,18 +3,17 @@ import { getPool } from "@/src/lib/db";
 import { sendMail } from "@/src/lib/mail";
 
 interface InquiryBody {
+  category?: string;
   name?: string;
   company?: string;
-  department?: string;
-  country?: string;
   email?: string;
-  website?: string;
-  phone?: string;
+  country?: string;
   subject?: string;
   message?: string;
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const CATEGORIES = ["불편 접수", "추가 요청사항", "기타"];
 
 function clip(v: unknown, max: number): string | null {
   if (typeof v !== "string") return null;
@@ -34,6 +33,10 @@ export async function POST(req: Request) {
   const email = clip(body.email, 190);
   const subject = clip(body.subject, 255);
   const message = clip(body.message, 5000);
+  const company = clip(body.company, 190);
+  const country = clip(body.country, 120);
+  const rawCategory = clip(body.category, 40);
+  const category = rawCategory && CATEGORIES.includes(rawCategory) ? rawCategory : "기타";
 
   if (!name || !email || !subject || !message) {
     return NextResponse.json(
@@ -48,35 +51,22 @@ export async function POST(req: Request) {
   try {
     const pool = getPool();
     const [result] = await pool.execute(
-      `INSERT INTO inquiries
-         (name, company, department, country, email, website, phone, subject, message)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        name,
-        clip(body.company, 190),
-        clip(body.department, 190),
-        clip(body.country, 120),
-        email,
-        clip(body.website, 255),
-        clip(body.phone, 60),
-        subject,
-        message,
-      ],
+      `INSERT INTO inquiries (category, name, company, email, country, subject, message)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [category, name, company, email, country, subject, message],
     );
     const insertId = (result as { insertId: number }).insertId;
 
     try {
       await sendMail({
-        subject: `[문의] ${subject}`,
+        subject: `[문의:${category}] ${subject}`,
         replyTo: email,
         text: [
-          `이름: ${name}`,
-          `회사: ${clip(body.company, 190) ?? "-"}`,
-          `부서: ${clip(body.department, 190) ?? "-"}`,
-          `국가: ${clip(body.country, 120) ?? "-"}`,
+          `분류: ${category}`,
+          `아이디: ${name}`,
+          `회사: ${company ?? "-"}`,
           `이메일: ${email}`,
-          `웹사이트: ${clip(body.website, 255) ?? "-"}`,
-          `전화번호: ${clip(body.phone, 60) ?? "-"}`,
+          `국가: ${country ?? "-"}`,
           "",
           "메시지:",
           message,

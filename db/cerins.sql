@@ -1318,6 +1318,7 @@ INSERT INTO users (login_id, password_hash, email, email_consent, account_type, 
 -- ---------------------------------------------------------------------
 CREATE TABLE inquiries (
   id         BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  category   VARCHAR(40)  NULL,
   name       VARCHAR(190) NOT NULL,
   company    VARCHAR(190) NULL,
   department VARCHAR(190) NULL,

@@ -10,7 +10,7 @@ export async function GET() {
   try {
     const pool = getPool();
     const [rows] = await pool.execute(
-      `SELECT id, name, company, department, country, email, website, phone, subject, message, created_at
+      `SELECT id, category, name, company, department, country, email, website, phone, subject, message, created_at
          FROM inquiries ORDER BY id DESC LIMIT 500`,
     );
     return NextResponse.json({ items: rows });

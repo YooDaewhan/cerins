@@ -6,6 +6,7 @@ import {
   getAlternateUrls,
   getPageWithTranslation,
 } from "@/src/lib/mockRepository";
+import { getCurrentUser } from "@/src/lib/auth";
 import { isLocale } from "@/src/lib/i18n";
 import type { LocaleCode } from "@/src/lib/types";
 
@@ -55,6 +56,16 @@ export default async function ContactPage({ params }: Props) {
 
   const page = await getPageWithTranslation("contact", code);
   if (!page) notFound();
+
+  const currentUser = await getCurrentUser();
+  const member = currentUser
+    ? {
+        name: currentUser.login_id,
+        email: currentUser.email,
+        company: currentUser.company ?? "",
+        country: currentUser.country ?? "",
+      }
+    : null;
 
   const primary = page.translation.content.filter((b) => PRIMARY_LABELS.has(b.heading));
 
@@ -108,7 +119,7 @@ export default async function ContactPage({ params }: Props) {
               <h3 className="text-lg font-bold text-(--brand)">Send a Message</h3>
               <p className="text-sm text-gray-400 mt-1">We typically respond within 1 business day.</p>
             </div>
-            <ContactForm />
+            <ContactForm member={member} />
           </div>
         </div>
       </div>

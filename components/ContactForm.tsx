@@ -1,42 +1,48 @@
-﻿// TODO: move form labels/placeholders/success-text to a `ui_strings` table per locale once admin CRUD lands.
+// TODO: move form labels/placeholders/success-text to a `ui_strings` table per locale once admin CRUD lands.
 "use client";
 
 import { useState } from "react";
 
-interface FormData {
+const CATEGORIES = ["불편 접수", "추가 요청사항", "기타"];
+
+interface Member {
   name: string;
-  company: string;
-  department: string;
-  country: string;
   email: string;
-  website: string;
-  phone: string;
+  company: string;
+  country: string;
+}
+
+interface FormData {
+  category: string;
+  company: string;
+  name: string;
+  email: string;
+  country: string;
   subject: string;
   message: string;
 }
 
-const initialForm: FormData = {
-  name: "",
-  company: "",
-  department: "",
-  country: "",
-  email: "",
-  website: "",
-  phone: "",
-  subject: "",
-  message: "",
-};
-
-export default function ContactForm() {
-  const [form, setForm] = useState<FormData>(initialForm);
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+export default function ContactForm({ member }: { member?: Member | null }) {
+  const initialForm: FormData = {
+    category: CATEGORIES[0],
+    company: member?.company ?? "",
+    name: member?.name ?? "",
+    email: member?.email ?? "",
+    country: member?.country ?? "",
+    subject: "",
+    message: "",
   };
 
+  const [form, setForm] = useState<FormData>(initialForm);
+  const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +59,7 @@ export default function ContactForm() {
         setError(data.error ?? "전송에 실패했습니다. 잠시 후 다시 시도해 주세요.");
         return;
       }
-      setForm(initialForm);
+      setForm({ ...initialForm, subject: "", message: "" });
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 4000);
     } catch {
@@ -65,24 +71,24 @@ export default function ContactForm() {
 
   const inputClass =
     "w-full border border-gray-200 rounded px-4 py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-(--brand) transition";
+  const labelClass = "block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      <div>
+        <label className={labelClass}>Category *</label>
+        <select name="category" value={form.category} onChange={handleChange} className={inputClass}>
+          {CATEGORIES.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Name *</label>
-          <input
-            type="text"
-            name="name"
-            required
-            value={form.name}
-            onChange={handleChange}
-            placeholder="Your full name"
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Company</label>
+          <label className={labelClass}>Company</label>
           <input
             type="text"
             name="company"
@@ -93,77 +99,51 @@ export default function ContactForm() {
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Department</label>
+          <label className={labelClass}>ID *</label>
           <input
             type="text"
-            name="department"
-            value={form.department}
-            onChange={handleChange}
-            placeholder="Your department"
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Country *</label>
-          <input
-            type="text"
-            name="country"
+            name="name"
             required
-            value={form.country}
+            readOnly={!!member}
+            value={form.name}
             onChange={handleChange}
-            placeholder="Your country"
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Email *</label>
-          <input
-            type="email"
-            name="email"
-            required
-            value={form.email}
-            onChange={handleChange}
-            placeholder="your@email.com"
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Website</label>
-          <input
-            type="url"
-            name="website"
-            value={form.website}
-            onChange={handleChange}
-            placeholder="https://yourcompany.com"
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Phone</label>
-          <input
-            type="tel"
-            name="phone"
-            value={form.phone}
-            onChange={handleChange}
-            placeholder="+82-2-1234-5678"
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Subject *</label>
-          <input
-            type="text"
-            name="subject"
-            required
-            value={form.subject}
-            onChange={handleChange}
-            placeholder="How can we help?"
-            className={inputClass}
+            placeholder="Your account ID"
+            className={inputClass + (member ? " bg-gray-100 text-gray-500" : "")}
           />
         </div>
       </div>
+
+      {/* 국가: 입력칸 없이 회원정보 값을 그대로 저장 */}
+      <input type="hidden" name="country" value={form.country} />
+
       <div>
-        <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">Message *</label>
+        <label className={labelClass}>Email *</label>
+        <input
+          type="email"
+          name="email"
+          required
+          value={form.email}
+          onChange={handleChange}
+          placeholder="your@email.com"
+          className={inputClass}
+        />
+      </div>
+
+      <div>
+        <label className={labelClass}>Subject *</label>
+        <input
+          type="text"
+          name="subject"
+          required
+          value={form.subject}
+          onChange={handleChange}
+          placeholder="How can we help?"
+          className={inputClass}
+        />
+      </div>
+
+      <div>
+        <label className={labelClass}>Message *</label>
         <textarea
           name="message"
           required
@@ -178,9 +158,7 @@ export default function ContactForm() {
       {submitted && (
         <p className="text-sm text-green-600 font-medium">Message sent successfully. We&apos;ll be in touch soon.</p>
       )}
-      {error && (
-        <p className="text-sm text-red-600 font-medium">{error}</p>
-      )}
+      {error && <p className="text-sm text-red-600 font-medium">{error}</p>}
 
       <button
         type="submit"
@@ -192,4 +170,3 @@ export default function ContactForm() {
     </form>
   );
 }
-
