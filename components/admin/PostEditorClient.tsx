@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { PopupCard } from "@/components/NewsPopup";
+import type { Post } from "@/src/lib/types";
 
 const TiptapEditor = dynamic(() => import("./TiptapEditor"), { ssr: false });
 
@@ -105,6 +107,8 @@ export default function PostEditorClient({
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 라디오 숫자를 누르면 해당 타입의 팝업 미리보기를 띄운다.
+  const [previewType, setPreviewType] = useState<number | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -363,7 +367,11 @@ export default function PostEditorClient({
                           type="radio"
                           name="popup_type"
                           checked={form.popup_type === n}
-                          onChange={() => update({ popup_type: n })}
+                          onChange={() => {
+                            update({ popup_type: n });
+                            setPreviewType(n);
+                          }}
+                          onClick={() => setPreviewType(n)}
                           className="h-4 w-4 accent-(--brand)"
                         />
                         <span>{n}</span>
@@ -379,6 +387,30 @@ export default function PostEditorClient({
                 </p>
               )}
             </Field>
+          )}
+          {previewType !== null && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+              onClick={() => setPreviewType(null)}
+            >
+              <div onClick={(e) => e.stopPropagation()}>
+                <PopupCard
+                  post={
+                    {
+                      slug: slug || "preview",
+                      title: form.title || "제목 미리보기",
+                      summary: form.summary,
+                      content: form.content,
+                      thumbnail: form.thumbnail,
+                      popup_type: previewType,
+                    } as unknown as Post
+                  }
+                  href="#"
+                  onClose={() => setPreviewType(null)}
+                  onHideForDay={() => setPreviewType(null)}
+                />
+              </div>
+            </div>
           )}
           <Field label="썸네일 이미지 URL (선택)" className="sm:col-span-2">
             <input

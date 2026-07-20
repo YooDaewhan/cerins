@@ -8,10 +8,8 @@ import FeedbackButton, { type FeedbackUser } from "@/components/FeedbackButton";
 const INTERVAL = 5500;
 const DEFAULT_LOCALE: LocaleCode = "ko";
 
-// ponytail: 히어로 우측 표시용 — 왼쪽 줄은 인증 종류, 오른쪽 줄은 국가.
-// major 는 크게, minor 는 하단에 작게 나열.
-const CERT_MAJOR = ["TRCU", "GOST", "계측기", "방폭", "화재"];
-const CERT_MINOR = ["ISE", "RTN", "위생등록", "의료기기", "기타인증"];
+// ponytail: 히어로 우측 왼쪽 줄 표시용 국가. major 는 크게, minor 는 하단에 작게.
+// 오른쪽 줄(인증/검사 항목)은 tags prop 실데이터를 링크로 렌더.
 const COUNTRY_MAJOR = ["RUS", "KAZ", "INDIA"];
 const COUNTRY_MINOR = ["UZB", "AZE", "VNM", "UKR", "KOR"];
 
@@ -29,10 +27,12 @@ function localized(path: string, locale: LocaleCode): string {
   return "/" + locale + path;
 }
 
-export default function HeroSlider({ slides, locale, feedbackUser = null, heroVideo = "" }: HeroSliderProps) {
+export default function HeroSlider({ slides, locale, tags = [], feedbackUser = null, heroVideo = "" }: HeroSliderProps) {
   const total = slides.length;
 
   const [current, setCurrent] = useState(0);
+  // 우측 하위요소(인증/검사 항목)를 마운트 후 클라이언트에서만 섞어 하이드레이션 불일치 방지.
+  const [shownTags, setShownTags] = useState<HeroTag[]>(tags);
   const [progress, setProgress] = useState(0);
   const rafRef = useRef<number | null>(null);
   const startRef = useRef<number>(0);
@@ -82,6 +82,15 @@ export default function HeroSlider({ slides, locale, feedbackUser = null, heroVi
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [prev, next]);
+
+  useEffect(() => {
+    const a = [...tags];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    setShownTags(a);
+  }, [tags]);
 
   if (total === 0) {
     return (
@@ -202,32 +211,40 @@ export default function HeroSlider({ slides, locale, feedbackUser = null, heroVi
             </div>
 
             <div className="hidden lg:flex flex-col gap-7 content-center justify-center lg:mt-28">
-              <div className="grid grid-cols-2 gap-x-12 justify-items-end text-right">
-                {/* 왼쪽 줄: 인증 종류 */}
-                <div className="flex flex-col items-end gap-2">
-                  {CERT_MAJOR.map((label, i) => (
-                    <span
-                      key={label}
-                      className="text-xl font-semibold text-white/90 leading-none whitespace-nowrap"
+              <div className="grid grid-cols-2 gap-x-16 justify-items-end text-right">
+                {/* 왼쪽 줄: 인증/검사 항목 — 실데이터 링크, 새로고침마다 랜덤.
+                    앞 5개는 크게(세로), 다음 5개는 작게(좌→우 가로). */}
+                <div className="flex flex-col items-end gap-4">
+                  {shownTags.slice(0, 5).map((t, i) => (
+                    <a
+                      key={t.href}
+                      href={t.href}
+                      className="text-xl font-semibold text-white/90 leading-none whitespace-nowrap hover:text-white transition-colors"
                       style={{
                         animation: `tagFloat 0.6s cubic-bezier(.2,.7,.2,1) ${0.28 + i * 0.04}s both`,
                       }}
                     >
-                      {label}
-                    </span>
+                      {t.title}
+                    </a>
                   ))}
-                  <span
-                    className="mt-2 max-w-[150px] text-[11px] font-medium leading-relaxed text-white/45"
-                    style={{
-                      animation: `tagFloat 0.6s cubic-bezier(.2,.7,.2,1) ${0.28 + CERT_MAJOR.length * 0.04}s both`,
-                    }}
-                  >
-                    {CERT_MINOR.join(" · ")}
-                  </span>
+                  <div className="mt-4 flex flex-wrap justify-end gap-x-3 gap-y-1 max-w-[240px]">
+                    {shownTags.slice(5, 10).map((t, i) => (
+                      <a
+                        key={t.href}
+                        href={t.href}
+                        className="text-[11px] font-medium leading-none whitespace-nowrap text-white/45 hover:text-white/80 transition-colors"
+                        style={{
+                          animation: `tagFloat 0.6s cubic-bezier(.2,.7,.2,1) ${0.28 + (5 + i) * 0.04}s both`,
+                        }}
+                      >
+                        {t.title}
+                      </a>
+                    ))}
+                  </div>
                 </div>
 
-                {/* 오른쪽 줄: 국가 */}
-                <div className="flex flex-col items-end gap-2">
+                {/* 오른쪽 줄: 국가 (클릭 없음) */}
+                <div className="flex flex-col items-end gap-4">
                   {COUNTRY_MAJOR.map((label, i) => (
                     <span
                       key={label}
@@ -240,7 +257,7 @@ export default function HeroSlider({ slides, locale, feedbackUser = null, heroVi
                     </span>
                   ))}
                   <span
-                    className="mt-2 max-w-[150px] text-[11px] font-medium leading-relaxed text-white/45"
+                    className="mt-4 max-w-[150px] text-[11px] font-medium leading-relaxed text-white/45"
                     style={{
                       animation: `tagFloat 0.6s cubic-bezier(.2,.7,.2,1) ${0.32 + COUNTRY_MAJOR.length * 0.04}s both`,
                     }}
@@ -250,9 +267,7 @@ export default function HeroSlider({ slides, locale, feedbackUser = null, heroVi
                 </div>
               </div>
 
-              {/* 우하단 상시 소개 동영상. 관리자에서 링크/업로드로 관리. 없으면 검은 자리표시자. */}
-              {/* 동영상은 absolute 로 흐름에서 빼내야 원본 크기가 auto 그리드 열 너비를
-                  밀어내지 않고 박스(aspect-video) 크기에 맞춰 들어간다. */}
+              {/* 상시 소개 동영상 — 우측. 관리자에서 링크/업로드로 관리. 없으면 검은 자리표시자. */}
               <div
                 className="relative w-full min-w-[360px] ml-auto aspect-video rounded-xl bg-black border border-white/15 overflow-hidden"
                 style={{
