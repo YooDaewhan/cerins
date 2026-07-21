@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { geoCentroid, geoGraticule, geoNaturalEarth1, geoPath } from "d3-geo";
 import { type Step } from "./ServiceProcess";
@@ -71,6 +71,9 @@ export default function ServiceFlatMap({ steps }: { steps?: Step[] }) {
   const [selected, setSelected] = useState<Step | null>(null);
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [hoverName, setHoverName] = useState<string | null>(null);
+  // SVG 는 마운트 후에만 렌더 — geoCentroid 부동소수점 차이로 인한 하이드레이션 불일치 방지.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const rawId = useId().replace(/:/g, "");
   const arrowId = `flatmap-arrow-${rawId}`;
   const glowId = `flatmap-glow-${rawId}`;
@@ -78,6 +81,7 @@ export default function ServiceFlatMap({ steps }: { steps?: Step[] }) {
   const landGradId = `flatmap-land-${rawId}`;
   const softGlowId = `flatmap-soft-${rawId}`;
   const markerGlowId = `flatmap-mglow-${rawId}`;
+  const cardShadowId = `flatmap-cardshadow-${rawId}`;
 
   const activeName = hoverName ?? selectedName;
   const arcD = useMemo(() => {
@@ -132,6 +136,7 @@ export default function ServiceFlatMap({ steps }: { steps?: Step[] }) {
       className="relative h-full w-full overflow-hidden bg-(--on-brand)"
       aria-label="Interactive service coverage flat map"
     >
+      {mounted && (
       <svg
         viewBox={`${WIDTH * 0.05} ${-HEIGHT * 0.1} ${WIDTH} ${HEIGHT}`}
         preserveAspectRatio="xMidYMid slice"
@@ -156,9 +161,9 @@ export default function ServiceFlatMap({ steps }: { steps?: Step[] }) {
             </feMerge>
           </filter>
           {/* 배경 광원 — 지도 중앙에서 은은하게 새어나오는 빛 */}
-          <radialGradient id={bgGlowId} cx="42%" cy="38%" r="65%">
-            <stop offset="0%" stopColor="rgba(120,170,255,0.28)" />
-            <stop offset="45%" stopColor="rgba(90,130,220,0.10)" />
+          <radialGradient id={bgGlowId} cx="42%" cy="38%" r="68%">
+            <stop offset="0%" stopColor="rgba(150,190,255,0.18)" />
+            <stop offset="48%" stopColor="rgba(110,150,225,0.06)" />
             <stop offset="100%" stopColor="rgba(10,31,68,0)" />
           </radialGradient>
           {/* 육지 그라데이션 — 지도 전체 좌표 기준(연속)이라 국가 경계 이음새가 안 생김 */}
@@ -170,8 +175,8 @@ export default function ServiceFlatMap({ steps }: { steps?: Step[] }) {
             x2="0"
             y2={HEIGHT * 0.9}
           >
-            <stop offset="0%" stopColor="rgba(190,215,255,0.22)" />
-            <stop offset="100%" stopColor="rgba(120,150,210,0.06)" />
+            <stop offset="0%" stopColor="rgba(205,225,255,0.15)" />
+            <stop offset="100%" stopColor="rgba(130,160,215,0.04)" />
           </linearGradient>
           {/* 육지 발광 언더레이용 부드러운 블러 */}
           <filter id={softGlowId} x="-20%" y="-20%" width="140%" height="140%">
@@ -185,11 +190,16 @@ export default function ServiceFlatMap({ steps }: { steps?: Step[] }) {
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
+          {/* 카드 부드러운 그림자 — 고급감 */}
+          <filter id={cardShadowId} x="-40%" y="-40%" width="180%" height="200%">
+            <feDropShadow dx="0" dy="1.5" stdDeviation="2.5" floodColor="rgba(0,0,0,0.45)" />
+          </filter>
         </defs>
         <style>{`
           @keyframes flatmapDash { to { stroke-dashoffset: -8; } }
           @keyframes flatmapFlow { to { stroke-dashoffset: -19; } }
           @keyframes flatmapGlow { 0%,100% { opacity: .35; } 50% { opacity: .85; } }
+          @keyframes flatmapCard { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
           @keyframes flatmapPulse { 0% { r: 6; opacity: .55; } 100% { r: 16; opacity: 0; } }
         `}</style>
         {/* 배경 광원 레이어 */}
@@ -222,12 +232,12 @@ export default function ServiceFlatMap({ steps }: { steps?: Step[] }) {
         <g className="pointer-events-none" filter={`url(#${glowId})`}>
           {routes.map((r) => (
             <g key={`route-${r.name}`}>
-              <path d={r.d} fill="none" stroke="rgba(150,190,255,0.22)" strokeWidth={0.8} strokeLinecap="round" />
+              <path d={r.d} fill="none" stroke="rgba(170,200,255,0.14)" strokeWidth={0.7} strokeLinecap="round" />
               <path
                 d={r.d}
                 fill="none"
-                stroke="rgba(190,220,255,0.9)"
-                strokeWidth={1.2}
+                stroke="rgba(205,225,255,0.7)"
+                strokeWidth={1}
                 strokeLinecap="round"
                 strokeDasharray="1 18"
                 style={{ animation: `flatmapFlow 3.4s linear infinite`, animationDelay: `${r.i * 0.3}s` }}
@@ -262,7 +272,7 @@ export default function ServiceFlatMap({ steps }: { steps?: Step[] }) {
         {/* 거래국 중앙 고리 마커 — 호버/클릭 상호작용은 여기에. */}
         {markers.map((m) => {
           const isSelected = selected != null && m.step === selected;
-          const color = m.isHome ? "rgba(220,90,110,0.85)" : "rgba(255,255,255,0.75)";
+          const color = m.isHome ? "rgba(228,140,155,0.8)" : "rgba(255,255,255,0.62)";
           return (
             <g
               key={m.name}
@@ -282,21 +292,62 @@ export default function ServiceFlatMap({ steps }: { steps?: Step[] }) {
                 r={6}
                 fill="none"
                 stroke={color}
-                strokeWidth={1.5}
-                style={{ animation: "flatmapPulse 2.8s ease-out infinite" }}
+                strokeWidth={1}
+                style={{ animation: "flatmapPulse 3.2s ease-out infinite" }}
               />
               <circle
                 r={isSelected ? 8 : 6}
                 fill="none"
                 stroke={color}
-                strokeWidth={2}
+                strokeWidth={1.4}
                 className="transition-all"
               />
-              <circle r={2.5} fill={color} />
+              <circle r={2} fill={color} />
             </g>
           );
         })}
+        {/* 호버 시 마커 위로 스윽 뜨는 카드 (좌측 클릭 패널과 동일 톤) */}
+        {hoverName &&
+          (() => {
+            const m = markers.find((mm) => mm.name === hoverName);
+            if (!m) return null;
+            const chars = Math.max(m.step.title.length, m.step.tag.length * 0.75);
+            const w = Math.max(96, chars * 8.4 + 22);
+            const h = 34;
+            const left = m.x - w / 2;
+            const top = m.y - 14 - h;
+            return (
+              <g
+                key={hoverName}
+                className="pointer-events-none"
+                filter={`url(#${cardShadowId})`}
+                style={{ animation: "flatmapCard 0.24s cubic-bezier(.2,.7,.2,1) both", transformOrigin: `${m.x}px ${m.y}px` }}
+              >
+                <rect
+                  x={left}
+                  y={top}
+                  width={w}
+                  height={h}
+                  rx={7}
+                  fill="rgba(16,40,80,0.72)"
+                  stroke="rgba(255,255,255,0.22)"
+                  strokeWidth={0.5}
+                />
+                {/* 좌측 골드 액센트 바 */}
+                <rect x={left + 6} y={top + 8} width={2} height={h - 16} rx={1} className="fill-(--gold)" opacity={0.85} />
+                <text x={left + 13} y={top + 14} fontSize={6.5} fontWeight={700} letterSpacing={0.6} className="fill-(--gold)" opacity={0.9}>
+                  {m.step.tag}
+                </text>
+                <text x={left + 13} y={top + 26} fontSize={11} fontWeight={600} fill="rgba(255,255,255,0.95)">
+                  {m.step.title}
+                </text>
+                {/* 아래 꼬리 (마커를 가리키는 삼각형) */}
+                <path d={`M${m.x - 4.5} ${top + h} L${m.x + 4.5} ${top + h} L${m.x} ${top + h + 5.5} Z`} fill="rgba(16,40,80,0.72)" />
+              </g>
+            );
+          })()}
       </svg>
+      )}
 
       <div className="pointer-events-none relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 flex items-center">
         <div className="pointer-events-auto max-w-sm">
