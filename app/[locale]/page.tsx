@@ -101,7 +101,7 @@ export default async function HomePage({ params }: Props) {
   return (
     <>
       <div className={snapFull}>
-        <HeroSlider slides={slides} locale={code} tags={heroTags} fixedCerts={fixedCerts} feedbackUser={feedbackUser} heroVideo={heroVideo} />
+        <HeroSlider slides={slides} locale={code} tags={heroTags} fixedCerts={fixedCerts} countries={certCountries.map((c) => ({ title: c.title.split(" ")[0], slug: c.slug }))} feedbackUser={feedbackUser} heroVideo={heroVideo} />
       </div>
       <div className={snapFull}>
         <ServiceBento />

@@ -9,10 +9,7 @@ const INTERVAL = 5500;
 const DEFAULT_LOCALE: LocaleCode = "ko";
 
 // 왼쪽 큰 글씨 5개는 서버(page.tsx)에서 슬러그별 제목을 채워 fixedCerts prop 으로 전달.
-
-// 히어로 우측 오른쪽 줄 표시용 국가. major 는 크게, minor 는 하단에 작게.
-const COUNTRY_MAJOR = ["RUS", "KAZ", "INDIA"];
-const COUNTRY_MINOR = ["UZB", "AZE", "VNM", "UKR", "KOR"];
+// 오른쪽 국가 목록은 /certification 항목을 서버에서 채워 countries prop 으로 전달.
 
 interface HeroSliderProps {
   slides: HeroSlide[];
@@ -20,6 +17,8 @@ interface HeroSliderProps {
   tags?: HeroTag[];
   // 왼쪽 큰 글씨 5개 — 언어판 제목 + 슬러그. 서버에서 채워 전달.
   fixedCerts?: { title: string; slug: string }[];
+  // 오른쪽 국가 — /certification 항목. 앞 5개는 크게, 나머지는 하단에 작게.
+  countries?: { title: string; slug: string }[];
   feedbackUser?: FeedbackUser | null;
   // 우하단 상시 노출 소개 동영상(관리자에서 관리). 비어 있으면 자리표시자만 표시.
   heroVideo?: string;
@@ -30,12 +29,14 @@ function localized(path: string, locale: LocaleCode): string {
   return "/" + locale + path;
 }
 
-export default function HeroSlider({ slides, locale, tags = [], fixedCerts = [], feedbackUser = null, heroVideo = "" }: HeroSliderProps) {
+export default function HeroSlider({ slides, locale, tags = [], fixedCerts = [], countries = [], feedbackUser = null, heroVideo = "" }: HeroSliderProps) {
   const total = slides.length;
 
   const [current, setCurrent] = useState(0);
   // 우측 하위요소(인증/검사 항목)를 마운트 후 클라이언트에서만 섞어 하이드레이션 불일치 방지.
   const [shownTags, setShownTags] = useState<HeroTag[]>(tags);
+  // 국가명도 마운트 후 클라이언트에서만 섞어 새로고침마다 랜덤(하이드레이션 불일치 방지).
+  const [shownCountries, setShownCountries] = useState(countries);
   const [progress, setProgress] = useState(0);
   const rafRef = useRef<number | null>(null);
   const startRef = useRef<number>(0);
@@ -94,6 +95,15 @@ export default function HeroSlider({ slides, locale, tags = [], fixedCerts = [],
     }
     setShownTags(a);
   }, [tags]);
+
+  useEffect(() => {
+    const a = [...countries];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    setShownCountries(a);
+  }, [countries]);
 
   if (total === 0) {
     return (
@@ -245,27 +255,36 @@ export default function HeroSlider({ slides, locale, tags = [], fixedCerts = [],
                   </div>
                 </div>
 
-                {/* 오른쪽 줄: 국가 (클릭 없음) */}
+                {/* 오른쪽 줄: 국가 — 앞 5개 크게, 나머지 하단에 작게 (좌측과 동일 패턴). */}
                 <div className="flex flex-col items-end gap-4">
-                  {COUNTRY_MAJOR.map((label, i) => (
-                    <span
-                      key={label}
-                      className="text-xl font-semibold text-white/90 leading-none whitespace-nowrap"
+                  {shownCountries.slice(0, 5).map((c, i) => (
+                    <a
+                      key={c.slug}
+                      href={localized(`/certification/${c.slug}`, locale)}
+                      className="text-xl font-semibold text-white/90 leading-none whitespace-nowrap hover:text-white transition-colors"
                       style={{
                         animation: `tagFloat 0.6s cubic-bezier(.2,.7,.2,1) ${0.32 + i * 0.04}s both`,
                       }}
                     >
-                      {label}
-                    </span>
+                      {c.title}
+                    </a>
                   ))}
-                  <span
-                    className="mt-4 max-w-[150px] text-[11px] font-medium leading-relaxed text-white/45"
-                    style={{
-                      animation: `tagFloat 0.6s cubic-bezier(.2,.7,.2,1) ${0.32 + COUNTRY_MAJOR.length * 0.04}s both`,
-                    }}
-                  >
-                    {COUNTRY_MINOR.join(" · ")}
-                  </span>
+                  {shownCountries.length > 5 && (
+                    <div className="mt-4 flex flex-wrap justify-end gap-x-3 gap-y-1 max-w-[240px]">
+                      {shownCountries.slice(5).map((c, i) => (
+                        <a
+                          key={c.slug}
+                          href={localized(`/certification/${c.slug}`, locale)}
+                          className="text-[11px] font-medium leading-none whitespace-nowrap text-white/45 hover:text-white/80 transition-colors"
+                          style={{
+                            animation: `tagFloat 0.6s cubic-bezier(.2,.7,.2,1) ${0.32 + (5 + i) * 0.04}s both`,
+                          }}
+                        >
+                          {c.title}
+                        </a>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 

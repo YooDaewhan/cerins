@@ -30,23 +30,87 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-const PRIMARY_LABELS = new Set(["Head Office", "Telephone", "Email", "Business Hours"]);
-
+// 이메일/전화는 언어 공통, 라벨(사무소명)만 언어별. offices 배열 순서와 아래 T.offices 순서 일치.
 const CONTACT_DIRECTORY = [
-  { label: "본사", email: "korcerins@cerins.net", tel: "+82 2 337 4611" },
-  { label: "러시아 세린스", email: "ruscerins@cerins.net", tel: "+7 499 957 84 05" },
-  { label: "카자흐스탄 세린스", email: "kazcerins@cerins.net", tel: "+7 727 220 68 25" },
-  { label: "인도 세린스", email: null, tel: "+91 9033 790 007" },
-  { label: "베트남 세린스", email: "vncerins@cerins.net", tel: "+84 283 6202526" },
-  { label: "중국 세린스", email: "chncerins@cerins.net", tel: "+86 021 5039 0399" },
-  { label: "우즈베키스탄 세린스", email: "uzbcerins@cerins.net", tel: "+998 95 194 3747" },
+  { email: "korcerins@cerins.net", tel: "+82 2 337 4611" },
+  { email: "ruscerins@cerins.net", tel: "+7 499 957 84 05" },
+  { email: "kazcerins@cerins.net", tel: "+7 727 220 68 25" },
+  { email: null, tel: "+91 9033 790 007" },
+  { email: "vncerins@cerins.net", tel: "+84 283 6202526" },
+  { email: "chncerins@cerins.net", tel: "+86 021 5039 0399" },
+  { email: "uzbcerins@cerins.net", tel: "+998 95 194 3747" },
 ];
 
-const ICON_BY_HEADING: Record<string, "location" | "phone" | "email" | "clock"> = {
-  "Head Office": "location",
-  Telephone: "phone",
-  Email: "email",
-  "Business Hours": "clock",
+// 이 페이지 전용 UI 문구 (제목/부제는 이미 번역 DB에서 옴).
+const T: Record<
+  LocaleCode,
+  {
+    breadcrumb: string;
+    getInTouch: string;
+    heading: string;
+    intro: string;
+    regionalOffices: string;
+    sendMessage: string;
+    responseNote: string;
+    tbd: string;
+    offices: string[];
+  }
+> = {
+  ko: {
+    breadcrumb: "문의",
+    getInTouch: "문의하기",
+    heading: "언제든지 연락 주세요",
+    intro: "인증 견적, 규제 관련 문의, 검사 일정 예약 등 무엇이든 저희 팀이 도와드리겠습니다.",
+    regionalOffices: "지역 사무소",
+    sendMessage: "메시지 보내기",
+    responseNote: "보통 1 영업일 이내에 답변드립니다.",
+    tbd: "(추가예정)",
+    offices: ["본사", "러시아 세린스", "카자흐스탄 세린스", "인도 세린스", "베트남 세린스", "중국 세린스", "우즈베키스탄 세린스"],
+  },
+  en: {
+    breadcrumb: "Contact",
+    getInTouch: "Get In Touch",
+    heading: "We'd love to hear from you",
+    intro: "Whether you need a certification quote, have a compliance question, or want to schedule an inspection — our team is ready to assist.",
+    regionalOffices: "Regional Offices",
+    sendMessage: "Send a Message",
+    responseNote: "We typically respond within 1 business day.",
+    tbd: "(coming soon)",
+    offices: ["Head Office", "CERINS Russia", "CERINS Kazakhstan", "CERINS India", "CERINS Vietnam", "CERINS China", "CERINS Uzbekistan"],
+  },
+  ja: {
+    breadcrumb: "お問い合わせ",
+    getInTouch: "お問い合わせ",
+    heading: "お気軽にご連絡ください",
+    intro: "認証のお見積もり、コンプライアンスに関するご質問、検査のご予約など、当社チームがお手伝いいたします。",
+    regionalOffices: "地域事務所",
+    sendMessage: "メッセージを送る",
+    responseNote: "通常、1営業日以内に返信いたします。",
+    tbd: "(準備中)",
+    offices: ["本社", "セリンス ロシア", "セリンス カザフスタン", "セリンス インド", "セリンス ベトナム", "セリンス 中国", "セリンス ウズベキスタン"],
+  },
+  zh: {
+    breadcrumb: "联系",
+    getInTouch: "联系我们",
+    heading: "期待您的来信",
+    intro: "无论您需要认证报价、有合规问题，还是想安排检验，我们的团队随时为您提供帮助。",
+    regionalOffices: "地区办事处",
+    sendMessage: "发送消息",
+    responseNote: "我们通常在1个工作日内回复。",
+    tbd: "(即将推出)",
+    offices: ["总部", "俄罗斯 CERINS", "哈萨克斯坦 CERINS", "印度 CERINS", "越南 CERINS", "中国 CERINS", "乌兹别克斯坦 CERINS"],
+  },
+  ru: {
+    breadcrumb: "Контакты",
+    getInTouch: "Связаться с нами",
+    heading: "Мы будем рады услышать вас",
+    intro: "Нужен ли вам расчёт стоимости сертификации, есть вопрос по соответствию требованиям или вы хотите записаться на инспекцию — наша команда готова помочь.",
+    regionalOffices: "Региональные офисы",
+    sendMessage: "Отправить сообщение",
+    responseNote: "Обычно мы отвечаем в течение одного рабочего дня.",
+    tbd: "(скоро)",
+    offices: ["Головной офис", "СЕРИНС Россия", "СЕРИНС Казахстан", "СЕРИНС Индия", "СЕРИНС Вьетнам", "СЕРИНС Китай", "СЕРИНС Узбекистан"],
+  },
 };
 
 export default async function ContactPage({ params }: Props) {
@@ -68,14 +132,14 @@ export default async function ContactPage({ params }: Props) {
       }
     : null;
 
-  const primary = page.translation.content.filter((b) => PRIMARY_LABELS.has(b.heading));
+  const t = T[code];
 
   return (
     <>
       <PageHero
         title={page.translation.title}
         subtitle={page.translation.subtitle}
-        breadcrumb="Contact"
+        breadcrumb={t.breadcrumb}
         image={page.translation.hero_image}
       />
 
@@ -85,31 +149,18 @@ export default async function ContactPage({ params }: Props) {
             <div>
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-6 h-0.5 bg-(--brand)" />
-                <span className="text-xs font-bold text-(--brand) uppercase tracking-widest">Get In Touch</span>
+                <span className="text-xs font-bold text-(--brand) uppercase tracking-widest">{t.getInTouch}</span>
               </div>
-              <h2 className="text-2xl font-bold text-(--brand) mb-3">We&apos;d love to hear from you</h2>
-              <p className="text-sm text-gray-500 leading-relaxed">
-                Whether you need a certification quote, have a compliance question, or want to schedule an inspection — our team is ready to assist.
-              </p>
+              <h2 className="text-2xl font-bold text-(--brand) mb-3">{t.heading}</h2>
+              <p className="text-sm text-gray-500 leading-relaxed">{t.intro}</p>
             </div>
 
-            <div className="space-y-5">
-              {primary.map((block) => (
-                <ContactInfoItem
-                  key={block.heading}
-                  icon={ICON_BY_HEADING[block.heading] ?? "location"}
-                  label={block.heading}
-                  lines={block.body.split("\n")}
-                />
-              ))}
-            </div>
-
-            <div className="border-t border-gray-100 pt-6 space-y-4">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Regional Offices</p>
-              <OfficeItem {...CONTACT_DIRECTORY[0]} />
+            <div className="space-y-4">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t.regionalOffices}</p>
+              <OfficeItem label={t.offices[0]} {...CONTACT_DIRECTORY[0]} tbd={t.tbd} />
               <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                {CONTACT_DIRECTORY.slice(1).map((office) => (
-                  <OfficeItem key={office.label} {...office} />
+                {CONTACT_DIRECTORY.slice(1).map((office, i) => (
+                  <OfficeItem key={t.offices[i + 1]} label={t.offices[i + 1]} {...office} tbd={t.tbd} />
                 ))}
               </div>
             </div>
@@ -117,8 +168,8 @@ export default async function ContactPage({ params }: Props) {
 
           <div className="lg:col-span-2 bg-white border border-gray-300 shadow-md rounded-xl p-8">
             <div className="mb-6">
-              <h3 className="text-lg font-bold text-(--brand)">Send a Message</h3>
-              <p className="text-sm text-gray-400 mt-1">We typically respond within 1 business day.</p>
+              <h3 className="text-lg font-bold text-(--brand)">{t.sendMessage}</h3>
+              <p className="text-sm text-gray-400 mt-1">{t.responseNote}</p>
             </div>
             <ContactForm member={member} />
           </div>
@@ -132,10 +183,12 @@ function OfficeItem({
   label,
   email,
   tel,
+  tbd,
 }: {
   label: string;
   email: string | null;
   tel: string;
+  tbd: string;
 }) {
   return (
     <div>
@@ -145,57 +198,11 @@ function OfficeItem({
           {email}
         </a>
       ) : (
-        <p className="text-xs text-gray-400">(추가예정)</p>
+        <p className="text-xs text-gray-400">{tbd}</p>
       )}
       <a href={`tel:${tel.replace(/\s/g, "")}`} className="block text-xs text-gray-500 hover:text-(--brand) transition-colors">
         {tel}
       </a>
-    </div>
-  );
-}
-
-function ContactInfoItem({
-  icon,
-  label,
-  lines,
-}: {
-  icon: "location" | "phone" | "email" | "clock";
-  label: string;
-  lines: string[];
-}) {
-  const iconMap: Record<string, React.ReactNode> = {
-    location: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
-    phone: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-      </svg>
-    ),
-    email: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-      </svg>
-    ),
-    clock: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-  };
-
-  return (
-    <div className="flex gap-3">
-      <div className="text-(--brand) flex-shrink-0 mt-0.5">{iconMap[icon]}</div>
-      <div>
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-0.5">{label}</p>
-        {lines.map((line, i) => (
-          <p key={i} className="text-sm text-gray-700">{line}</p>
-        ))}
-      </div>
     </div>
   );
 }

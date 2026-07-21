@@ -18,6 +18,14 @@ interface Props {
   params: Promise<{ locale: string; slug: string }>;
 }
 
+const CHROME: Record<LocaleCode, { about: string; backToAbout: string; contactUs: string }> = {
+  ko: { about: "회사소개", backToAbout: "회사소개로", contactUs: "문의하기" },
+  en: { about: "About", backToAbout: "Back to About", contactUs: "Contact Us" },
+  ja: { about: "会社概要", backToAbout: "会社概要へ戻る", contactUs: "お問い合わせ" },
+  zh: { about: "关于我们", backToAbout: "返回关于我们", contactUs: "联系我们" },
+  ru: { about: "О компании", backToAbout: "Назад к разделу", contactUs: "Связаться с нами" },
+};
+
 export async function generateStaticParams() {
   const [locales, pages] = await Promise.all([
     getEnabledLocales(),
@@ -55,13 +63,14 @@ export default async function AboutDetailPage({ params }: Props) {
 
   const allAbout = await listPagesByTemplate("about", code);
   const sideNav = allAbout.filter((p) => p.page.slug !== "about");
+  const chrome = CHROME[code];
 
   return (
     <>
       <PageHero
         title={page.translation.title}
         subtitle={page.translation.subtitle}
-        breadcrumb="About"
+        breadcrumb={chrome.about}
         image={page.translation.hero_image}
       />
 
@@ -70,7 +79,7 @@ export default async function AboutDetailPage({ params }: Props) {
           <aside className="lg:w-56 flex-shrink-0">
             <div className="bg-[#f8f9fc] border border-gray-100 rounded-lg overflow-hidden">
               <div className="px-4 py-3 bg-(--brand)">
-                <span className="text-xs font-bold text-white uppercase tracking-wider">About</span>
+                <span className="text-xs font-bold text-white uppercase tracking-wider">{chrome.about}</span>
               </div>
               <nav className="py-2">
                 {sideNav.map((item) => (
@@ -92,7 +101,7 @@ export default async function AboutDetailPage({ params }: Props) {
 
           <div className="flex-1 min-w-0">
             {slug === "location" ? (
-              <LocationMap />
+              <LocationMap locale={code} />
             ) : (
               <div className="space-y-10">
                 {page.translation.content.map((block, i) => (
@@ -112,10 +121,10 @@ export default async function AboutDetailPage({ params }: Props) {
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-                Back to About
+                {chrome.backToAbout}
               </Link>
               <Link href={buildLocalizedPath(code, "/contact")} className="text-sm font-semibold text-white bg-(--brand) px-5 py-2 rounded hover:bg-[#0d2a5a] transition">
-                Contact Us
+                {chrome.contactUs}
               </Link>
             </div>
           </div>
