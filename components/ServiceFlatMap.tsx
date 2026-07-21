@@ -2,30 +2,12 @@
 
 import { useId, useMemo, useState } from "react";
 import Link from "next/link";
-import { geoCentroid, geoNaturalEarth1, geoPath } from "d3-geo";
-import { STEPS, type Step } from "./ServiceProcess";
+import { geoCentroid, geoGraticule, geoNaturalEarth1, geoPath } from "d3-geo";
+import { type Step } from "./ServiceProcess";
 import { COUNTRY_TO_STEP, HOME, WEST_BOUND, loadWorldCountries } from "./worldGeo";
 
 const WIDTH = 820;
 const HEIGHT = 430;
-
-// slug 별 고정 색상 — 러시아는 붉은계열, 유럽은 푸른계열로 항상 고정.
-const FIXED_COLORS: Record<string, string> = {
-  russia: "234,179,8",   // yellow
-  europe: "132,204,22",  // lime (연두)
-  belarus: "236,72,153", // pink (분홍)
-};
-
-// 그 외 지역에 순서대로 배정하는 색상 (붉은·푸른계열과 겹치지 않게).
-const REGION_PALETTE = [
-  "59,130,246",  // blue
-  "168,85,247",  // purple
-  "249,115,22",  // orange
-  "20,184,166",  // teal
-  "217,70,239",  // fuchsia
-  "239,68,68",   // red
-  "99,102,241",  // indigo
-];
 
 // ponytail: EAFR/EU/AS/OC only — Americas + poles excluded per design.
 const REGION = {
@@ -50,23 +32,6 @@ export default function ServiceFlatMap({ steps }: { steps?: Step[] }) {
     }
     map["South Korea"] = HOME;
     return map;
-  }, [steps]);
-
-  // 러시아·유럽은 slug 로 색을 고정하고, 나머지는 팔레트를 순서대로 배정한다.
-  const stepColor = useMemo(() => {
-    const m = new Map<Step, string>();
-    const source = steps && steps.length ? steps : STEPS;
-    let paletteIdx = 0;
-    source.forEach((s, i) => {
-      const fixed = s.slug ? FIXED_COLORS[s.slug] : i === 0 ? FIXED_COLORS.russia : i === 1 ? FIXED_COLORS.europe : undefined;
-      if (fixed) {
-        m.set(s, fixed);
-      } else {
-        m.set(s, REGION_PALETTE[paletteIdx % REGION_PALETTE.length]);
-        paletteIdx++;
-      }
-    });
-    return m;
   }, [steps]);
 
   const countries = useMemo(
@@ -97,12 +62,22 @@ export default function ServiceFlatMap({ steps }: { steps?: Step[] }) {
   );
   const pathGen = useMemo(() => geoPath(projection), [projection]);
 
+  // 경위도 격자 (15도 간격) — 배경에 흐리게 깔아 첨단 느낌 보강.
+  const graticuleD = useMemo(
+    () => pathGen(geoGraticule().step([15, 15])()) ?? "",
+    [pathGen],
+  );
+
   const [selected, setSelected] = useState<Step | null>(null);
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [hoverName, setHoverName] = useState<string | null>(null);
   const rawId = useId().replace(/:/g, "");
   const arrowId = `flatmap-arrow-${rawId}`;
   const glowId = `flatmap-glow-${rawId}`;
+  const bgGlowId = `flatmap-bgglow-${rawId}`;
+  const landGradId = `flatmap-land-${rawId}`;
+  const softGlowId = `flatmap-soft-${rawId}`;
+  const markerGlowId = `flatmap-mglow-${rawId}`;
 
   const activeName = hoverName ?? selectedName;
   const arcD = useMemo(() => {
@@ -112,6 +87,38 @@ export default function ServiceFlatMap({ steps }: { steps?: Step[] }) {
       pathGen({ type: "LineString", coordinates: [koreaCentroid, geoCentroid(target)] }) ?? ""
     );
   }, [activeName, koreaCentroid, nameToFeature, pathGen]);
+
+  // 거래국 중앙에 찍을 고리 마커 — 국경/채색 대신 이것만 표시. 스텝(거래국)당 하나만.
+  const markers = useMemo(() => {
+    const out: { name: string; step: Step; x: number; y: number; isHome: boolean }[] = [];
+    const seen = new Set<Step>();
+    for (const name of Object.keys(countryToStep)) {
+      const step = countryToStep[name];
+      if (seen.has(step)) continue;
+      const f = nameToFeature[name];
+      if (!f) continue;
+      const p = projection(geoCentroid(f));
+      if (!p) continue;
+      seen.add(step);
+      out.push({ name, step, x: p[0], y: p[1], isHome: name === "South Korea" });
+    }
+    return out;
+  }, [countryToStep, nameToFeature, projection]);
+
+  // 서울에서 모든 거래국으로 상시 연결되는 아크 경로.
+  const routes = useMemo(() => {
+    if (!koreaCentroid) return [];
+    return markers
+      .filter((m) => !m.isHome)
+      .map((m, i) => {
+        const f = nameToFeature[m.name];
+        const d = f
+          ? pathGen({ type: "LineString", coordinates: [koreaCentroid, geoCentroid(f)] }) ?? ""
+          : "";
+        return { name: m.name, d, i };
+      })
+      .filter((r) => r.d);
+  }, [markers, koreaCentroid, nameToFeature, pathGen]);
 
   const handleClick = (name: string) => {
     const step = countryToStep[name];
@@ -148,41 +155,86 @@ export default function ServiceFlatMap({ steps }: { steps?: Step[] }) {
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
+          {/* 배경 광원 — 지도 중앙에서 은은하게 새어나오는 빛 */}
+          <radialGradient id={bgGlowId} cx="42%" cy="38%" r="65%">
+            <stop offset="0%" stopColor="rgba(120,170,255,0.28)" />
+            <stop offset="45%" stopColor="rgba(90,130,220,0.10)" />
+            <stop offset="100%" stopColor="rgba(10,31,68,0)" />
+          </radialGradient>
+          {/* 육지 그라데이션 — 지도 전체 좌표 기준(연속)이라 국가 경계 이음새가 안 생김 */}
+          <linearGradient
+            id={landGradId}
+            gradientUnits="userSpaceOnUse"
+            x1="0"
+            y1={-HEIGHT * 0.1}
+            x2="0"
+            y2={HEIGHT * 0.9}
+          >
+            <stop offset="0%" stopColor="rgba(190,215,255,0.22)" />
+            <stop offset="100%" stopColor="rgba(120,150,210,0.06)" />
+          </linearGradient>
+          {/* 육지 발광 언더레이용 부드러운 블러 */}
+          <filter id={softGlowId} x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="4" />
+          </filter>
+          {/* 마커 발광 */}
+          <filter id={markerGlowId} x="-120%" y="-120%" width="340%" height="340%">
+            <feGaussianBlur stdDeviation="2.5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
         <style>{`
           @keyframes flatmapDash { to { stroke-dashoffset: -8; } }
+          @keyframes flatmapFlow { to { stroke-dashoffset: -19; } }
           @keyframes flatmapGlow { 0%,100% { opacity: .35; } 50% { opacity: .85; } }
+          @keyframes flatmapPulse { 0% { r: 6; opacity: .55; } 100% { r: 16; opacity: 0; } }
         `}</style>
-        {countries.map((c) => {
-          const name = c.properties.name;
-          const step = countryToStep[name];
-          const isHome = name === "South Korea";
-          const isSelected = selected && step === selected;
-          return (
-            <path
-              key={name}
-              d={pathGen(c) ?? ""}
-              data-name={name}
-              onClick={() => handleClick(name)}
-              onPointerEnter={() => {
-                if (step && !isHome) setHoverName(name);
-              }}
-              onPointerLeave={() => setHoverName(null)}
-              className={step ? "cursor-pointer hover:brightness-125 transition-[filter]" : ""}
-              fill={
-                isSelected
-                  ? "var(--gold)"
-                  : isHome
-                    ? "var(--brand)"
-                    : step
-                      ? `rgba(${stepColor.get(step) ?? "201,168,76"},0.55)`
-                      : "rgba(255,255,255,0.12)"
-              }
-              stroke="rgba(255,255,255,0.15)"
-              strokeWidth={0.5}
-            />
-          );
-        })}
+        {/* 배경 광원 레이어 */}
+        <rect
+          x={WIDTH * 0.05}
+          y={-HEIGHT * 0.1}
+          width={WIDTH}
+          height={HEIGHT}
+          fill={`url(#${bgGlowId})`}
+        />
+        {/* 경위도 격자 — 배경 */}
+        {graticuleD && (
+          <path
+            d={graticuleD}
+            fill="none"
+            stroke="rgba(150,190,255,0.12)"
+            strokeWidth={0.4}
+          />
+        )}
+        {/* 국경·채색 없음 — 육지를 그라데이션 + 은은한 발광으로. (러·우 국경 이슈 회피) */}
+        <g filter={`url(#${softGlowId})`} opacity={0.55}>
+          {countries.map((c) => (
+            <path key={`glow-${c.properties.name}`} d={pathGen(c) ?? ""} fill={`url(#${landGradId})`} />
+          ))}
+        </g>
+        {countries.map((c) => (
+          <path key={c.properties.name} d={pathGen(c) ?? ""} fill={`url(#${landGradId})`} />
+        ))}
+        {/* 상시 연결 아크 — 서울→거래국. 은은한 라인 + 흐르는 빛 점선. */}
+        <g className="pointer-events-none" filter={`url(#${glowId})`}>
+          {routes.map((r) => (
+            <g key={`route-${r.name}`}>
+              <path d={r.d} fill="none" stroke="rgba(150,190,255,0.22)" strokeWidth={0.8} strokeLinecap="round" />
+              <path
+                d={r.d}
+                fill="none"
+                stroke="rgba(190,220,255,0.9)"
+                strokeWidth={1.2}
+                strokeLinecap="round"
+                strokeDasharray="1 18"
+                style={{ animation: `flatmapFlow 3.4s linear infinite`, animationDelay: `${r.i * 0.3}s` }}
+              />
+            </g>
+          ))}
+        </g>
         {arcD && (
           <g className="pointer-events-none" filter={`url(#${glowId})`}>
             {/* 은은하게 맥동하는 발광 언더레이 */}
@@ -207,6 +259,43 @@ export default function ServiceFlatMap({ steps }: { steps?: Step[] }) {
             />
           </g>
         )}
+        {/* 거래국 중앙 고리 마커 — 호버/클릭 상호작용은 여기에. */}
+        {markers.map((m) => {
+          const isSelected = selected != null && m.step === selected;
+          const color = m.isHome ? "rgba(220,90,110,0.85)" : "rgba(255,255,255,0.75)";
+          return (
+            <g
+              key={m.name}
+              transform={`translate(${m.x} ${m.y})`}
+              onClick={() => handleClick(m.name)}
+              onPointerEnter={() => {
+                if (!m.isHome) setHoverName(m.name);
+              }}
+              onPointerLeave={() => setHoverName(null)}
+              className="cursor-pointer"
+              filter={`url(#${markerGlowId})`}
+            >
+              {/* 넓은 투명 히트박스 */}
+              <circle r={11} fill="transparent" />
+              {/* 밖으로 퍼지는 맥동 링 */}
+              <circle
+                r={6}
+                fill="none"
+                stroke={color}
+                strokeWidth={1.5}
+                style={{ animation: "flatmapPulse 2.8s ease-out infinite" }}
+              />
+              <circle
+                r={isSelected ? 8 : 6}
+                fill="none"
+                stroke={color}
+                strokeWidth={2}
+                className="transition-all"
+              />
+              <circle r={2.5} fill={color} />
+            </g>
+          );
+        })}
       </svg>
 
       <div className="pointer-events-none relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 flex items-center">
