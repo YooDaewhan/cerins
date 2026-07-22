@@ -46,6 +46,7 @@ export default async function AdminLayout({ children, params }: Props) {
     tabs: [
       { href: `${base}/requests`, label: "의뢰 관리" },
       { href: base, label: "회원" },
+      { href: `${base}/email`, label: "메일 발송" },
       { href: `${base}/inquiries`, label: "문의" },
       { href: `${base}/satisfaction`, label: "고객만족도" },
       { href: `${base}/staff-evaluations`, label: "직원평가" },
