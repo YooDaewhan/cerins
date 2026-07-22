@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import type { RowDataPacket } from "mysql2/promise";
 import { getPool } from "@/src/lib/db";
 import { requireAdmin } from "@/src/lib/auth";
+import { pageContentToHtml } from "@/src/lib/pageContent";
 import type { PageContentBlock, PageTemplate } from "@/src/lib/types";
 
 const TEMPLATES: PageTemplate[] = [
@@ -57,17 +58,9 @@ function parseId(raw: string): number | null {
   return Number.isFinite(id) && id > 0 ? id : null;
 }
 
-function normalizeContent(raw: string | PageContentBlock[]): PageContentBlock[] {
-  if (Array.isArray(raw)) return raw;
-  if (typeof raw === "string") {
-    try {
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? (parsed as PageContentBlock[]) : [];
-    } catch {
-      return [];
-    }
-  }
-  return [];
+function normalizeContent(raw: string | PageContentBlock[]): string {
+  // mysql2가 JSON 컬럼을 자동 파싱: 신규는 HTML 문자열, 구 데이터는 블록 배열.
+  return pageContentToHtml(raw);
 }
 
 function normalizeKeywords(raw: string | string[] | null): string[] {

@@ -34,6 +34,8 @@ export interface Locale {
   sort_order: number;
 }
 
+// 구(舊) 블록 구조. content는 이제 HTML 문자열이지만, 과거 데이터 변환을 위해
+// 타입은 남겨둔다. → src/lib/pageContent.ts 의 pageContentToHtml 참조.
 export interface PageContentBlock {
   heading: string;
   body: string;
@@ -58,8 +60,8 @@ export interface PageTranslation {
   title: string;
   subtitle?: string;
   hero_image?: string;
-  // MySQL: JSON column
-  content: PageContentBlock[];
+  // MySQL: JSON column. HTML 문자열(포스트 본문과 동일). 구 데이터는 읽을 때 변환.
+  content: string;
   meta_title: string;
   meta_description: string;
   meta_keywords?: string[]; // 검색용 태그(JSON 배열). DB는 항상 반환, mock 시드는 생략 가능.
@@ -129,7 +131,7 @@ export interface CertificationCountry {
   slug: string;
   title: string;
   subtitle: string | null;
-  content: PageContentBlock[];
+  content: string;
   certifications: CertificationLink[];
 }
 

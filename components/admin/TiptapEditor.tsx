@@ -5,6 +5,7 @@ import { Node, mergeAttributes } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
+import { TableKit } from "@tiptap/extension-table";
 import Placeholder from "@tiptap/extension-placeholder";
 import { useEffect, useRef, useState } from "react";
 
@@ -52,6 +53,7 @@ export default function TiptapEditor({ value, onChange, placeholder }: Props) {
         HTMLAttributes: { rel: "noopener noreferrer", target: "_blank" },
       }),
       Image.configure({ inline: false }),
+      TableKit.configure({ table: { resizable: true } }),
       Video,
       Placeholder.configure({
         placeholder: placeholder ?? "본문을 입력하세요…",
@@ -267,6 +269,65 @@ function Toolbar({ editor }: { editor: Editor | null }) {
       >
         🖼 URL
       </button>
+      <span className="w-px bg-gray-200 mx-1" />
+      <button
+        type="button"
+        className={btn(editor.isActive("table"))}
+        onClick={() =>
+          editor
+            .chain()
+            .focus()
+            .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+            .run()
+        }
+        title="표 삽입 (3x3)"
+      >
+        ▦ 표
+      </button>
+      {editor.isActive("table") && (
+        <>
+          <button
+            type="button"
+            className={btn(false)}
+            onClick={() => editor.chain().focus().addRowAfter().run()}
+            title="아래에 행 추가"
+          >
+            +행
+          </button>
+          <button
+            type="button"
+            className={btn(false)}
+            onClick={() => editor.chain().focus().addColumnAfter().run()}
+            title="오른쪽에 열 추가"
+          >
+            +열
+          </button>
+          <button
+            type="button"
+            className={btn(false)}
+            onClick={() => editor.chain().focus().deleteRow().run()}
+            title="행 삭제"
+          >
+            −행
+          </button>
+          <button
+            type="button"
+            className={btn(false)}
+            onClick={() => editor.chain().focus().deleteColumn().run()}
+            title="열 삭제"
+          >
+            −열
+          </button>
+          <button
+            type="button"
+            className={btn(false)}
+            onClick={() => editor.chain().focus().deleteTable().run()}
+            title="표 삭제"
+          >
+            표삭제
+          </button>
+        </>
+      )}
       <span className="w-px bg-gray-200 mx-1" />
       <button
         type="button"

@@ -1,5 +1,6 @@
 import type { RowDataPacket } from "mysql2";
 import { getPool } from "@/src/lib/db";
+import { pageContentToHtml } from "@/src/lib/pageContent";
 import {
   DEFAULT_LOCALE,
   buildLocalizedPath as buildLocalizedPathImpl,
@@ -92,7 +93,9 @@ export async function getPageTranslation(
     "SELECT * FROM page_translations WHERE page_id = ? AND locale = ?",
     [pageId, locale],
   );
-  return rows.length ? (rows[0] as unknown as PageTranslation) : null;
+  if (!rows.length) return null;
+  const t = rows[0] as unknown as PageTranslation;
+  return { ...t, content: pageContentToHtml(t.content) };
 }
 
 export async function getPageWithTranslation(
@@ -145,7 +148,10 @@ export async function listPagesByTemplate(
     "SELECT * FROM page_translations WHERE page_id IN (?) AND locale IN (?)",
     [ids, [locale, DEFAULT_LOCALE]],
   );
-  const translations = transRows as unknown as PageTranslation[];
+  const translations = (transRows as unknown as PageTranslation[]).map((t) => ({
+    ...t,
+    content: pageContentToHtml(t.content),
+  }));
 
   const transMap = new Map<string, PageTranslation>();
   for (const t of translations) {
@@ -196,7 +202,7 @@ export async function listCertificationCountries(
       slug: page.slug,
       title: translation.title,
       subtitle: translation.subtitle ?? null,
-      content: Array.isArray(translation.content) ? translation.content : [],
+      content: translation.content,
       certifications: certsByParent.get(page.id) ?? [],
     }));
 }

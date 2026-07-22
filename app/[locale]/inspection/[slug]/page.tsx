@@ -110,17 +110,10 @@ export default async function InspectionDetailPage({ params }: Props) {
           </aside>
 
           <div className="flex-1 min-w-0">
-            <div className="space-y-10">
-              {page.translation.content.map((block, i) => (
-                <div key={i} className="border-b border-gray-100 pb-8 last:border-0">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-1 h-6 bg-[#c9a84c] rounded" />
-                    <h2 className="text-xl font-bold text-(--brand)">{block.heading}</h2>
-                  </div>
-                  <p className="text-gray-600 leading-relaxed pl-4">{block.body}</p>
-                </div>
-              ))}
-            </div>
+            <div
+              className="post-content text-gray-600"
+              dangerouslySetInnerHTML={{ __html: page.translation.content }}
+            />
 
             {children.length > 0 && (
               <div className="mt-10">

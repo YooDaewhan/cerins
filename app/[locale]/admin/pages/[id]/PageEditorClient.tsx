@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import MediaInput from "@/components/admin/MediaInput";
+
+const TiptapEditor = dynamic(
+  () => import("@/components/admin/TiptapEditor"),
+  { ssr: false },
+);
 
 type Template =
   | "home"
@@ -36,17 +42,12 @@ interface AllPagesEntry {
   translation_locales: string[];
 }
 
-interface ContentBlock {
-  heading: string;
-  body: string;
-}
-
 interface PageTranslation {
   locale: string;
   title: string;
   subtitle: string | null;
   hero_image: string | null;
-  content: ContentBlock[];
+  content: string;
   meta_title: string;
   meta_description: string;
   meta_keywords: string[];
@@ -63,7 +64,7 @@ function emptyTranslation(locale: string): PageTranslation {
     title: "",
     subtitle: null,
     hero_image: null,
-    content: [],
+    content: "",
     meta_title: "",
     meta_description: "",
     meta_keywords: [],
@@ -193,27 +194,6 @@ export default function PageEditorClient({
 
   function removeTag(idx: number) {
     patchDraft({ meta_keywords: draft.meta_keywords.filter((_, i) => i !== idx) });
-  }
-
-  function patchBlock(idx: number, patch: Partial<ContentBlock>) {
-    const next = draft.content.map((b, i) => (i === idx ? { ...b, ...patch } : b));
-    patchDraft({ content: next });
-  }
-
-  function moveBlock(idx: number, dir: -1 | 1) {
-    const j = idx + dir;
-    if (j < 0 || j >= draft.content.length) return;
-    const next = [...draft.content];
-    [next[idx], next[j]] = [next[j], next[idx]];
-    patchDraft({ content: next });
-  }
-
-  function removeBlock(idx: number) {
-    patchDraft({ content: draft.content.filter((_, i) => i !== idx) });
-  }
-
-  function addBlock() {
-    patchDraft({ content: [...draft.content, { heading: "", body: "" }] });
   }
 
   async function saveMeta() {
@@ -685,80 +665,14 @@ export default function PageEditorClient({
           </div>
 
           <div className="border-t border-gray-100 pt-4">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-sm font-semibold text-gray-800">
-                본문 블록 ({draft.content.length})
-              </h4>
-              <button
-                type="button"
-                onClick={addBlock}
-                className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-50"
-              >
-                + 블록 추가
-              </button>
-            </div>
-
-            {draft.content.length === 0 && (
-              <p className="text-xs text-gray-400 py-3">
-                본문 블록이 없습니다. 위 버튼으로 추가하세요.
-              </p>
-            )}
-
-            <ul className="space-y-3">
-              {draft.content.map((block, idx) => (
-                <li
-                  key={idx}
-                  className="rounded border border-gray-200 bg-gray-50 p-3 space-y-2"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] font-mono text-gray-500">
-                      블록 #{idx + 1}
-                    </span>
-                    <div className="flex gap-1">
-                      <button
-                        type="button"
-                        onClick={() => moveBlock(idx, -1)}
-                        disabled={idx === 0}
-                        className="rounded border border-gray-300 px-2 py-0.5 text-[11px] hover:bg-gray-50 disabled:opacity-40"
-                        aria-label="위로"
-                      >
-                        ↑
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => moveBlock(idx, 1)}
-                        disabled={idx === draft.content.length - 1}
-                        className="rounded border border-gray-300 px-2 py-0.5 text-[11px] hover:bg-gray-50 disabled:opacity-40"
-                        aria-label="아래로"
-                      >
-                        ↓
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeBlock(idx)}
-                        className="rounded border border-red-300 text-red-600 px-2 py-0.5 text-[11px] hover:bg-red-50"
-                      >
-                        삭제
-                      </button>
-                    </div>
-                  </div>
-                  <input
-                    type="text"
-                    value={block.heading}
-                    onChange={(e) => patchBlock(idx, { heading: e.target.value })}
-                    placeholder="Heading (소제목)"
-                    className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm font-semibold bg-white"
-                  />
-                  <textarea
-                    value={block.body}
-                    onChange={(e) => patchBlock(idx, { body: e.target.value })}
-                    rows={4}
-                    placeholder="Body (본문 — 줄바꿈 그대로 표시됩니다)"
-                    className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm bg-white"
-                  />
-                </li>
-              ))}
-            </ul>
+            <label className="block text-sm font-semibold text-gray-800 mb-2">
+              본문
+            </label>
+            <TiptapEditor
+              value={draft.content}
+              onChange={(html) => patchDraft({ content: html })}
+              placeholder="본문을 입력하세요… (사진·표·목록 지원)"
+            />
           </div>
 
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">

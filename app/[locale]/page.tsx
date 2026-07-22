@@ -17,6 +17,7 @@ import {
   listHeroTags,
   listPartners,
 } from "@/src/lib/mockRepository";
+import { htmlToPlainText } from "@/src/lib/pageContent";
 import { mapCountriesForSlug } from "@/components/worldGeo";
 import { isLocale } from "@/src/lib/i18n";
 import { getCurrentUser } from "@/src/lib/auth";
@@ -83,16 +84,19 @@ export default async function HomePage({ params }: Props) {
     : null;
 
   const certSteps: Step[] | undefined = certCountries.length
-    ? certCountries.map((c, i) => ({
-        n: String(i + 1).padStart(2, "0"),
-        tag: c.subtitle ?? c.title,
-        title: c.title,
-        overview: c.content[0]?.body ?? c.subtitle ?? "",
-        desc: c.content[1]?.body ?? c.content[0]?.body ?? "",
-        certifications: c.certifications,
-        mapCountries: mapCountriesForSlug(c.slug),
-        slug: c.slug,
-      }))
+    ? certCountries.map((c, i) => {
+        const text = htmlToPlainText(c.content);
+        return {
+          n: String(i + 1).padStart(2, "0"),
+          tag: c.subtitle ?? c.title,
+          title: c.title,
+          overview: c.subtitle ?? text.slice(0, 120),
+          desc: text.slice(0, 240) || c.subtitle || "",
+          certifications: c.certifications,
+          mapCountries: mapCountriesForSlug(c.slug),
+          slug: c.slug,
+        };
+      })
     : undefined;
 
   const snapFull =

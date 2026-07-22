@@ -1,12 +1,18 @@
-﻿import type { PageTranslation } from "@/src/lib/types";
+﻿import type { PageContentBlock, PageTranslation } from "@/src/lib/types";
 
 const NOW = "2026-01-01T00:00:00Z";
+
+// 시드는 구 블록 포맷을 유지한다. 실제 content 컬럼은 이제 HTML 문자열이며,
+// 읽기 시 pageContentToHtml 이 블록을 HTML로 변환한다(런타임 미사용 시드).
+type SeedTranslation = Omit<PageTranslation, "content"> & {
+  content: PageContentBlock[];
+};
 
 // MySQL future table: page_translations
 //
 // Seeded for English and Korean. ja/zh/ru rows are intentionally absent so the
 // repository's ko-fallback path is exercised until the admin CRUD lands.
-export const pageTranslations: PageTranslation[] = [
+export const pageTranslations: SeedTranslation[] = [
   // ?? Section roots / standalone ???????????????????????????????????????????
   {
     id: 1, page_id: 1, locale: "en",

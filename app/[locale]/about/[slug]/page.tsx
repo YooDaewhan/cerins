@@ -103,17 +103,10 @@ export default async function AboutDetailPage({ params }: Props) {
             {slug === "location" ? (
               <LocationMap locale={code} />
             ) : (
-              <div className="space-y-10">
-                {page.translation.content.map((block, i) => (
-                  <div key={i}>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-1 h-6 bg-[#c9a84c] rounded" />
-                      <h2 className="text-xl font-bold text-(--brand)">{block.heading}</h2>
-                    </div>
-                    <p className="text-gray-600 leading-relaxed whitespace-pre-line pl-4">{block.body}</p>
-                  </div>
-                ))}
-              </div>
+              <div
+                className="post-content text-gray-600"
+                dangerouslySetInnerHTML={{ __html: page.translation.content }}
+              />
             )}
 
             <div className="mt-14 pt-6 border-t border-gray-100 flex items-center justify-between">

@@ -146,6 +146,40 @@ body {
   border-top: 1px solid #e5e7eb;
   margin: 1.4em 0;
 }
+.tiptap-prose table,
+.post-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.9em 0;
+  table-layout: fixed;
+  overflow: hidden;
+}
+.tiptap-prose th,
+.post-content th,
+.tiptap-prose td,
+.post-content td {
+  border: 1px solid #d1d5db;
+  padding: 0.5em 0.7em;
+  vertical-align: top;
+  text-align: left;
+}
+.tiptap-prose th,
+.post-content th {
+  background: #f4f4f6;
+  font-weight: 700;
+}
+/* 편집 중 셀 선택 하이라이트 */
+.tiptap-prose .selectedCell:after {
+  background: rgba(37, 99, 235, 0.1);
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.tiptap-prose td,
+.tiptap-prose th {
+  position: relative;
+}
 .tiptap-prose .is-editor-empty:first-child::before {
   color: #9ca3af;
   content: attr(data-placeholder);
