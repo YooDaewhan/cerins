@@ -47,20 +47,17 @@ const HANBIRO_COMPOSE_URL = "https://cerins.hanbiro.net/ngw/app/#/mail/writeIn/a
 
 function sendVia(provider: "hanbiro" | "outlook", emails: string[]): void {
   if (emails.length === 0) return;
-  if (provider === "outlook") {
-    const to = encodeURIComponent(emails.join(";"));
-    window.open(
-      `https://outlook.office.com/mail/deeplink/compose?to=${to}`,
-      "_blank",
-      "noopener",
-    );
-    return;
-  }
-  // URL에 받는사람을 붙여 자동입력을 시도하고(해시 라우팅이라 무시될 수 있음),
-  // 동시에 클립보드에 복사해 붙여넣기로도 확실히 되게 한다.
+  // 받는사람은 항상 클립보드에 복사 → URL이 브라우저 상한(~2000자)을 넘어도 붙여넣기로 커버.
   void navigator.clipboard?.writeText(emails.join(", "));
-  const to = encodeURIComponent(emails.join(","));
-  window.open(`${HANBIRO_COMPOSE_URL}?to=${to}`, "_blank", "noopener");
+
+  const base =
+    provider === "outlook"
+      ? "https://outlook.office.com/mail/deeplink/compose"
+      : HANBIRO_COMPOSE_URL;
+  const to = encodeURIComponent(emails.join(provider === "outlook" ? ";" : ","));
+  const withTo = `${base}?to=${to}`;
+  // 자동입력은 URL이 상한 안에 들 때만. 넘으면 빈 작성창 + 클립보드 붙여넣기.
+  window.open(withTo.length > 1900 ? base : withTo, "_blank", "noopener");
 }
 
 function dateOnly(s: string | null): string {
@@ -379,8 +376,8 @@ export default function AdminUsersClient({ currentUserId }: Props) {
       )}
 
       <p className="text-xs text-gray-400">
-        한비로 버튼은 받는사람 주소를 클립보드에 복사한 뒤 작성창을 엽니다 — 받는사람 칸에
-        붙여넣기(Ctrl+V) 하세요. 아웃룩 버튼은 받는사람이 자동 입력됩니다.
+        한비로 · 아웃룩 버튼은 작성창을 열며 받는사람을 자동 입력합니다. 받는사람이 많아
+        자동 입력이 안 되면, 클립보드에 복사된 주소를 받는사람 칸에 붙여넣기(Ctrl+V) 하세요.
       </p>
 
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">

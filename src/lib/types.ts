@@ -24,6 +24,7 @@ export interface SearchHit {
   href: string;
   snippet: string | null;
   context: string | null; // 상위 분류명 등 브레드크럼
+  terms: string[]; // 강조할 검색어 (NOT 조건 제외)
 }
 
 export interface Locale {
