@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import MediaInput from "@/components/admin/MediaInput";
+import type { LocaleCode } from "@/src/lib/types";
+import { pageEditorLabels, common } from "@/src/lib/adminMessages";
 
 const TiptapEditor = dynamic(
   () => import("@/components/admin/TiptapEditor"),
@@ -337,7 +339,7 @@ export default function PageEditorClient({
     }
   }
 
-  if (loading) return <p className="text-sm text-gray-500">불러오는 중...</p>;
+  if (loading) return <p className="text-sm text-gray-500">{common(activeLocale as LocaleCode).loading}</p>;
   if (!data || !meta) {
     return (
       <div>
@@ -348,7 +350,7 @@ export default function PageEditorClient({
           ← 페이지 목록
         </Link>
         <p className="mt-4 text-sm text-red-600">
-          {error ?? "페이지를 불러올 수 없습니다."}
+          {error ?? common(activeLocale as LocaleCode).loadError}
         </p>
       </div>
     );
@@ -384,7 +386,7 @@ export default function PageEditorClient({
           <h3 className="text-sm font-semibold text-gray-800">
             페이지 메타{" "}
             <span className="text-[11px] font-normal text-gray-400">
-              (구조는 한국어 관리자 전용 · 읽기 전용)
+              {pageEditorLabels(activeLocale as LocaleCode).metaReadonly}
             </span>
           </h3>
           <dl className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
@@ -570,7 +572,7 @@ export default function PageEditorClient({
             {activeLocale}
           </span>
           <span className="text-sm font-semibold text-gray-700">
-            언어판 편집
+            {pageEditorLabels(activeLocale as LocaleCode).editHeading}
           </span>
           {!hasTranslation && (
             <span className="text-[11px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">

@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { common, confirmDelete } from "@/src/lib/adminMessages";
+import { useAdminLocale } from "@/src/lib/useAdminLocale";
 
 interface AdminLocale {
   code: string;
@@ -17,6 +19,7 @@ function emptyDraft(sort: number): DraftState {
 }
 
 export default function LocalesAdminClient() {
+  const loc = useAdminLocale();
   const [locales, setLocales] = useState<AdminLocale[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -119,7 +122,7 @@ export default function LocalesAdminClient() {
   }
 
   async function removeLocale(l: AdminLocale) {
-    if (!confirm(`'${l.name} (${l.code})' 언어를 삭제할까요?`)) return;
+    if (!confirm(confirmDelete(loc, `${l.name} (${l.code})`))) return;
     setBusy(true);
     setError(null);
     try {
@@ -137,7 +140,7 @@ export default function LocalesAdminClient() {
     }
   }
 
-  if (loading) return <p className="text-sm text-gray-500">불러오는 중...</p>;
+  if (loading) return <p className="text-sm text-gray-500">{common(loc).loading}</p>;
 
   return (
     <div className="space-y-4">
@@ -269,6 +272,7 @@ function LocaleForm({
   codeEditable,
   inline = false,
 }: LocaleFormProps) {
+  const t = common(useAdminLocale());
   function patch<K extends keyof DraftState>(key: K, value: DraftState[K]) {
     onChange({ ...draft, [key]: value });
   }
@@ -344,7 +348,7 @@ function LocaleForm({
           disabled={busy}
           className="rounded bg-(--brand) text-white px-4 py-1.5 text-xs font-semibold hover:opacity-90 disabled:opacity-60"
         >
-          {busy ? "저장 중..." : "저장"}
+          {busy ? t.saving : t.save}
         </button>
       </div>
     </div>

@@ -111,6 +111,28 @@ const T: Record<
     tbd: "(скоро)",
     offices: ["Головной офис", "СЕРИНС Россия", "СЕРИНС Казахстан", "СЕРИНС Индия", "СЕРИНС Вьетнам", "СЕРИНС Китай", "СЕРИНС Узбекистан"],
   },
+  kk: {
+    breadcrumb: "Байланыс",
+    getInTouch: "Бізбен байланысыңыз",
+    heading: "Сізден хабар күтеміз",
+    intro: "Сертификаттау бағасы, сәйкестік бойынша сұрақ немесе тексеруге жазылу — қандай мәселе болса да, біздің команда көмектесуге дайын.",
+    regionalOffices: "Аймақтық кеңселер",
+    sendMessage: "Хабарлама жіберу",
+    responseNote: "Әдетте бір жұмыс күні ішінде жауап береміз.",
+    tbd: "(жақында)",
+    offices: ["Бас кеңсе", "CERINS Ресей", "CERINS Қазақстан", "CERINS Үндістан", "CERINS Вьетнам", "CERINS Қытай", "CERINS Өзбекстан"],
+  },
+  vi: {
+    breadcrumb: "Liên hệ",
+    getInTouch: "Liên hệ với chúng tôi",
+    heading: "Chúng tôi rất mong nhận được tin từ bạn",
+    intro: "Dù bạn cần báo giá chứng nhận, có câu hỏi về tuân thủ hay muốn đặt lịch kiểm tra — đội ngũ của chúng tôi luôn sẵn sàng hỗ trợ.",
+    regionalOffices: "Văn phòng khu vực",
+    sendMessage: "Gửi tin nhắn",
+    responseNote: "Chúng tôi thường phản hồi trong vòng 1 ngày làm việc.",
+    tbd: "(sắp có)",
+    offices: ["Trụ sở chính", "CERINS Nga", "CERINS Kazakhstan", "CERINS Ấn Độ", "CERINS Việt Nam", "CERINS Trung Quốc", "CERINS Uzbekistan"],
+  },
 };
 
 export default async function ContactPage({ params }: Props) {

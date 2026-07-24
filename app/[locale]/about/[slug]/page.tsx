@@ -24,6 +24,8 @@ const CHROME: Record<LocaleCode, { about: string; backToAbout: string; contactUs
   ja: { about: "会社概要", backToAbout: "会社概要へ戻る", contactUs: "お問い合わせ" },
   zh: { about: "关于我们", backToAbout: "返回关于我们", contactUs: "联系我们" },
   ru: { about: "О компании", backToAbout: "Назад к разделу", contactUs: "Связаться с нами" },
+  kk: { about: "Компания туралы", backToAbout: "Компания туралыға оралу", contactUs: "Байланысу" },
+  vi: { about: "Giới thiệu", backToAbout: "Quay lại Giới thiệu", contactUs: "Liên hệ" },
 };
 
 export async function generateStaticParams() {

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import type { LocaleCode } from "@/src/lib/types";
+import { pagesNotice, common, confirmDeleteAllLangs } from "@/src/lib/adminMessages";
 
 type Template =
   | "home"
@@ -226,12 +228,7 @@ export default function PagesAdminClient({
 
   async function deletePage(p: AdminPage) {
     if (!isPrimary) return;
-    if (
-      !confirm(
-        `'${p.slug}' 페이지와 모든 언어판 번역을 삭제합니다. 계속할까요?`,
-      )
-    )
-      return;
+    if (!confirm(confirmDeleteAllLangs(locale as LocaleCode, p.slug))) return;
     setBusy(true);
     setError(null);
     try {
@@ -251,28 +248,30 @@ export default function PagesAdminClient({
 
   const adminBase = locale === "ko" ? "/admin" : `/${locale}/admin`;
 
-  if (loading) return <p className="text-sm text-gray-500">불러오는 중...</p>;
+  if (loading) return <p className="text-sm text-gray-500">{common(locale as LocaleCode).loading}</p>;
   if (!data) {
     return (
       <p className="text-sm text-red-600">
-        {error ?? "페이지를 불러올 수 없습니다."}
+        {error ?? common(locale as LocaleCode).loadError}
       </p>
     );
   }
 
   return (
     <div className="space-y-4">
-      {!isPrimary && (
-        <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-gray-700">
-          <p className="font-semibold mb-1">
-            {locale.toUpperCase()} 언어판 번역
-          </p>
-          <ul className="list-disc list-inside space-y-0.5 text-gray-600">
-            <li>페이지 생성·삭제·구조(slug/템플릿/정렬)는 한국어 관리자가 관리합니다.</li>
-            <li>여기서는 각 페이지의 <b>{locale.toUpperCase()}</b> 언어판만 편집합니다.</li>
-          </ul>
-        </div>
-      )}
+      {!isPrimary && (() => {
+        const notice = pagesNotice(locale as LocaleCode);
+        return (
+          <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-gray-700">
+            <p className="font-semibold mb-1">{notice.title}</p>
+            <ul className="list-disc list-inside space-y-0.5 text-gray-600">
+              {notice.bullets.map((b, i) => (
+                <li key={i}>{b}</li>
+              ))}
+            </ul>
+          </div>
+        );
+      })()}
 
       {error && (
         <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">

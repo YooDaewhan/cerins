@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { isVideoUrl } from "@/src/lib/media";
 import MediaInput from "@/components/admin/MediaInput";
+import type { LocaleCode } from "@/src/lib/types";
+import { common, confirmDelete } from "@/src/lib/adminMessages";
+import { useAdminLocale } from "@/src/lib/useAdminLocale";
 
 interface AdminSlide {
   id: number;
@@ -160,7 +163,7 @@ export default function HeroSlidesAdminClient({
   }
 
   async function removeSlide(s: AdminSlide) {
-    if (!confirm(`'${s.headline}' 슬라이드를 삭제할까요?`)) return;
+    if (!confirm(confirmDelete(locale as LocaleCode, s.headline))) return;
     setBusy(true);
     setError(null);
     try {
@@ -180,11 +183,11 @@ export default function HeroSlidesAdminClient({
     }
   }
 
-  if (loading) return <p className="text-sm text-gray-500">불러오는 중...</p>;
+  if (loading) return <p className="text-sm text-gray-500">{common(locale as LocaleCode).loading}</p>;
   if (!data) {
     return (
       <p className="text-sm text-red-600">
-        {error ?? "슬라이드를 불러올 수 없습니다."}
+        {error ?? common(locale as LocaleCode).loadError}
       </p>
     );
   }
@@ -329,6 +332,7 @@ export default function HeroSlidesAdminClient({
 // 메인 히어로 우하단에 상시 노출되는 단일 소개 동영상.
 // 슬라이드와 달리 전 언어 공통·1개 고정이므로 목록 맨 위에 예외적으로 올린다.
 function HeroVideoCard({ onError }: { onError: (msg: string | null) => void }) {
+  const t = common(useAdminLocale());
   const [videoUrl, setVideoUrl] = useState("");
   const [draftUrl, setDraftUrl] = useState("");
   const [editing, setEditing] = useState(false);
@@ -455,7 +459,7 @@ function HeroVideoCard({ onError }: { onError: (msg: string | null) => void }) {
               disabled={saving}
               className="rounded bg-(--brand) text-white px-4 py-1.5 text-xs font-semibold hover:opacity-90 disabled:opacity-60"
             >
-              {saving ? "저장 중..." : "저장"}
+              {saving ? t.saving : t.save}
             </button>
           </div>
         </div>
@@ -483,6 +487,7 @@ function SlideForm({
   busy,
   inline = false,
 }: SlideFormProps) {
+  const t = common(useAdminLocale());
   function patch<K extends keyof DraftState>(key: K, value: DraftState[K]) {
     onChange({ ...draft, [key]: value });
   }
@@ -579,7 +584,7 @@ function SlideForm({
           disabled={busy}
           className="rounded bg-(--brand) text-white px-4 py-1.5 text-xs font-semibold hover:opacity-90 disabled:opacity-60"
         >
-          {busy ? "저장 중..." : "저장"}
+          {busy ? t.saving : t.save}
         </button>
       </div>
     </div>

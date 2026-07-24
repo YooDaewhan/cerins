@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { LocaleCode } from "@/src/lib/types";
+import { menusNotice, common, confirmDelete, confirmDeleteWithChildren } from "@/src/lib/adminMessages";
 import MediaInput from "@/components/admin/MediaInput";
 
 interface AdminMenu {
@@ -231,8 +232,8 @@ export default function MenusAdminClient({ locale, isPrimary }: Props) {
     const label = m.translations.ko ?? m.translations.en ?? `#${m.id}`;
     const warn =
       kids.length > 0
-        ? `'${label}' 및 하위 ${kids.length}개 메뉴를 함께 삭제합니다. 계속할까요?`
-        : `'${label}' 메뉴를 삭제할까요?`;
+        ? confirmDeleteWithChildren(locale, label, kids.length)
+        : confirmDelete(locale, label);
     if (!confirm(warn)) return;
     setBusy(true);
     setError(null);
@@ -252,12 +253,12 @@ export default function MenusAdminClient({ locale, isPrimary }: Props) {
   }
 
   if (loading) {
-    return <p className="text-sm text-gray-500">불러오는 중...</p>;
+    return <p className="text-sm text-gray-500">{common(locale).loading}</p>;
   }
   if (!data) {
     return (
       <p className="text-sm text-red-600">
-        {error ?? "메뉴를 불러올 수 없습니다."}
+        {error ?? common(locale).loadError}
       </p>
     );
   }
@@ -278,13 +279,11 @@ export default function MenusAdminClient({ locale, isPrimary }: Props) {
         </div>
       ) : (
         <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-gray-700">
-          <p className="font-semibold mb-1">
-            {localeName} 라벨 번역
-          </p>
+          <p className="font-semibold mb-1">{menusNotice(locale).title}</p>
           <ul className="list-disc list-inside space-y-0.5 text-gray-600">
-            <li>메뉴 구조(추가·삭제·정렬·링크)는 한국어 관리자가 관리합니다.</li>
-            <li>이 화면에서는 각 메뉴의 <b>{localeName}</b> 라벨만 입력·수정합니다.</li>
-            <li>번역이 비어 있으면 사이트에서 한국어 라벨로 대체됩니다.</li>
+            {menusNotice(locale).bullets.map((b, i) => (
+              <li key={i}>{b}</li>
+            ))}
           </ul>
         </div>
       )}
@@ -820,7 +819,7 @@ function MenuForm({
           disabled={busy}
           className="rounded bg-(--brand) text-white px-4 py-1.5 text-xs font-semibold hover:opacity-90 disabled:opacity-60"
         >
-          {busy ? "저장 중..." : "저장"}
+          {busy ? common(locale).saving : common(locale).save}
         </button>
       </div>
     </div>

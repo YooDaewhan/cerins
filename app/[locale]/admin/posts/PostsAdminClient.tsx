@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { LocaleCode } from "@/src/lib/types";
+import { postsNotice, common, confirmDeleteAllLangs } from "@/src/lib/adminMessages";
 
 interface AdminPostTranslation {
   id: number;
@@ -68,7 +69,7 @@ export default function PostsAdminClient({
 
   async function deletePost(slug: string) {
     if (!isPrimary) return;
-    if (!confirm(`'${slug}' 글을 모든 언어판과 함께 삭제합니다.`)) return;
+    if (!confirm(confirmDeleteAllLangs(locale as LocaleCode, slug))) return;
     setBusy(true);
     try {
       const res = await fetch(`${apiBase}/${encodeURIComponent(slug)}`, {
@@ -87,28 +88,30 @@ export default function PostsAdminClient({
     }
   }
 
-  if (loading) return <p className="text-sm text-gray-500">불러오는 중...</p>;
+  if (loading) return <p className="text-sm text-gray-500">{common(locale as LocaleCode).loading}</p>;
   if (!data) {
     return (
       <p className="text-sm text-red-600">
-        {error ?? "글을 불러올 수 없습니다."}
+        {error ?? common(locale as LocaleCode).loadError}
       </p>
     );
   }
 
   return (
     <div className="space-y-4">
-      {!isPrimary && (
-        <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-gray-700">
-          <p className="font-semibold mb-1">
-            {locale.toUpperCase()} 언어판 편집
-          </p>
-          <ul className="list-disc list-inside space-y-0.5 text-gray-600">
-            <li>글 생성·삭제·slug는 한국어 관리자가 관리합니다.</li>
-            <li>여기서는 각 글의 <b>{locale.toUpperCase()}</b> 언어판만 입력·수정합니다.</li>
-          </ul>
-        </div>
-      )}
+      {!isPrimary && (() => {
+        const notice = postsNotice(locale as LocaleCode);
+        return (
+          <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-gray-700">
+            <p className="font-semibold mb-1">{notice.title}</p>
+            <ul className="list-disc list-inside space-y-0.5 text-gray-600">
+              {notice.bullets.map((b, i) => (
+                <li key={i}>{b}</li>
+              ))}
+            </ul>
+          </div>
+        );
+      })()}
 
       {error && (
         <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">

@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import type { ServiceDocumentRequirement } from "@/src/lib/scrapIndiaTypes";
+import { common } from "@/src/lib/adminMessages";
+import { useAdminLocale } from "@/src/lib/useAdminLocale";
 
 interface Props {
   serviceType: string;
@@ -9,6 +11,7 @@ interface Props {
 }
 
 export default function DocumentRequirementsClient({ serviceType, workflowStep }: Props) {
+  const t = common(useAdminLocale());
   const [items, setItems] = useState<ServiceDocumentRequirement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -107,7 +110,7 @@ export default function DocumentRequirementsClient({ serviceType, workflowStep }
         <div className="flex items-center gap-4 text-sm">
           <label className="flex items-center gap-1.5"><input type="checkbox" checked={newRequired} onChange={(e) => setNewRequired(e.target.checked)} /> 필수</label>
           <label className="flex items-center gap-1.5"><input type="checkbox" checked={newMultiple} onChange={(e) => setNewMultiple(e.target.checked)} /> 여러 파일 허용</label>
-          <button className="rounded-md bg-(--brand) text-white text-sm font-semibold px-4 py-1.5 disabled:opacity-50" disabled={busy || !newName.trim()} onClick={create}>추가</button>
+          <button className="rounded-md bg-(--brand) text-white text-sm font-semibold px-4 py-1.5 disabled:opacity-50" disabled={busy || !newName.trim()} onClick={create}>{t.add}</button>
         </div>
       </div>
 
@@ -115,7 +118,7 @@ export default function DocumentRequirementsClient({ serviceType, workflowStep }
       <div className="bg-white border border-gray-200 rounded-xl p-5">
         <h3 className="text-sm font-bold text-gray-800 mb-3">등록된 항목 (step {workflowStep})</h3>
         {loading ? (
-          <p className="text-sm text-gray-400">불러오는 중...</p>
+          <p className="text-sm text-gray-400">{t.loading}</p>
         ) : items.length === 0 ? (
           <p className="text-sm text-gray-400">등록된 서류 항목이 없습니다.</p>
         ) : (

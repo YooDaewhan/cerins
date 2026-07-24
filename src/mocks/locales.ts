@@ -7,4 +7,6 @@ export const locales: Locale[] = [
   { code: "ja", name: "Japanese", native_name: "日本語", is_enabled: true, sort_order: 3 },
   { code: "zh", name: "Chinese", native_name: "中文", is_enabled: true, sort_order: 4 },
   { code: "ru", name: "Russian", native_name: "Русский", is_enabled: true, sort_order: 5 },
+  { code: "kk", name: "Kazakh", native_name: "Қазақша", is_enabled: true, sort_order: 6 },
+  { code: "vi", name: "Vietnamese", native_name: "Tiếng Việt", is_enabled: true, sort_order: 7 },
 ];

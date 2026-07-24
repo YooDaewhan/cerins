@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { PopupCard } from "@/components/NewsPopup";
-import type { Post } from "@/src/lib/types";
+import type { Post, LocaleCode } from "@/src/lib/types";
+import { postsNotice } from "@/src/lib/adminMessages";
 
 const TiptapEditor = dynamic(() => import("./TiptapEditor"), { ssr: false });
 
@@ -264,15 +265,19 @@ export default function PostEditorClient({
         </div>
       </div>
 
-      {!isPrimary && (
-        <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-gray-700">
-          <p className="font-semibold mb-1">{localeName} 언어판 편집</p>
-          <ul className="list-disc list-inside space-y-0.5 text-gray-600">
-            <li>글 생성·삭제·slug는 한국어 관리자가 관리합니다.</li>
-            <li>여기서는 이 글의 <b>{localeName}</b> 언어판만 입력·수정합니다.</li>
-          </ul>
-        </div>
-      )}
+      {!isPrimary && (() => {
+        const notice = postsNotice(locale as LocaleCode);
+        return (
+          <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-gray-700">
+            <p className="font-semibold mb-1">{notice.title}</p>
+            <ul className="list-disc list-inside space-y-0.5 text-gray-600">
+              {notice.bullets.map((b, i) => (
+                <li key={i}>{b}</li>
+              ))}
+            </ul>
+          </div>
+        );
+      })()}
 
       {error && (
         <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">

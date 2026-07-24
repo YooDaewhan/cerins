@@ -8,6 +8,7 @@ import {
   splitLocaleFromPath,
   buildLocalizedPath,
 } from "@/src/lib/i18n";
+import { chrome } from "@/src/lib/adminMessages";
 
 /**
  * 관리자 상단 언어 전환기.
@@ -23,13 +24,14 @@ export default function AdminLocaleSwitcher({
 }) {
   const pathname = usePathname();
   const { locale: current, rest } = splitLocaleFromPath(pathname);
+  const t = chrome(current);
   const enabled = locales
     .filter((l) => l.is_enabled)
     .sort((a, b) => a.sort_order - b.sort_order);
 
   return (
     <div className="mt-3 flex items-center gap-2 flex-wrap">
-      <span className="text-xs font-semibold text-gray-500">편집 언어</span>
+      <span className="text-xs font-semibold text-gray-500">{t.editLang}</span>
       <div className="flex gap-1">
         {enabled.map((l) => {
           const active = l.code === current;
@@ -55,7 +57,7 @@ export default function AdminLocaleSwitcher({
                     (active ? "bg-white/25" : "bg-gray-100 text-gray-500")
                   }
                 >
-                  구조
+                  {t.structureBadge}
                 </span>
               )}
             </Link>
@@ -65,17 +67,15 @@ export default function AdminLocaleSwitcher({
           <Link
             href={addLocaleHref}
             className="inline-flex items-center gap-1 rounded border border-dashed border-gray-300 px-2.5 py-1 text-xs font-semibold text-gray-500 transition-colors hover:border-(--brand) hover:text-(--brand)"
-            title="언어 추가·관리"
+            title={t.addLangTitle}
           >
             <span aria-hidden>+</span>
-            <span>언어 추가</span>
+            <span>{t.addLang}</span>
           </Link>
         )}
       </div>
       <span className="text-[11px] text-gray-400">
-        {current === DEFAULT_LOCALE
-          ? "구조(메뉴·페이지·글) 생성/삭제 + 한국어 콘텐츠"
-          : "이 언어의 번역만 편집합니다."}
+        {current === DEFAULT_LOCALE ? t.hintPrimary : t.hintOther}
       </span>
     </div>
   );

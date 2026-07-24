@@ -11,6 +11,8 @@ import {
 } from "@/src/lib/userTypes";
 import { locales } from "@/src/mocks/locales";
 import type { User } from "@/src/lib/types";
+import { common, confirmDelete } from "@/src/lib/adminMessages";
+import { useAdminLocale } from "@/src/lib/useAdminLocale";
 
 interface Props {
   currentUserId: number;
@@ -76,6 +78,7 @@ type SortKey =
 type SortDir = "asc" | "desc";
 
 export default function AdminUsersClient({ currentUserId }: Props) {
+  const loc = useAdminLocale();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -265,7 +268,7 @@ export default function AdminUsersClient({ currentUserId }: Props) {
 
   async function removeUser(u: User) {
     if (u.id === currentUserId) return;
-    if (!confirm(`'${u.login_id}' 사용자를 삭제하시겠습니까?`)) return;
+    if (!confirm(confirmDelete(loc, u.login_id))) return;
     setError(null);
     try {
       const res = await fetch(`/api/admin/users/${u.id}`, { method: "DELETE" });
@@ -477,7 +480,7 @@ export default function AdminUsersClient({ currentUserId }: Props) {
               {loading && (
                 <tr>
                   <td colSpan={10} className="text-center py-6 text-gray-400">
-                    불러오는 중...
+                    {common(loc).loading}
                   </td>
                 </tr>
               )}
@@ -590,7 +593,7 @@ export default function AdminUsersClient({ currentUserId }: Props) {
                             onClick={() => saveEdit(u.id)}
                             className="rounded bg-(--brand) text-white px-3 py-1 text-xs font-semibold hover:opacity-90 disabled:opacity-60"
                           >
-                            {isSaving ? "저장 중..." : "저장"}
+                            {isSaving ? common(loc).saving : common(loc).save}
                           </button>
                           <button
                             type="button"

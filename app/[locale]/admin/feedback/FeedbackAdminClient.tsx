@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { common } from "@/src/lib/adminMessages";
+import { useAdminLocale } from "@/src/lib/useAdminLocale";
 import {
   SATISFACTION_ITEMS,
   STAFF_EVAL_ITEMS,
@@ -49,6 +51,7 @@ function parseRatings(raw: unknown): Record<string, number> {
 }
 
 export default function FeedbackAdminClient({ kind, endpoint }: Props) {
+  const t = common(useAdminLocale());
   const [rows, setRows] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -94,7 +97,7 @@ export default function FeedbackAdminClient({ kind, endpoint }: Props) {
       )}
 
       {loading ? (
-        <p className="text-sm text-gray-400 py-6 text-center">불러오는 중...</p>
+        <p className="text-sm text-gray-400 py-6 text-center">{t.loading}</p>
       ) : rows.length === 0 ? (
         <p className="text-sm text-gray-400 py-6 text-center">아직 접수된 내역이 없습니다.</p>
       ) : (

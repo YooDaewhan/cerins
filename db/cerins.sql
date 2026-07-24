@@ -30,7 +30,9 @@ INSERT INTO locales (code, name, native_name, is_enabled, sort_order) VALUES
   ('en', 'English',  'English',  1, 2),
   ('ja', 'Japanese', '日本語',   1, 3),
   ('zh', 'Chinese',  '中文',     1, 4),
-  ('ru', 'Russian',  'Русский',  1, 5);
+  ('ru', 'Russian',  'Русский',  1, 5),
+  ('kk', 'Kazakh',   'Қазақша',  1, 6),
+  ('vi', 'Vietnamese','Tiếng Việt', 1, 7);
 
 -- ---------------------------------------------------------------------
 -- 2. pages

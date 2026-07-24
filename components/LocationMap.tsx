@@ -32,6 +32,8 @@ const LABELS: Record<LocaleCode, string[]> = {
   ja: ["本社 · ソウル, 韓国", "モスクワ, ロシア", "アルマトイ, カザフスタン", "グジャラート, インド", "ホーチミン, ベトナム", "上海, 中国", "タシケント, ウズベキスタン"],
   zh: ["总部 · 首尔, 韩国", "莫斯科, 俄罗斯", "阿拉木图, 哈萨克斯坦", "古吉拉特, 印度", "胡志明市, 越南", "上海, 中国", "塔什干, 乌兹别克斯坦"],
   ru: ["Головной офис · Сеул, Корея", "Москва, Россия", "Алматы, Казахстан", "Гуджарат, Индия", "Хошимин, Вьетнам", "Шанхай, Китай", "Ташкент, Узбекистан"],
+  kk: ["Бас кеңсе · Сеул, Корея", "Мәскеу, Ресей", "Алматы, Қазақстан", "Гуджарат, Үндістан", "Хошимин, Вьетнам", "Шанхай, Қытай", "Ташкент, Өзбекстан"],
+  vi: ["Trụ sở chính · Seoul, Hàn Quốc", "Moscow, Nga", "Almaty, Kazakhstan", "Gujarat, Ấn Độ", "TP. Hồ Chí Minh, Việt Nam", "Thượng Hải, Trung Quốc", "Tashkent, Uzbekistan"],
 };
 
 const CAPTIONS: Record<LocaleCode, { tel: string; email: string; photo: string }> = {
@@ -40,6 +42,8 @@ const CAPTIONS: Record<LocaleCode, { tel: string; email: string; photo: string }
   ja: { tel: "電話", email: "メール", photo: "写真" },
   zh: { tel: "电话", email: "邮箱", photo: "照片" },
   ru: { tel: "Тел.", email: "Эл. почта", photo: "Фото" },
+  kk: { tel: "Тел.", email: "Email", photo: "Сурет" },
+  vi: { tel: "ĐT.", email: "Email", photo: "Ảnh" },
 };
 
 function embedUrl(loc: MapLocation) {

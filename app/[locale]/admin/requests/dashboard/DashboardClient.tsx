@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { common } from "@/src/lib/adminMessages";
+import { useAdminLocale } from "@/src/lib/useAdminLocale";
 import {
   STATUS_LABELS,
   SERVICE_TYPE_LABELS,
@@ -61,6 +63,7 @@ interface StaffCandidate {
 /* ------------------------------ 메인 ------------------------------ */
 
 export default function DashboardClient() {
+  const t = common(useAdminLocale());
   const [preset, setPreset] = useState<DashboardPreset>("6month");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -189,7 +192,7 @@ export default function DashboardClient() {
       )}
 
       {loading ? (
-        <p className="text-sm text-gray-400">불러오는 중...</p>
+        <p className="text-sm text-gray-400">{t.loading}</p>
       ) : preset === "custom" && (!from || !to) ? (
         <p className="text-sm text-gray-400">시작일과 종료일을 선택하세요.</p>
       ) : !data ? (

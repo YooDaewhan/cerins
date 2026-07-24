@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import type { User } from "@/src/lib/types";
+import { common, confirmDelete, confirmSendMail } from "@/src/lib/adminMessages";
+import { useAdminLocale } from "@/src/lib/useAdminLocale";
 
 const TiptapEditor = dynamic(
   () => import("@/components/admin/TiptapEditor"),
@@ -30,6 +32,7 @@ interface EmailLog {
 }
 
 export default function EmailAdminClient() {
+  const loc = useAdminLocale();
   const [users, setUsers] = useState<User[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
   const [logs, setLogs] = useState<EmailLog[]>([]);
@@ -138,7 +141,7 @@ export default function EmailAdminClient() {
         setError(data.error ?? "양식 저장에 실패했습니다.");
         return;
       }
-      setNotice("양식을 저장했습니다.");
+      setNotice(common(loc).saved);
       await load();
     } catch {
       setError("네트워크 오류가 발생했습니다.");
@@ -149,7 +152,7 @@ export default function EmailAdminClient() {
     if (templateId === "") return;
     const t = templates.find((x) => x.id === templateId);
     if (!t) return;
-    if (!confirm(`'${t.name}' 양식을 삭제하시겠습니까?`)) return;
+    if (!confirm(confirmDelete(loc, t.name))) return;
     setError(null);
     try {
       const res = await fetch(`/api/admin/email/templates/${t.id}`, {
@@ -179,7 +182,7 @@ export default function EmailAdminClient() {
       setError("제목을 입력하세요.");
       return;
     }
-    if (!confirm(`${ids.length}명에게 메일을 발송하시겠습니까?`)) return;
+    if (!confirm(confirmSendMail(loc, ids.length))) return;
     setSending(true);
     try {
       const res = await fetch("/api/admin/email/send", {

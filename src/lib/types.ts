@@ -1,7 +1,7 @@
 // Shape mirrors the planned MySQL schema. When the real DB lands, these
 // interfaces stay; only src/lib/mockRepository.ts changes.
 
-export type LocaleCode = "ko" | "en" | "ja" | "zh" | "ru";
+export type LocaleCode = "ko" | "en" | "ja" | "zh" | "ru" | "kk" | "vi";
 
 export type PageTemplate =
   | "home"
