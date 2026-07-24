@@ -308,19 +308,22 @@ export type AdminCommon = {
   save: string;
   saving: string;
   add: string;
+  edit: string;
+  cancel: string;
+  delete: string;
   loadError: string;
   saved: string;
   deleted: string;
 };
 
 const commonMap: Record<LocaleCode, AdminCommon> = {
-  ko: { loading: "불러오는 중...", save: "저장", saving: "저장 중...", add: "추가", loadError: "불러올 수 없습니다.", saved: "저장했습니다.", deleted: "삭제했습니다." },
-  en: { loading: "Loading...", save: "Save", saving: "Saving...", add: "Add", loadError: "Failed to load.", saved: "Saved.", deleted: "Deleted." },
-  ja: { loading: "読み込み中...", save: "保存", saving: "保存中...", add: "追加", loadError: "読み込めませんでした。", saved: "保存しました。", deleted: "削除しました。" },
-  zh: { loading: "加载中...", save: "保存", saving: "保存中...", add: "添加", loadError: "无法加载。", saved: "已保存。", deleted: "已删除。" },
-  ru: { loading: "Загрузка...", save: "Сохранить", saving: "Сохранение...", add: "Добавить", loadError: "Не удалось загрузить.", saved: "Сохранено.", deleted: "Удалено." },
-  kk: { loading: "Жүктелуде...", save: "Сақтау", saving: "Сақталуда...", add: "Қосу", loadError: "Жүктеу мүмкін болмады.", saved: "Сақталды.", deleted: "Жойылды." },
-  vi: { loading: "Đang tải...", save: "Lưu", saving: "Đang lưu...", add: "Thêm", loadError: "Không thể tải.", saved: "Đã lưu.", deleted: "Đã xóa." },
+  ko: { loading: "불러오는 중...", save: "저장", saving: "저장 중...", add: "추가", edit: "수정", cancel: "취소", delete: "삭제", loadError: "불러올 수 없습니다.", saved: "저장했습니다.", deleted: "삭제했습니다." },
+  en: { loading: "Loading...", save: "Save", saving: "Saving...", add: "Add", edit: "Edit", cancel: "Cancel", delete: "Delete", loadError: "Failed to load.", saved: "Saved.", deleted: "Deleted." },
+  ja: { loading: "読み込み中...", save: "保存", saving: "保存中...", add: "追加", edit: "編集", cancel: "キャンセル", delete: "削除", loadError: "読み込めませんでした。", saved: "保存しました。", deleted: "削除しました。" },
+  zh: { loading: "加载中...", save: "保存", saving: "保存中...", add: "添加", edit: "编辑", cancel: "取消", delete: "删除", loadError: "无法加载。", saved: "已保存。", deleted: "已删除。" },
+  ru: { loading: "Загрузка...", save: "Сохранить", saving: "Сохранение...", add: "Добавить", edit: "Изменить", cancel: "Отмена", delete: "Удалить", loadError: "Не удалось загрузить.", saved: "Сохранено.", deleted: "Удалено." },
+  kk: { loading: "Жүктелуде...", save: "Сақтау", saving: "Сақталуда...", add: "Қосу", edit: "Өзгерту", cancel: "Болдырмау", delete: "Жою", loadError: "Жүктеу мүмкін болмады.", saved: "Сақталды.", deleted: "Жойылды." },
+  vi: { loading: "Đang tải...", save: "Lưu", saving: "Đang lưu...", add: "Thêm", edit: "Sửa", cancel: "Hủy", delete: "Xóa", loadError: "Không thể tải.", saved: "Đã lưu.", deleted: "Đã xóa." },
 };
 
 export const common = (l: LocaleCode) => pick(commonMap, l);

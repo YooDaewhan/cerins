@@ -219,14 +219,14 @@ export default function LocalesAdminClient() {
                   onClick={() => startEdit(l)}
                   className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-50"
                 >
-                  수정
+                  {common(loc).edit}
                 </button>
                 <button
                   type="button"
                   onClick={() => removeLocale(l)}
                   className="rounded border border-red-300 text-red-600 px-2.5 py-1 text-xs hover:bg-red-50"
                 >
-                  삭제
+                  {common(loc).delete}
                 </button>
               </div>
             </div>
@@ -340,7 +340,7 @@ function LocaleForm({
           onClick={onCancel}
           className="rounded border border-gray-300 px-3 py-1.5 text-xs hover:bg-gray-50"
         >
-          취소
+          {t.cancel}
         </button>
         <button
           type="button"

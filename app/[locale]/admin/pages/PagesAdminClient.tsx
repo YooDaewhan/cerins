@@ -396,7 +396,7 @@ export default function PagesAdminClient({
               onClick={() => setCreating(false)}
               className="rounded border border-gray-300 px-3 py-1.5 text-xs hover:bg-gray-50"
             >
-              취소
+              {common(locale as LocaleCode).cancel}
             </button>
             <button
               type="button"
@@ -517,7 +517,7 @@ export default function PagesAdminClient({
                         href={`${adminBase}/pages/${p.id}`}
                         className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-50"
                       >
-                        {isPrimary ? "편집" : "수정"}
+                        {common(locale as LocaleCode).edit}
                       </Link>
                       {isPrimary && (
                         <button
@@ -525,7 +525,7 @@ export default function PagesAdminClient({
                           onClick={() => deletePage(p)}
                           className="rounded border border-red-300 text-red-600 px-2.5 py-1 text-xs hover:bg-red-50"
                         >
-                          삭제
+                          {common(locale as LocaleCode).delete}
                         </button>
                       )}
                     </div>

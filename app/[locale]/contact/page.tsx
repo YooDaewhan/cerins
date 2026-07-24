@@ -193,7 +193,7 @@ export default async function ContactPage({ params }: Props) {
               <h3 className="text-lg font-bold text-(--brand)">{t.sendMessage}</h3>
               <p className="text-sm text-gray-400 mt-1">{t.responseNote}</p>
             </div>
-            <ContactForm member={member} />
+            <ContactForm member={member} locale={code} />
           </div>
         </div>
       </div>

@@ -514,7 +514,7 @@ function MenuRow(props: MenuRowProps) {
             onClick={onStartEdit}
             className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-50"
           >
-            수정
+            {common(locale).edit}
           </button>
           {isPrimary && (
             <button
@@ -522,7 +522,7 @@ function MenuRow(props: MenuRowProps) {
               onClick={onDelete}
               className="rounded border border-red-300 text-red-600 px-2.5 py-1 text-xs hover:bg-red-50"
             >
-              삭제
+              {common(locale).delete}
             </button>
           )}
         </div>
@@ -608,7 +608,7 @@ function MenuRow(props: MenuRowProps) {
                         onClick={() => startChildEdit(c)}
                         className="rounded border border-gray-300 px-2 py-0.5 text-[11px] hover:bg-gray-50"
                       >
-                        수정
+                        {common(locale).edit}
                       </button>
                       {isPrimary && (
                         <button
@@ -616,7 +616,7 @@ function MenuRow(props: MenuRowProps) {
                           onClick={() => onChildDelete(c)}
                           className="rounded border border-red-300 text-red-600 px-2 py-0.5 text-[11px] hover:bg-red-50"
                         >
-                          삭제
+                          {common(locale).delete}
                         </button>
                       )}
                     </div>
@@ -811,7 +811,7 @@ function MenuForm({
           onClick={onCancel}
           className="rounded border border-gray-300 px-3 py-1.5 text-xs hover:bg-gray-50"
         >
-          취소
+          {common(locale).cancel}
         </button>
         <button
           type="button"

@@ -557,7 +557,7 @@ export default function PageEditorClient({
                     href={`${adminBase}/pages/${c.id}`}
                     className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-50"
                   >
-                    {isPrimary ? "편집" : "수정"}
+                    {common(activeLocale as LocaleCode).edit}
                   </Link>
                 </li>
               ))}

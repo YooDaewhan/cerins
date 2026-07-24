@@ -298,14 +298,14 @@ export default function HeroSlidesAdminClient({
                   onClick={() => startEdit(s)}
                   className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-50"
                 >
-                  수정
+                  {common(locale as LocaleCode).edit}
                 </button>
                 <button
                   type="button"
                   onClick={() => removeSlide(s)}
                   className="rounded border border-red-300 text-red-600 px-2.5 py-1 text-xs hover:bg-red-50"
                 >
-                  삭제
+                  {common(locale as LocaleCode).delete}
                 </button>
               </div>
             </div>
@@ -430,7 +430,7 @@ function HeroVideoCard({ onError }: { onError: (msg: string | null) => void }) {
               disabled={loading}
               className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-50 disabled:opacity-60"
             >
-              {loading ? "..." : "수정"}
+              {loading ? "..." : t.edit}
             </button>
           )}
         </div>
@@ -451,7 +451,7 @@ function HeroVideoCard({ onError }: { onError: (msg: string | null) => void }) {
               onClick={() => setEditing(false)}
               className="rounded border border-gray-300 px-3 py-1.5 text-xs hover:bg-gray-50"
             >
-              취소
+              {t.cancel}
             </button>
             <button
               type="button"
@@ -576,7 +576,7 @@ function SlideForm({
           onClick={onCancel}
           className="rounded border border-gray-300 px-3 py-1.5 text-xs hover:bg-gray-50"
         >
-          취소
+          {t.cancel}
         </button>
         <button
           type="button"

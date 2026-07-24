@@ -206,7 +206,7 @@ export default function PostsAdminClient({
                         href={`${adminBase}/${listSlug}/${encodeURIComponent(p.slug)}`}
                         className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-50"
                       >
-                        {isPrimary ? "편집" : "수정"}
+                        {common(locale as LocaleCode).edit}
                       </Link>
                       {isPrimary && (
                         <button
@@ -215,7 +215,7 @@ export default function PostsAdminClient({
                           disabled={busy}
                           className="rounded border border-red-300 text-red-600 px-2.5 py-1 text-xs hover:bg-red-50 disabled:opacity-60"
                         >
-                          삭제
+                          {common(locale as LocaleCode).delete}
                         </button>
                       )}
                     </div>

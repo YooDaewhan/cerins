@@ -2,8 +2,32 @@
 "use client";
 
 import { useState } from "react";
+import type { LocaleCode } from "@/src/lib/types";
 
-const CATEGORIES = ["불편 접수", "추가 요청사항", "기타"];
+// 저장값은 항상 한글(canonical) — 관리자에서 한글로 보이게. 표시만 로케일별로 바꾼다.
+const CATEGORY_VALUES = ["불편 접수", "추가 요청사항", "기타"] as const;
+const CATEGORY_LABELS: Record<LocaleCode, string[]> = {
+  ko: ["불편 접수", "추가 요청사항", "기타"],
+  en: ["Complaint", "Additional request", "Other"],
+  ja: ["不具合の申告", "追加のご要望", "その他"],
+  zh: ["问题反馈", "补充需求", "其他"],
+  ru: ["Жалоба", "Дополнительный запрос", "Другое"],
+  kk: ["Шағым", "Қосымша сұраныс", "Басқа"],
+  vi: ["Phản ánh sự cố", "Yêu cầu bổ sung", "Khác"],
+};
+
+const UI: Record<LocaleCode, {
+  category: string; send: string; sending: string;
+  success: string; sendFail: string; networkError: string;
+}> = {
+  ko: { category: "카테고리", send: "메시지 보내기", sending: "전송 중...", success: "메시지를 보냈습니다. 곧 연락드리겠습니다.", sendFail: "전송에 실패했습니다. 잠시 후 다시 시도해 주세요.", networkError: "네트워크 오류가 발생했습니다." },
+  en: { category: "Category", send: "Send Message", sending: "Sending...", success: "Message sent successfully. We'll be in touch soon.", sendFail: "Failed to send. Please try again shortly.", networkError: "A network error occurred." },
+  ja: { category: "カテゴリ", send: "メッセージを送る", sending: "送信中...", success: "メッセージを送信しました。まもなくご連絡いたします。", sendFail: "送信に失敗しました。しばらくしてからもう一度お試しください。", networkError: "ネットワークエラーが発生しました。" },
+  zh: { category: "类别", send: "发送消息", sending: "发送中...", success: "消息已发送，我们会尽快与您联系。", sendFail: "发送失败，请稍后重试。", networkError: "发生网络错误。" },
+  ru: { category: "Категория", send: "Отправить сообщение", sending: "Отправка...", success: "Сообщение отправлено. Мы скоро свяжемся с вами.", sendFail: "Не удалось отправить. Повторите попытку позже.", networkError: "Произошла сетевая ошибка." },
+  kk: { category: "Санат", send: "Хабарлама жіберу", sending: "Жіберілуде...", success: "Хабарлама жіберілді. Жақында хабарласамыз.", sendFail: "Жіберу сәтсіз аяқталды. Сәлден соң қайталаңыз.", networkError: "Желі қатесі орын алды." },
+  vi: { category: "Danh mục", send: "Gửi tin nhắn", sending: "Đang gửi...", success: "Đã gửi tin nhắn. Chúng tôi sẽ liên hệ sớm.", sendFail: "Gửi không thành công. Vui lòng thử lại sau.", networkError: "Đã xảy ra lỗi mạng." },
+};
 
 interface Member {
   name: string;
@@ -25,9 +49,17 @@ interface FormData {
   message: string;
 }
 
-export default function ContactForm({ member }: { member?: Member | null }) {
+export default function ContactForm({
+  member,
+  locale = "ko",
+}: {
+  member?: Member | null;
+  locale?: LocaleCode;
+}) {
+  const labels = CATEGORY_LABELS[locale] ?? CATEGORY_LABELS.ko;
+  const ui = UI[locale] ?? UI.ko;
   const initialForm: FormData = {
-    category: CATEGORIES[0],
+    category: CATEGORY_VALUES[0],
     company: member?.company ?? "",
     name: member?.name ?? "",
     email: member?.email ?? "",
@@ -61,14 +93,14 @@ export default function ContactForm({ member }: { member?: Member | null }) {
       });
       const data = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok || !data.ok) {
-        setError(data.error ?? "전송에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+        setError(data.error ?? ui.sendFail);
         return;
       }
       setForm({ ...initialForm, subject: "", message: "" });
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 4000);
     } catch {
-      setError("네트워크 오류가 발생했습니다.");
+      setError(ui.networkError);
     } finally {
       setSubmitting(false);
     }
@@ -81,11 +113,11 @@ export default function ContactForm({ member }: { member?: Member | null }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label className={labelClass}>Category *</label>
+        <label className={labelClass}>{ui.category} *</label>
         <select name="category" value={form.category} onChange={handleChange} className={inputClass}>
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {c}
+          {CATEGORY_VALUES.map((value, i) => (
+            <option key={value} value={value}>
+              {labels[i]}
             </option>
           ))}
         </select>
@@ -175,7 +207,7 @@ export default function ContactForm({ member }: { member?: Member | null }) {
       </div>
 
       {submitted && (
-        <p className="text-sm text-green-600 font-medium">Message sent successfully. We&apos;ll be in touch soon.</p>
+        <p className="text-sm text-green-600 font-medium">{ui.success}</p>
       )}
       {error && <p className="text-sm text-red-600 font-medium">{error}</p>}
 
@@ -184,7 +216,7 @@ export default function ContactForm({ member }: { member?: Member | null }) {
         disabled={submitting}
         className="w-full sm:w-auto px-8 py-3 bg-(--brand) text-white text-sm font-semibold rounded hover:bg-[#0d2a5a] transition disabled:opacity-60"
       >
-        {submitting ? "Sending..." : "Send Message"}
+        {submitting ? ui.sending : ui.send}
       </button>
     </form>
   );

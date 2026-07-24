@@ -600,7 +600,7 @@ export default function AdminUsersClient({ currentUserId }: Props) {
                             onClick={cancelEdit}
                             className="rounded border border-gray-300 px-3 py-1 text-xs hover:bg-gray-50"
                           >
-                            취소
+                            {common(loc).cancel}
                           </button>
                         </div>
                       ) : (
@@ -610,7 +610,7 @@ export default function AdminUsersClient({ currentUserId }: Props) {
                             onClick={() => startEdit(u)}
                             className="rounded border border-gray-300 px-3 py-1 text-xs hover:bg-gray-50"
                           >
-                            수정
+                            {common(loc).edit}
                           </button>
                           <button
                             type="button"
@@ -618,7 +618,7 @@ export default function AdminUsersClient({ currentUserId }: Props) {
                             onClick={() => removeUser(u)}
                             className="rounded border border-red-300 text-red-600 px-3 py-1 text-xs hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            삭제
+                            {common(loc).delete}
                           </button>
                         </div>
                       )}
@@ -698,6 +698,7 @@ interface CreatePanelProps {
 }
 
 function CreateUserPanel({ onCreated, onCancel, onError }: CreatePanelProps) {
+  const t = common(useAdminLocale());
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
@@ -814,14 +815,14 @@ function CreateUserPanel({ onCreated, onCancel, onError }: CreatePanelProps) {
             onClick={onCancel}
             className="rounded-md border border-gray-300 text-sm px-4 py-2 hover:bg-gray-50"
           >
-            취소
+            {t.cancel}
           </button>
           <button
             type="submit"
             disabled={submitting}
             className="rounded-md bg-(--brand) text-white text-sm font-semibold px-5 py-2 hover:opacity-90 disabled:opacity-60"
           >
-            {submitting ? "추가 중..." : "추가"}
+            {submitting ? `${t.add}…` : t.add}
           </button>
         </div>
       </form>
