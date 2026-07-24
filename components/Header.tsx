@@ -90,6 +90,19 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
     return () => document.removeEventListener("keydown", onKey);
   }, [openMenu]);
 
+  // 언어 드롭다운: 바깥 클릭/ESC로 닫기 (버튼·메뉴는 stopPropagation 하므로 여기 오면 바깥).
+  useEffect(() => {
+    if (!langOpen) return;
+    const close = () => setLangOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
+    document.addEventListener("click", close);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("click", close);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [langOpen]);
+
   const isActive = (path: string) =>
     pathname === path || pathname.startsWith(path + "/");
 
