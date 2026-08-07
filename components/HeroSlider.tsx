@@ -10,15 +10,14 @@ const DEFAULT_LOCALE: LocaleCode = "ko";
 
 // 왼쪽 큰 글씨 5개는 서버(page.tsx)에서 슬러그별 제목을 채워 fixedCerts prop 으로 전달.
 
-// 오른쪽 국가 — 고정, 랜덤 없음. ISO 3166-1 alpha-3 공식 3글자 코드.
-const COUNTRIES = ["RUS", "KAZ", "IND", "VNM", "CHN"];
-
 interface HeroSliderProps {
   slides: HeroSlide[];
   locale: LocaleCode;
   tags?: HeroTag[];
   // 왼쪽 큰 글씨 5개 — 언어판 제목 + 슬러그. 서버에서 채워 전달.
   fixedCerts?: { title: string; slug: string }[];
+  // 오른쪽 줄 — certification 국가 목록. 서버에서 채워 전달.
+  countries?: { title: string; slug: string }[];
   feedbackUser?: FeedbackUser | null;
   // 우하단 상시 노출 소개 동영상(관리자에서 관리). 비어 있으면 자리표시자만 표시.
   heroVideo?: string;
@@ -29,7 +28,7 @@ function localized(path: string, locale: LocaleCode): string {
   return "/" + locale + path;
 }
 
-export default function HeroSlider({ slides, locale, tags = [], fixedCerts = [], feedbackUser = null, heroVideo = "" }: HeroSliderProps) {
+export default function HeroSlider({ slides, locale, tags = [], fixedCerts = [], countries = [], feedbackUser = null, heroVideo = "" }: HeroSliderProps) {
   const total = slides.length;
 
   const [current, setCurrent] = useState(0);
@@ -244,18 +243,19 @@ export default function HeroSlider({ slides, locale, tags = [], fixedCerts = [],
                   </div>
                 </div>
 
-                {/* 오른쪽 줄: 국가 — 고정 3글자 코드, 랜덤 없음. */}
+                {/* 오른쪽 줄: certification 국가 목록 — 각각 /certification/{slug} 로 이동. */}
                 <div className="flex flex-col items-end gap-4">
-                  {COUNTRIES.map((label, i) => (
-                    <span
-                      key={label}
-                      className="text-xl font-semibold text-white/90 leading-none whitespace-nowrap"
+                  {countries.map((c, i) => (
+                    <a
+                      key={c.slug}
+                      href={localized(`/certification/${c.slug}`, locale)}
+                      className="text-xl font-semibold text-white/90 leading-none whitespace-nowrap hover:text-white transition-colors"
                       style={{
                         animation: `tagFloat 0.6s cubic-bezier(.2,.7,.2,1) ${0.32 + i * 0.04}s both`,
                       }}
                     >
-                      {label}
-                    </span>
+                      {c.title}
+                    </a>
                   ))}
                 </div>
               </div>

@@ -326,7 +326,7 @@ export default function PostEditorClient({
               type="text"
               value={form.author}
               onChange={(e) => update({ author: e.target.value })}
-              placeholder="비우면 'CERINS Editorial' 표시"
+              placeholder="비우면 'CERINS' 표시"
               className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
             />
           </Field>

@@ -17,7 +17,7 @@ interface HeaderProps {
 
 const DEFAULT_LOCALE: LocaleCode = "ko";
 
-const LOGOS = ["/cerins-logo-color.jpg", "/cerins-logo-white.jpg"] as const;
+const LOGOS = ["/cerins_red.png", "/cerins_white.png"] as const;
 const LOGO_SWEEP_INTERVAL_MS = 10000;
 
 function buildLocalizedHref(target: LocaleCode, currentPathname: string, enabled: LocaleCode[]): string {

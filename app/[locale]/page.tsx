@@ -105,7 +105,20 @@ export default async function HomePage({ params }: Props) {
   return (
     <>
       <div className={snapFull}>
-        <HeroSlider slides={slides} locale={code} tags={heroTags} fixedCerts={fixedCerts} feedbackUser={feedbackUser} heroVideo={heroVideo} />
+        <HeroSlider
+          slides={slides}
+          locale={code}
+          tags={heroTags}
+          fixedCerts={fixedCerts}
+          // ponytail: 왼쪽 줄(5개)과 높이를 맞추려고 5개까지만.
+          countries={certCountries.slice(0, 5).map((c) => ({
+            // ponytail: 국가명만 남기려고 꼬리의 "인증/Certification"만 제거. 다른 언어는 제목 그대로.
+            title: c.title.replace(/\s*(인증|certification)\s*$/i, ""),
+            slug: c.slug,
+          }))}
+          feedbackUser={feedbackUser}
+          heroVideo={heroVideo}
+        />
       </div>
       <div className={snapFull}>
         <ServiceBento />

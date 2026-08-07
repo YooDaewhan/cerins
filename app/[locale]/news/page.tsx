@@ -47,7 +47,7 @@ export default async function NewsListPage({ params }: Props) {
     title: p.title,
     summary: p.summary,
     published_at: p.published_at,
-    author: p.author ?? "CERINS Editorial",
+    author: p.author ?? "CERINS",
   }));
 
   return (

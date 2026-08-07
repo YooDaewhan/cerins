@@ -345,7 +345,7 @@ export async function getPostAuthor(postId: number): Promise<string> {
     "SELECT author FROM posts WHERE id = ?",
     [postId],
   );
-  return (rows[0] as unknown as { author?: string })?.author ?? "CERINS Editorial";
+  return (rows[0] as unknown as { author?: string })?.author ?? "CERINS";
 }
 
 // ── Site-wide assets ───────────────────────────────────────────────────────
