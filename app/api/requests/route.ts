@@ -85,10 +85,8 @@ export async function POST(req: Request) {
     ["company_name", "회사명"], ["contact_name", "담당자 이름"],
     ["contact_phone", "연락처"], ["contact_email", "이메일"],
     ["title", "의뢰 제목"], ["description", "의뢰 내용"],
-    // 제품 정보는 TRCU/GOST 의뢰서에만 있는 항목.
-    ...(serviceType === "TRCU_GOST"
-      ? ([["product_name", "제품명"], ["hs_code", "HS코드"], ["product_use", "제품 용도"]] as const)
-      : []),
+    // 제품 정보는 TRCU/GOST 의뢰서에만 있는 항목. HS코드·용도는 선택 입력.
+    ...(serviceType === "TRCU_GOST" ? ([["product_name", "제품명"]] as const) : []),
   ];
   for (const [k, label] of required) {
     if (!input[k]) {

@@ -203,8 +203,8 @@ export const REQUEST_FILE_META: Record<
   RequestFileType,
   { label: string; required: boolean }
 > = {
-  MANUAL: { label: "메뉴얼", required: true },
-  DRAWING: { label: "도면", required: true },
+  MANUAL: { label: "메뉴얼", required: false },
+  DRAWING: { label: "도면", required: false },
   EXISTING_CERTIFICATE: { label: "기 발급 인증서", required: false },
   TEST_REPORT: { label: "테스트 리포트", required: false },
   AUTHORIZATION: { label: "권한위임계약서", required: false },
