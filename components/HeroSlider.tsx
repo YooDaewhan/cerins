@@ -35,6 +35,9 @@ export default function HeroSlider({ slides, locale, tags = [], fixedCerts = [],
   // 우측 하위요소(인증/검사 항목)를 마운트 후 클라이언트에서만 섞어 하이드레이션 불일치 방지.
   const [shownTags, setShownTags] = useState<HeroTag[]>(tags);
   const [progress, setProgress] = useState(0);
+  // 우하단 소개 동영상 클릭 시 확대 재생(소리 켜짐). 좌하단 버튼으로 음소거 토글.
+  const [expanded, setExpanded] = useState(false);
+  const [muted, setMuted] = useState(false);
   const rafRef = useRef<number | null>(null);
   const startRef = useRef<number>(0);
 
@@ -77,12 +80,14 @@ export default function HeroSlider({ slides, locale, tags = [], fixedCerts = [],
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") return setExpanded(false);
+      if (expanded) return;
       if (e.key === "ArrowLeft") prev();
       if (e.key === "ArrowRight") next();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [prev, next]);
+  }, [prev, next, expanded]);
 
   useEffect(() => {
     const a = [...tags];
@@ -261,26 +266,35 @@ export default function HeroSlider({ slides, locale, tags = [], fixedCerts = [],
               </div>
 
               {/* 상시 소개 동영상 — 우측. 관리자에서 링크/업로드로 관리. 없으면 검은 자리표시자. */}
-              <div
-                className="relative w-full min-w-[360px] ml-auto aspect-video rounded-xl bg-black border border-white/15 overflow-hidden"
+              <button
+                type="button"
+                onClick={() => heroVideo && (setMuted(false), setExpanded(true))}
+                className="group relative w-full min-w-[360px] ml-auto aspect-video rounded-xl bg-black border border-white/15 overflow-hidden cursor-pointer"
                 style={{
                   transform: "translateX(30%)",
                   animation: "tagFloat 0.6s cubic-bezier(.2,.7,.2,1) 0.4s both",
                 }}
-                aria-label="동영상 재생 영역"
+                aria-label="소개 동영상 확대 재생"
               >
                 {heroVideo && (
-                  <video
-                    src={heroVideo}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    preload="auto"
-                  />
+                  <>
+                    <video
+                      src={heroVideo}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      preload="auto"
+                    />
+                    <span className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors">
+                      <svg className="w-14 h-14 text-white/0 group-hover:text-white/90 transition-colors" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </span>
+                  </>
                 )}
-              </div>
+              </button>
             </div>
           </div>
         </div>
@@ -366,6 +380,48 @@ export default function HeroSlider({ slides, locale, tags = [], fixedCerts = [],
         <div className="w-px h-6 bg-white/30 animate-[scrollHint_1.8s_ease-in-out_infinite]" />
         Scroll
       </div>
+
+      {expanded && heroVideo && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
+          onClick={() => setExpanded(false)}
+        >
+          <video
+            src={heroVideo}
+            className="max-w-[92vw] max-h-[88vh]"
+            autoPlay
+            loop
+            playsInline
+            muted={muted}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            type="button"
+            onClick={(e) => (e.stopPropagation(), setMuted((m) => !m))}
+            aria-label={muted ? "소리 켜기" : "음소거"}
+            className="absolute bottom-6 left-6 w-11 h-11 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M4 9v6h4l5 5V4L8 9H4z" />
+              {muted ? (
+                <path d="M16 8l5 5m0-5l-5 5" stroke="currentColor" strokeWidth={2} strokeLinecap="round" fill="none" />
+              ) : (
+                <path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12" stroke="currentColor" strokeWidth={2} strokeLinecap="round" fill="none" />
+              )}
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={() => setExpanded(false)}
+            aria-label="닫기"
+            className="absolute top-5 right-5 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       <style>{`
         @keyframes slideUp {
