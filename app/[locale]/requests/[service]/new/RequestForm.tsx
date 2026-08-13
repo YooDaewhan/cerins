@@ -25,6 +25,9 @@ export default function RequestForm({
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState(defaults.contact_email);
   const [title, setTitle] = useState("");
+  const [productName, setProductName] = useState("");
+  const [hsCode, setHsCode] = useState("");
+  const [productUse, setProductUse] = useState("");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<Record<RequestFileType, File[]>>(
     () =>
@@ -60,6 +63,9 @@ export default function RequestForm({
       fd.set("contact_phone", phone);
       fd.set("contact_email", email);
       fd.set("title", title);
+      fd.set("product_name", productName);
+      fd.set("hs_code", hsCode);
+      fd.set("product_use", productUse);
       fd.set("description", description);
       for (const t of REQUEST_FILE_TYPES) {
         for (const f of files[t]) fd.append(`files_${t}`, f);
@@ -102,6 +108,15 @@ export default function RequestForm({
         <h2 className="text-sm font-bold text-gray-800">의뢰 내용</h2>
         <Field label="의뢰 제목" required>
           <input className={inputCls} value={title} onChange={(e) => setTitle(e.target.value)} required />
+        </Field>
+        <Field label="제품명" required>
+          <input className={inputCls} value={productName} onChange={(e) => setProductName(e.target.value)} required />
+        </Field>
+        <Field label="HS코드" required>
+          <input className={inputCls} value={hsCode} onChange={(e) => setHsCode(e.target.value)} required placeholder="예: 8501.10" />
+        </Field>
+        <Field label="제품 용도" required>
+          <input className={inputCls} value={productUse} onChange={(e) => setProductUse(e.target.value)} required />
         </Field>
         <Field label="의뢰 내용" required>
           <textarea className={`${inputCls} min-h-32`} value={description} onChange={(e) => setDescription(e.target.value)} required />

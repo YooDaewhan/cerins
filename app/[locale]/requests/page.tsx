@@ -45,6 +45,17 @@ export default async function RequestsIndexPage({ params }: Props) {
             <section key={cat} className="bg-white border border-gray-200 rounded-xl p-6">
               <h2 className="text-lg font-bold text-(--brand) mb-4">{CATEGORY_LABELS[cat]}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {CATEGORY_SERVICES[cat].length === 0 && (
+                  <div
+                    className="sm:col-span-2 flex items-center justify-between rounded-lg border border-dashed border-gray-200 bg-gray-50 px-5 py-4 cursor-not-allowed"
+                    title="온라인 의뢰 준비 중"
+                  >
+                    <span className="text-base font-semibold text-gray-400">
+                      {CATEGORY_LABELS[cat]} 서비스
+                    </span>
+                    <span className="text-xs font-semibold text-gray-400">준비 중</span>
+                  </div>
+                )}
                 {CATEGORY_SERVICES[cat].map((svc) => {
                   const implemented = IMPLEMENTED_SERVICE_TYPES.includes(svc);
                   const href = buildLocalizedPath(code, `/requests/${SERVICE_TYPE_SLUGS[svc]}/new`);
@@ -80,7 +91,7 @@ export default async function RequestsIndexPage({ params }: Props) {
         </div>
 
         <p className="text-xs text-gray-400 mt-6">
-          현재 TRCU / GOST · CEC India 인증과 제품검사 온라인 의뢰가 제공됩니다. 그 외 서비스는 순차적으로 오픈됩니다.
+          현재 인증 · 검사 서비스의 온라인 의뢰가 제공됩니다. 컨설팅 · 물류를 포함한 그 외 서비스는 순차적으로 오픈됩니다.
         </p>
       </div>
     </div>

@@ -13,12 +13,14 @@ import { isScrapStatus, scrapStatusLabel, scrapCustomerStatusLabel } from "@/src
 /* ------------------------------------------------------------------ */
 
 // 대분류. 새 분류 추가 시 여기 + CATEGORY_LABELS + SERVICE_TYPES 만 수정.
-export const CATEGORIES = ["CERTIFICATION", "INSPECTION"] as const;
+export const CATEGORIES = ["CERTIFICATION", "INSPECTION", "CONSULTING", "LOGISTICS"] as const;
 export type Category = (typeof CATEGORIES)[number];
 
 export const CATEGORY_LABELS: Record<Category, string> = {
   CERTIFICATION: "인증",
   INSPECTION: "검사",
+  CONSULTING: "컨설팅",
+  LOGISTICS: "물류",
 };
 
 // 세부 서비스 종류.
@@ -41,6 +43,9 @@ export const SERVICE_TYPE_LABELS: Record<ServiceType, string> = {
 export const CATEGORY_SERVICES: Record<Category, ServiceType[]> = {
   CERTIFICATION: ["TRCU_GOST", "CEC_INDIA"],
   INSPECTION: ["PRODUCT_INSPECTION", "SCRAP_INDIA"],
+  // 세부 서비스 미정 → /requests 에서 "준비 중" 으로만 노출(클릭 불가).
+  CONSULTING: [],
+  LOGISTICS: [],
 };
 
 // URL 슬러그(소문자, 하이픈) ↔ ServiceType 매핑. 라우팅에 사용.
@@ -54,6 +59,8 @@ export const SERVICE_TYPE_SLUGS: Record<ServiceType, string> = {
 export const CATEGORY_SLUGS: Record<Category, string> = {
   CERTIFICATION: "certification",
   INSPECTION: "inspection",
+  CONSULTING: "consulting",
+  LOGISTICS: "logistics",
 };
 
 // 이번 범위에서 프로세스가 완전히 구현된 서비스. 나머지는 "준비 중" 처리.
@@ -358,6 +365,10 @@ export interface ServiceRequest {
   contact_phone: string;
   contact_email: string;
   title: string;
+  // 제품 정보: TRCU/GOST 접수 시 필수, 타 서비스·과거 접수분은 null.
+  product_name: string | null;
+  hs_code: string | null;
+  product_use: string | null;
   description: string;
   workflow_step: number;
   status: RequestStatus;

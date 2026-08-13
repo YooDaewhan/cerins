@@ -76,14 +76,22 @@ export async function POST(req: Request) {
     contact_phone: str(form, "contact_phone"),
     contact_email: str(form, "contact_email"),
     title: str(form, "title"),
+    product_name: str(form, "product_name"),
+    hs_code: str(form, "hs_code"),
+    product_use: str(form, "product_use"),
     description: str(form, "description"),
   };
-  for (const [k, label] of [
+  const required: ReadonlyArray<readonly [keyof typeof input, string]> = [
     ["company_name", "회사명"], ["contact_name", "담당자 이름"],
     ["contact_phone", "연락처"], ["contact_email", "이메일"],
     ["title", "의뢰 제목"], ["description", "의뢰 내용"],
-  ] as const) {
-    if (!input[k as keyof typeof input]) {
+    // 제품 정보는 TRCU/GOST 의뢰서에만 있는 항목.
+    ...(serviceType === "TRCU_GOST"
+      ? ([["product_name", "제품명"], ["hs_code", "HS코드"], ["product_use", "제품 용도"]] as const)
+      : []),
+  ];
+  for (const [k, label] of required) {
+    if (!input[k]) {
       return NextResponse.json({ error: `${label}은(는) 필수입니다.` }, { status: 400 });
     }
   }

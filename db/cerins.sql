@@ -903,7 +903,8 @@ INSERT INTO menus (id, parent_id, page_id, url, mega_image_url, sort_order, is_v
   (100, NULL, 2, NULL, 'https://images.unsplash.com/photo-1494412574643-ff11b0a5c1c3?w=1400&q=80&auto=format&fit=crop', 10, 1, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
   (200, NULL, 3, NULL, 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1400&q=80&auto=format&fit=crop', 20, 1, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
   (300, NULL, 4, NULL, 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?w=1400&q=80&auto=format&fit=crop', 30, 1, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
-  (400, NULL, 5, NULL, NULL, 40, 1, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
+  -- '문의' 탭 → 서비스 의뢰(/requests). 문의 폼(/contact)은 FAQ 목록에서 진입.
+  (400, NULL, NULL, '/requests', NULL, 40, 1, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
   (500, NULL, 6, NULL, NULL, 50, 1, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
   (600, NULL, 7, NULL, NULL, 60, 1, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
 
@@ -1379,6 +1380,10 @@ CREATE TABLE service_requests (
   contact_phone    VARCHAR(60)  NOT NULL,
   contact_email    VARCHAR(190) NOT NULL,
   title            VARCHAR(255) NOT NULL,
+  -- 제품 정보(TRCU/GOST 접수 시 필수. 타 서비스는 NULL)
+  product_name     VARCHAR(255) NULL,
+  hs_code          VARCHAR(64)  NULL,
+  product_use      VARCHAR(255) NULL,
   description      TEXT         NOT NULL,
   workflow_step    INT          NOT NULL DEFAULT 0,
   status           VARCHAR(48)  NOT NULL DEFAULT 'REQUESTED',

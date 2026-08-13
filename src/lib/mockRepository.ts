@@ -284,7 +284,8 @@ export async function getMenus(locale: LocaleCode): Promise<MenuNode[]> {
   }
 
   const getHref = (menu: Menu): string => {
-    if (menu.url) return menu.url;
+    // 내부 경로(/로 시작)는 로케일 프리픽스를 붙인다. 외부 링크(http…)는 그대로.
+    if (menu.url) return menu.url.startsWith("/") ? buildLocalizedPathImpl(locale, menu.url) : menu.url;
     if (menu.page_id !== null) {
       const page = pageMap.get(menu.page_id);
       if (page) {

@@ -226,6 +226,9 @@ export default function RequestDetailView({ bundle }: Props) {
             />
           )}
           {r.completed_at && <Info label="완료일" value={r.completed_at} />}
+          {r.product_name && <Info label="제품명" value={r.product_name} />}
+          {r.hs_code && <Info label="HS코드" value={r.hs_code} />}
+          {r.product_use && <Info label="제품 용도" value={r.product_use} />}
         </dl>
         <div className="mt-4 pt-4 border-t border-gray-100">
           <p className="text-xs font-semibold text-gray-500 mb-1">의뢰 내용</p>

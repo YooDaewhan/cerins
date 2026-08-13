@@ -8,6 +8,17 @@ import type { LocaleCode } from "@/src/lib/types";
 const DEFAULT_LOCALE: LocaleCode = "ko";
 const PER_PAGE = 5;
 
+// 찾는 답이 없을 때 /contact 문의 폼으로. (상단 '문의' 탭은 서비스 의뢰로 감)
+const CONTACT_LABEL: Record<LocaleCode, string> = {
+  ko: "문의하기",
+  en: "Contact us",
+  ja: "お問い合わせ",
+  zh: "联系我们",
+  ru: "Связаться с нами",
+  kk: "Бізбен байланысыңыз",
+  vi: "Liên hệ với chúng tôi",
+};
+
 export interface FaqListRow {
   id: number;
   slug: string;
@@ -39,9 +50,17 @@ export default function FaqListClient({ rows, locale }: FaqListClientProps) {
         <p className="text-sm text-gray-500">
           Total <span className="font-semibold text-(--brand)">{rows.length}</span> questions
         </p>
-        <p className="text-sm text-gray-400">
-          Page {page} of {totalPages}
-        </p>
+        <div className="flex items-center gap-4">
+          <Link
+            href={localized("/contact", locale)}
+            className="text-sm font-semibold text-(--brand) hover:underline"
+          >
+            {CONTACT_LABEL[locale]} →
+          </Link>
+          <p className="text-sm text-gray-400">
+            Page {page} of {totalPages}
+          </p>
+        </div>
       </div>
 
       <div className="border border-gray-200 rounded-lg overflow-hidden">
