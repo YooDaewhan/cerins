@@ -6,7 +6,8 @@
     "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start",
-    "test": "node --import tsx --test tests/**/*.test.ts"
+    "test": "node --import tsx --test tests/**/*.test.ts",
+    "postinstall": "node scripts/sync-pdfjs.mjs"
   },
   "dependencies": {
     "@tiptap/extension-image": "^3.27.0",
@@ -23,6 +24,7 @@
     "mysql2": "^3.22.5",
     "next": "16.2.9",
     "nodemailer": "^9.0.3",
+    "pdfjs-dist": "^6.2.108",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "sanitize-html": "^2.17.5",

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
 import LocationMap from "@/components/LocationMap";
+import BrochureFlipbook from "@/components/BrochureFlipbook";
 import {
   buildLocalizedPath,
   getAlternateUrls,
@@ -110,6 +111,8 @@ export default async function AboutDetailPage({ params }: Props) {
                 dangerouslySetInnerHTML={{ __html: page.translation.content }}
               />
             )}
+
+            {slug === "about-cerins" && <BrochureFlipbook locale={code} />}
 
             <div className="mt-14 pt-6 border-t border-gray-100 flex items-center justify-between">
               <Link href={buildLocalizedPath(code, "/about")} className="text-sm text-gray-400 hover:text-(--brand) transition flex items-center gap-1">
