@@ -167,6 +167,10 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                 const active = isActive(item.href);
                 // 마우스가 올라간 항목이 있으면 그 항목만, 없으면 활성/열린 항목만 배경 표시 → 배경은 항상 한 개.
                 const filled = hovered ? hovered === item.label : isOpen || active;
+                // 현재 페이지/열린 메뉴는 브랜드 레드, 단순 호버는 #B0AE96
+                const brandFill = isOpen || active;
+                const fillBg = brandFill ? "var(--brand)" : "#B0AE96";
+                const fillText = brandFill ? "text-white" : "text-[#33322a]";
                 const divider = idx > 0 ? (
                   <span key={`divider-${item.id}`} className="w-px h-5 bg-black" aria-hidden />
                 ) : null;
@@ -179,13 +183,14 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                         href={item.href}
                         onMouseEnter={() => setHovered(item.label)}
                         className={`group relative overflow-hidden whitespace-nowrap px-6 py-6 text-base font-bold tracking-wider uppercase transition-colors duration-300 ${
-                          filled ? "text-white" : "text-gray-700"
+                          filled ? fillText : "text-gray-700"
                         }`}
                         onClick={() => setOpenMenu(null)}
                       >
                         {/* 왼쪽에서 오른쪽으로 채워지는 배경 */}
                         <span
-                          className={`pointer-events-none absolute inset-0 bg-(--brand) origin-left transition-transform duration-300 ease-out ${
+                          style={{ backgroundColor: fillBg }}
+                          className={`pointer-events-none absolute inset-0 origin-left transition-transform duration-300 ease-out ${
                             filled ? "scale-x-100" : "scale-x-0"
                           }`}
                         />
@@ -213,12 +218,13 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                         if (openMenu) setOpenMenu(item.label);
                       }}
                       className={`group relative overflow-hidden whitespace-nowrap px-6 py-6 text-base font-bold tracking-wider uppercase transition-colors duration-300 ${
-                        filled ? "text-white" : "text-gray-700"
+                        filled ? fillText : "text-gray-700"
                       }`}
                     >
                       {/* 왼쪽에서 오른쪽으로 채워지는 배경 */}
                       <span
-                        className={`pointer-events-none absolute inset-0 bg-(--brand) origin-left transition-transform duration-300 ease-out ${
+                        style={{ backgroundColor: fillBg }}
+                        className={`pointer-events-none absolute inset-0 origin-left transition-transform duration-300 ease-out ${
                           filled ? "scale-x-100" : "scale-x-0"
                         }`}
                       />

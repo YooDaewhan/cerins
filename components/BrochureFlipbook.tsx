@@ -197,6 +197,8 @@ function Viewer({
   const pageCls = "absolute inset-0 w-full h-full object-contain bg-white";
   // 슬라이드가 16:9라 펼치면 32:9 — 비율 고정이므로 폭 상한을 낮춰야 전체가 작아진다.
   const bookWidth = `min(92vw, 1180px, calc(70vh * ${(aspect * 2).toFixed(3)}))`;
+  const canPrev = start > 1;
+  const canNext = total > 0 && start + 2 <= total;
 
   return (
     <div className="fixed inset-0 z-[120] bg-black/80 flex flex-col items-center justify-center p-4" onClick={onClose}>
@@ -231,13 +233,30 @@ function Viewer({
         <div className="relative bg-white shadow-2xl" style={{ aspectRatio: aspect * 2 }}>
           {base ? (
             <>
-              <div className="absolute left-0 top-0 h-full w-1/2 overflow-hidden bg-white">
+              {/* 쪽을 직접 눌러 넘긴다 — 왼쪽 쪽은 이전, 오른쪽 쪽은 다음 */}
+              <div
+                role="button"
+                tabIndex={-1}
+                aria-label="prev"
+                onClick={() => void go("prev")}
+                className={`absolute left-0 top-0 h-full w-1/2 overflow-hidden bg-white ${
+                  canPrev ? "cursor-pointer" : "cursor-default"
+                }`}
+              >
                 {base.left && (
                   /* eslint-disable-next-line @next/next/no-img-element */
                   <img src={base.left} alt={`page ${start}`} className={pageCls} />
                 )}
               </div>
-              <div className="absolute right-0 top-0 h-full w-1/2 overflow-hidden bg-white">
+              <div
+                role="button"
+                tabIndex={-1}
+                aria-label="next"
+                onClick={() => void go("next")}
+                className={`absolute right-0 top-0 h-full w-1/2 overflow-hidden bg-white ${
+                  canNext ? "cursor-pointer" : "cursor-default"
+                }`}
+              >
                 {base.right && (
                   /* eslint-disable-next-line @next/next/no-img-element */
                   <img src={base.right} alt={`page ${start + 1}`} className={pageCls} />
@@ -252,7 +271,7 @@ function Viewer({
 
           {flip && (
             <div
-              className="absolute right-0 top-0 h-full w-1/2 shadow-2xl"
+              className="pointer-events-none absolute right-0 top-0 h-full w-1/2 shadow-2xl"
               style={{
                 transformOrigin: "left center",
                 transformStyle: "preserve-3d",
@@ -276,28 +295,6 @@ function Viewer({
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={() => void go("prev")}
-          disabled={start <= 1}
-          aria-label="prev"
-          className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 sm:-translate-x-[140%] w-11 h-11 rounded-full bg-white/90 text-(--brand) shadow flex items-center justify-center disabled:opacity-30 hover:bg-white transition"
-        >
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <button
-          type="button"
-          onClick={() => void go("next")}
-          disabled={total > 0 && start + 2 > total}
-          aria-label="next"
-          className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 sm:translate-x-[140%] w-11 h-11 rounded-full bg-white/90 text-(--brand) shadow flex items-center justify-center disabled:opacity-30 hover:bg-white transition"
-        >
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
       </div>
 
       <div className="mt-3 text-white/70 text-sm tabular-nums" onClick={(e) => e.stopPropagation()}>
