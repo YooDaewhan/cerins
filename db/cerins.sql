@@ -1015,6 +1015,8 @@ CREATE TABLE posts (
   is_published TINYINT(1)   NOT NULL DEFAULT 1,
   is_popup     TINYINT(1)   NOT NULL DEFAULT 0,
   popup_type   TINYINT      NOT NULL DEFAULT 1,
+  popup_start  DATE         NULL,
+  popup_end    DATE         NULL,
   published_at DATE         NOT NULL,
   created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

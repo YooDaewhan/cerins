@@ -188,25 +188,6 @@ export default function HeroSlider({ slides, locale, tags = [], fixedCerts = [],
               }}
             >
               <a
-                href={localized("/requests", locale)}
-                className="group inline-flex items-center gap-2 px-7 py-3.5 bg-(--brand) text-white text-sm font-semibold rounded-full hover:bg-(--brand-dark) transition-all duration-300 shadow-[0_8px_24px_rgba(180,18,58,0.35)] hover:shadow-[0_12px_28px_rgba(180,18,58,0.45)] hover:-translate-y-0.5"
-              >
-                Get a Quote
-                <svg
-                  className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </a>
-              <a
                 href={localized("/certification", locale)}
                 className="inline-flex items-center gap-2 px-7 py-3.5 border border-white/50 text-white text-sm font-semibold rounded-full hover:bg-white hover:text-(--brand) hover:border-white transition-all duration-300"
               >

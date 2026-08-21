@@ -107,6 +107,9 @@ export interface Post {
   // 사이트 진입 팝업 노출 여부 + 팝업 레이아웃 타입(1~3).
   is_popup: boolean;
   popup_type: number;
+  // 팝업 노출기간(YYYY-MM-DD). null = 제한 없음.
+  popup_start: string | null;
+  popup_end: string | null;
   published_at: string;
   created_at: string;
   updated_at: string;

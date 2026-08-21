@@ -318,12 +318,13 @@ export async function getPosts(boardCode: string, locale: LocaleCode): Promise<P
 }
 
 // 사이트 진입 팝업으로 지정된(공개 + 팝업 체크) 뉴스. 최신순.
+// 노출기간(popup_start~popup_end)은 비워두면 해당 방향 제한 없음. 서버 날짜 기준.
 export async function getPopupPosts(
   boardCode: string,
   locale: LocaleCode,
 ): Promise<Post[]> {
   const [rows] = await getPool().query<RowDataPacket[]>(
-    "SELECT * FROM posts WHERE board_code = ? AND locale = ? AND is_published = 1 AND is_popup = 1 ORDER BY published_at DESC, id DESC",
+    "SELECT * FROM posts WHERE board_code = ? AND locale = ? AND is_published = 1 AND is_popup = 1 AND (popup_start IS NULL OR popup_start <= CURDATE()) AND (popup_end IS NULL OR popup_end >= CURDATE()) ORDER BY published_at DESC, id DESC",
     [boardCode, locale],
   );
   return rows as unknown as Post[];

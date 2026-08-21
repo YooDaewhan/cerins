@@ -19,6 +19,8 @@ interface FormState {
   is_published: boolean;
   is_popup: boolean;
   popup_type: number;
+  popup_start: string;
+  popup_end: string;
   published_at: string;
 }
 
@@ -32,6 +34,8 @@ function emptyForm(): FormState {
     is_published: true,
     is_popup: false,
     popup_type: 1,
+    popup_start: "",
+    popup_end: "",
     published_at: todayIso(),
   };
 }
@@ -53,6 +57,8 @@ interface InitialTranslation {
   is_published: boolean;
   is_popup?: boolean;
   popup_type?: number;
+  popup_start?: string | null;
+  popup_end?: string | null;
   published_at: string;
 }
 
@@ -101,6 +107,8 @@ export default function PostEditorClient({
         is_published: t.is_published,
         is_popup: t.is_popup ?? false,
         popup_type: t.popup_type ?? 1,
+        popup_start: t.popup_start ?? "",
+        popup_end: t.popup_end ?? "",
         published_at: t.published_at,
       };
     }
@@ -386,10 +394,31 @@ export default function PostEditorClient({
                 )}
               </div>
               {form.is_popup && (
-                <p className="text-[11px] text-gray-400 mt-1">
-                  사이트 진입 시 왼쪽에 팝업으로 노출됩니다. 타입 1=컬러 헤더,
-                  2=이미지 히어로, 3=사이드 강조.
-                </p>
+                <>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                    <span className="text-xs text-gray-600">노출기간</span>
+                    <input
+                      type="date"
+                      value={form.popup_start}
+                      max={form.popup_end || undefined}
+                      onChange={(e) => update({ popup_start: e.target.value })}
+                      className="rounded border border-gray-300 px-2 py-1 text-sm"
+                    />
+                    <span className="text-gray-400">~</span>
+                    <input
+                      type="date"
+                      value={form.popup_end}
+                      min={form.popup_start || undefined}
+                      onChange={(e) => update({ popup_end: e.target.value })}
+                      className="rounded border border-gray-300 px-2 py-1 text-sm"
+                    />
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    사이트 진입 시 왼쪽에 팝업으로 노출됩니다. 타입 1=컬러 헤더,
+                    2=이미지 히어로, 3=사이드 강조. 노출기간은 비워두면 제한
+                    없음(시작·종료일 포함).
+                  </p>
+                </>
               )}
             </Field>
           )}
@@ -461,6 +490,8 @@ function serialize(f: FormState) {
     is_published: f.is_published,
     is_popup: f.is_popup,
     popup_type: f.popup_type,
+    popup_start: f.popup_start || null,
+    popup_end: f.popup_end || null,
     published_at: f.published_at,
   };
 }
