@@ -29,7 +29,7 @@ export default async function RequestsIndexPage({ params }: Props) {
 
   return (
     <div className="min-h-[calc(100vh-8rem)] bg-gray-50 px-4 py-12">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <header className="mb-8">
           <p className="text-xs font-semibold tracking-widest text-(--brand) uppercase mb-2">
             Service Request
@@ -40,7 +40,7 @@ export default async function RequestsIndexPage({ params }: Props) {
           </p>
         </header>
 
-        <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {(CATEGORIES as readonly Category[]).map((cat) => (
             <section key={cat} className="bg-white border border-gray-200 rounded-xl p-6">
               <h2 className="text-lg font-bold text-(--brand) mb-4">{CATEGORY_LABELS[cat]}</h2>
