@@ -1,5 +1,6 @@
 import locationsData from "@/data/locations.json";
 import LocationGallery from "@/components/LocationGallery";
+import DeferredMapFrame from "@/components/DeferredMapFrame";
 import type { LocaleCode } from "@/src/lib/types";
 
 interface MapLocation {
@@ -36,14 +37,17 @@ const LABELS: Record<LocaleCode, string[]> = {
   vi: ["Trụ sở chính · Seoul, Hàn Quốc", "Moscow, Nga", "Almaty, Kazakhstan", "Gujarat, Ấn Độ", "TP. Hồ Chí Minh, Việt Nam", "Thượng Hải, Trung Quốc", "Tashkent, Uzbekistan"],
 };
 
-const CAPTIONS: Record<LocaleCode, { tel: string; email: string; photo: string }> = {
-  ko: { tel: "전화", email: "이메일", photo: "사진" },
-  en: { tel: "Tel.", email: "Email", photo: "Photo" },
-  ja: { tel: "電話", email: "メール", photo: "写真" },
-  zh: { tel: "电话", email: "邮箱", photo: "照片" },
-  ru: { tel: "Тел.", email: "Эл. почта", photo: "Фото" },
-  kk: { tel: "Тел.", email: "Email", photo: "Сурет" },
-  vi: { tel: "ĐT.", email: "Email", photo: "Ảnh" },
+const CAPTIONS: Record<
+  LocaleCode,
+  { tel: string; email: string; photo: string; showMap: string }
+> = {
+  ko: { tel: "전화", email: "이메일", photo: "사진", showMap: "지도 보기" },
+  en: { tel: "Tel.", email: "Email", photo: "Photo", showMap: "Show map" },
+  ja: { tel: "電話", email: "メール", photo: "写真", showMap: "地図を表示" },
+  zh: { tel: "电话", email: "邮箱", photo: "照片", showMap: "显示地图" },
+  ru: { tel: "Тел.", email: "Эл. почта", photo: "Фото", showMap: "Показать карту" },
+  kk: { tel: "Тел.", email: "Email", photo: "Сурет", showMap: "Картаны көрсету" },
+  vi: { tel: "ĐT.", email: "Email", photo: "Ảnh", showMap: "Xem bản đồ" },
 };
 
 function embedUrl(loc: MapLocation) {
@@ -86,14 +90,22 @@ export default function LocationMap({ locale }: { locale: LocaleCode }) {
 
           <div className="pl-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="rounded-xl overflow-hidden border border-gray-300 shadow-md">
-              <iframe
-                src={embedUrl(loc)}
-                title={`Map — ${loc.label}`}
-                className="w-full h-80 border-0"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                allowFullScreen
-              />
+              {loc.mapProvider === "baidu" ? (
+                <DeferredMapFrame
+                  src={embedUrl(loc)}
+                  title={`Map — ${loc.label}`}
+                  label={cap.showMap}
+                />
+              ) : (
+                <iframe
+                  src={embedUrl(loc)}
+                  title={`Map — ${loc.label}`}
+                  className="w-full h-80 border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
+              )}
             </div>
             {loc.images && loc.images.length > 0 ? (
               <LocationGallery images={loc.images} alt={loc.label} />

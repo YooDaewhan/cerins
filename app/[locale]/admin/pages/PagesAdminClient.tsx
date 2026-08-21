@@ -42,7 +42,7 @@ const TEMPLATE_DESCRIPTIONS: Record<Template, string> = {
   services: "/services/{slug}",
   news_list: "/news (게시판 인덱스)",
   contact: "/contact",
-  simple: "(미연결 — 라우트 별도 필요)",
+  simple: "/{slug} (상위 없는 독립 페이지)",
 };
 
 const TEMPLATE_LABELS: Record<Template, string> = {
@@ -53,7 +53,7 @@ const TEMPLATE_LABELS: Record<Template, string> = {
   services: "서비스",
   news_list: "뉴스 인덱스",
   contact: "문의",
-  simple: "단순",
+  simple: "독립",
 };
 
 export default function PagesAdminClient({
