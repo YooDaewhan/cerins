@@ -23,6 +23,8 @@ export default function SignupForm({ loginHref, redirectTo, countries }: Props) 
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
+  const [companyPhone, setCompanyPhone] = useState("");
+  const [companyAddress, setCompanyAddress] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [country, setCountry] = useState("");
   const [emailConsent, setEmailConsent] = useState(false);
@@ -123,6 +125,8 @@ export default function SignupForm({ loginHref, redirectTo, countries }: Props) 
           password,
           email,
           company,
+          company_phone: companyPhone,
+          company_address: companyAddress,
           job_title: jobTitle,
           country,
           email_consent: emailConsent,
@@ -287,6 +291,25 @@ export default function SignupForm({ loginHref, redirectTo, countries }: Props) 
         value={company}
         onChange={setCompany}
         autoComplete="organization"
+        required
+      />
+      <Field
+        id="company_phone"
+        label="회사 전화번호"
+        type="tel"
+        value={companyPhone}
+        onChange={setCompanyPhone}
+        placeholder="02-0000-0000"
+        autoComplete="tel"
+        required
+      />
+      <Field
+        id="company_address"
+        label="회사 주소"
+        type="text"
+        value={companyAddress}
+        onChange={setCompanyAddress}
+        autoComplete="street-address"
         required
       />
       <Field

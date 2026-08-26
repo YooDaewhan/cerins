@@ -49,6 +49,7 @@ interface PageTranslation {
   title: string;
   subtitle: string | null;
   hero_image: string | null;
+  side_image: string | null;
   content: string;
   meta_title: string;
   meta_description: string;
@@ -66,6 +67,7 @@ function emptyTranslation(locale: string): PageTranslation {
     title: "",
     subtitle: null,
     hero_image: null,
+    side_image: null,
     content: "",
     meta_title: "",
     meta_description: "",
@@ -247,6 +249,7 @@ export default function PageEditorClient({
             title: draft.title,
             subtitle: draft.subtitle,
             hero_image: draft.hero_image,
+            side_image: draft.side_image,
             content: draft.content,
             meta_title: draft.meta_title,
             meta_description: draft.meta_description,
@@ -607,6 +610,14 @@ export default function PageEditorClient({
                 onChange={(v) => patchDraft({ hero_image: v || null })}
                 accept="image/*"
                 helpText="이미지 업로드 또는 외부 URL. 비우면 사이트 기본 히어로 이미지가 사용됩니다."
+              />
+            </Field>
+            <Field label="본문 오른쪽 사진">
+              <MediaInput
+                url={draft.side_image ?? ""}
+                onChange={(v) => patchDraft({ side_image: v || null })}
+                accept="image/*"
+                helpText="회사소개 상세 본문 오른쪽에 붙는 사진. 비우면 본문이 전체 폭을 씁니다."
               />
             </Field>
             <Field label="메타 제목 (Meta Title)">

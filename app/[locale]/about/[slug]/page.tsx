@@ -105,6 +105,20 @@ export default async function AboutDetailPage({ params }: Props) {
           <div className="flex-1 min-w-0">
             {slug === "location" ? (
               <LocationMap locale={code} />
+            ) : page.translation.side_image ? (
+              // 사진이 있을 때만 본문 폭을 줄이고 오른쪽에 붙인다.
+              <div className="flex flex-col md:flex-row gap-8 items-start">
+                <div
+                  className="post-content text-gray-600 flex-1 min-w-0"
+                  dangerouslySetInnerHTML={{ __html: page.translation.content }}
+                />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={page.translation.side_image}
+                  alt={page.translation.title}
+                  className="md:w-72 lg:w-80 w-full flex-shrink-0 rounded-lg object-cover"
+                />
+              </div>
             ) : (
               <div
                 className="post-content text-gray-600"

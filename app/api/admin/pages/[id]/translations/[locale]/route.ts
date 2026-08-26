@@ -8,6 +8,7 @@ interface PutBody {
   title?: string;
   subtitle?: string | null;
   hero_image?: string | null;
+  side_image?: string | null;
   content?: unknown;
   meta_title?: string;
   meta_description?: string;
@@ -79,6 +80,7 @@ export async function PUT(req: Request, ctx: RouteContext) {
   }
   const subtitle = normalizeNullableString(body.subtitle);
   const hero_image = normalizeNullableString(body.hero_image);
+  const side_image = normalizeNullableString(body.side_image);
   const meta_title = (body.meta_title ?? "").trim() || title;
   const meta_description = (body.meta_description ?? "").trim();
   const meta_keywords = normalizeKeywords(body.meta_keywords);
@@ -109,13 +111,14 @@ export async function PUT(req: Request, ctx: RouteContext) {
     if (existing.length > 0) {
       await conn.execute(
         `UPDATE page_translations
-            SET title = ?, subtitle = ?, hero_image = ?, content = ?,
+            SET title = ?, subtitle = ?, hero_image = ?, side_image = ?, content = ?,
                 meta_title = ?, meta_description = ?, meta_keywords = ?
           WHERE page_id = ? AND locale = ?`,
         [
           title,
           subtitle,
           hero_image,
+          side_image,
           JSON.stringify(content),
           meta_title,
           meta_description,
@@ -131,8 +134,8 @@ export async function PUT(req: Request, ctx: RouteContext) {
       const newId = Number((maxRow[0] as { next_id: number }).next_id);
       await conn.execute(
         `INSERT INTO page_translations
-           (id, page_id, locale, title, subtitle, hero_image, content, meta_title, meta_description, meta_keywords)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           (id, page_id, locale, title, subtitle, hero_image, side_image, content, meta_title, meta_description, meta_keywords)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           newId,
           id,
@@ -140,6 +143,7 @@ export async function PUT(req: Request, ctx: RouteContext) {
           title,
           subtitle,
           hero_image,
+          side_image,
           JSON.stringify(content),
           meta_title,
           meta_description,

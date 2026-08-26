@@ -5,15 +5,15 @@ import { useState } from "react";
 import type { LocaleCode } from "@/src/lib/types";
 
 // 저장값은 항상 한글(canonical) — 관리자에서 한글로 보이게. 표시만 로케일별로 바꾼다.
-const CATEGORY_VALUES = ["불편 접수", "추가 요청사항", "기타"] as const;
+const CATEGORY_VALUES = ["요청사항", "불편 접수", "기타"] as const;
 const CATEGORY_LABELS: Record<LocaleCode, string[]> = {
-  ko: ["불편 접수", "추가 요청사항", "기타"],
-  en: ["Complaint", "Additional request", "Other"],
-  ja: ["不具合の申告", "追加のご要望", "その他"],
-  zh: ["问题反馈", "补充需求", "其他"],
-  ru: ["Жалоба", "Дополнительный запрос", "Другое"],
-  kk: ["Шағым", "Қосымша сұраныс", "Басқа"],
-  vi: ["Phản ánh sự cố", "Yêu cầu bổ sung", "Khác"],
+  ko: ["요청사항", "불편 접수", "기타"],
+  en: ["Request", "Complaint", "Other"],
+  ja: ["ご要望", "不具合の申告", "その他"],
+  zh: ["需求", "问题反馈", "其他"],
+  ru: ["Запрос", "Жалоба", "Другое"],
+  kk: ["Сұраныс", "Шағым", "Басқа"],
+  vi: ["Yêu cầu", "Phản ánh sự cố", "Khác"],
 };
 
 const UI: Record<LocaleCode, {
@@ -168,10 +168,11 @@ export default function ContactForm({
           />
         </div>
         <div>
-          <label className={labelClass}>Phone</label>
+          <label className={labelClass}>Phone *</label>
           <input
             type="tel"
             name="phone"
+            required
             value={form.phone}
             onChange={handleChange}
             placeholder="+82-2-1234-5678"

@@ -41,6 +41,7 @@ interface TransRow extends RowDataPacket {
   title: string;
   subtitle: string | null;
   hero_image: string | null;
+  side_image: string | null;
   content: string | PageContentBlock[];
   meta_title: string;
   meta_description: string;
@@ -116,6 +117,7 @@ export async function GET(_req: Request, ctx: RouteContext) {
       title: t.title,
       subtitle: t.subtitle,
       hero_image: t.hero_image,
+      side_image: t.side_image,
       content: normalizeContent(t.content),
       meta_title: t.meta_title,
       meta_description: t.meta_description,

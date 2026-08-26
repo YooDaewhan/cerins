@@ -15,7 +15,8 @@ interface InquiryBody {
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const CATEGORIES = ["불편 접수", "추가 요청사항", "기타"];
+// "추가 요청사항" 은 구 데이터 호환용으로만 남긴다(신규 접수는 "요청사항").
+const CATEGORIES = ["요청사항", "불편 접수", "추가 요청사항", "기타"];
 
 function clip(v: unknown, max: number): string | null {
   if (typeof v !== "string") return null;
@@ -42,9 +43,9 @@ export async function POST(req: Request) {
   const rawCategory = clip(body.category, 40);
   const category = rawCategory && CATEGORIES.includes(rawCategory) ? rawCategory : "기타";
 
-  if (!name || !email || !subject || !message) {
+  if (!name || !email || !phone || !subject || !message) {
     return NextResponse.json(
-      { error: "이름, 이메일, 제목, 메시지는 필수입니다." },
+      { error: "이름, 이메일, 전화번호, 제목, 메시지는 필수입니다." },
       { status: 400 },
     );
   }

@@ -196,7 +196,7 @@ function Viewer({
 
   const pageCls = "absolute inset-0 w-full h-full object-contain bg-white";
   // 슬라이드가 16:9라 펼치면 32:9 — 비율 고정이므로 폭 상한을 낮춰야 전체가 작아진다.
-  const bookWidth = `min(92vw, 1180px, calc(70vh * ${(aspect * 2).toFixed(3)}))`;
+  const bookWidth = `min(96vw, 1480px, calc(82vh * ${(aspect * 2).toFixed(3)}))`;
   const canPrev = start > 1;
   const canNext = total > 0 && start + 2 <= total;
 

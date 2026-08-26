@@ -61,6 +61,8 @@ export interface PageTranslation {
   title: string;
   subtitle?: string;
   hero_image?: string;
+  // 본문 오른쪽 열에 붙는 사진. 비우면 본문이 전체 폭을 쓴다.
+  side_image?: string | null;
   // MySQL: JSON column. HTML 문자열(포스트 본문과 동일). 구 데이터는 읽을 때 변환.
   content: string;
   meta_title: string;
@@ -189,6 +191,9 @@ export interface User {
   login_id: string;
   email: string;
   company: string | null;
+  // 2026-08-26 이후 가입자는 필수. 그 이전 가입자는 NULL 일 수 있다.
+  company_phone: string | null;
+  company_address: string | null;
   job_title: string | null;
   country: string | null;
   email_consent: boolean;

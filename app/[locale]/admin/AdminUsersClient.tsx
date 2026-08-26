@@ -141,6 +141,8 @@ export default function AdminUsersClient({ currentUserId }: Props) {
           u.login_id,
           u.email,
           u.company ?? "",
+          u.company_phone ?? "",
+          u.company_address ?? "",
           u.job_title ?? "",
           u.country ?? "",
           countryLabel(u.country),
