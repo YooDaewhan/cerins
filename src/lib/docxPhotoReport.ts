@@ -192,10 +192,14 @@ function buildPhotoSection(
   for (let i = 0; i < images.length; i += cols) {
     const chunk: MaybeImage[] = images.slice(i, i + cols);
     while (chunk.length < cols) chunk.push(null);
-    // cantSplit: 사진과 캡션이 페이지 경계에서 잘리지 않게 한 행을 통째로 넘긴다.
+    // 사진 행과 캡션 행을 나눠야 그 사이에 표 선이 그어진다.
+    // cantSplit + 사진 문단의 keepNext 로 둘이 페이지 경계에서 떨어지지 않게 묶는다.
     tableRows.push(
       `<w:tr><w:trPr><w:cantSplit/></w:trPr>${chunk
         .map((img, j) => buildImageCell(img, i + j + 1, colW))
+        .join('')}</w:tr>`,
+      `<w:tr><w:trPr><w:cantSplit/></w:trPr>${chunk
+        .map(img => buildNameCell(img?.name ?? '', colW))
         .join('')}</w:tr>`
     );
   }
@@ -240,11 +244,12 @@ function buildPhotoSection(
   return pageBreak + '\n' + heading + '\n' + table;
 }
 
-/** Cell containing a centered image plus its caption underneath. */
+/** Cell containing a centered image. keepNext 로 아래 캡션 행과 붙어 다닌다. */
 function buildImageCell(img: MaybeImage, docPrId: number, colW: number): string {
   const content = img
     ? `<w:p>
     <w:pPr>
+      <w:keepNext/>
       <w:jc w:val="center"/>
       <w:spacing w:before="0" w:after="0"/>
     </w:pPr>
@@ -287,9 +292,8 @@ function buildImageCell(img: MaybeImage, docPrId: number, colW: number): string 
         </wp:inline>
       </w:drawing>
     </w:r>
-  </w:p>
-  ${buildCaption(img.name)}`
-    : `<w:p><w:pPr><w:jc w:val="center"/></w:pPr></w:p>`;
+  </w:p>`
+    : `<w:p><w:pPr><w:keepNext/><w:jc w:val="center"/></w:pPr></w:p>`;
 
   return `<w:tc>
   <w:tcPr><w:tcW w:w="${colW}" w:type="dxa"/></w:tcPr>
@@ -297,9 +301,11 @@ function buildImageCell(img: MaybeImage, docPrId: number, colW: number): string 
 </w:tc>`;
 }
 
-/** Caption paragraph (항목 이름), centered under the image. */
-function buildCaption(name: string): string {
-  return `<w:p>
+/** Caption cell (항목 이름), centered under the image. */
+function buildNameCell(name: string, colW: number): string {
+  return `<w:tc>
+  <w:tcPr><w:tcW w:w="${colW}" w:type="dxa"/></w:tcPr>
+  <w:p>
     <w:pPr>
       <w:jc w:val="center"/>
       <w:spacing w:before="40" w:after="60"/>
@@ -308,7 +314,8 @@ function buildCaption(name: string): string {
       <w:rPr><w:sz w:val="16"/><w:szCs w:val="16"/></w:rPr>
       <w:t xml:space="preserve">${escapeXml(name)}</w:t>
     </w:r>
-  </w:p>`;
+  </w:p>
+</w:tc>`;
 }
 
 function escapeXml(str: string): string {

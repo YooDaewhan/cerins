@@ -27,6 +27,9 @@ async function main() {
   assert.equal((added.match(/<w:tbl>/g) ?? []).length, 1, '표가 한 개로 이어지지 않음');
   for (const p of photos) assert.ok(xml.includes(p.name), `캡션 누락: ${p.name}`);
   assert.ok(xml.includes('<w:cantSplit/>'), 'cantSplit 누락');
+  assert.ok(xml.includes('<w:keepNext/>'), 'keepNext 누락 — 사진과 캡션이 떨어질 수 있음');
+  // 사진 행 + 캡션 행이 따로 있어야 그 사이에 표 선이 그어진다.
+  assert.equal((added.match(/<w:tr>/g) ?? []).length, 4, '사진 행/캡션 행이 분리되지 않음');
   assert.equal((xml.match(/<w:br w:type="page"\/>/g) ?? []).length, 1, '페이지 나눔이 이어지지 않음');
 
   const sizes = await Promise.all(
