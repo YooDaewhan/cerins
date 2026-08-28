@@ -81,6 +81,19 @@ async function main() {
     'scrap.1#0': '다른 탭',
   }, '마지막 묶음 삭제가 앞 묶음을 건드림');
 
-  console.log('ok:', sizes[0], `${photos.length} photos`, `entries 1→${one.length} 2→${two.length}`);
+  // SCRAP: 9~13번(Container ~ Sealing)이 컨테이너 단위로 반복된다.
+  const scrap = REPORTS.find(r => r.id === 'scrap')!;
+  const sg = scrap.photoGroup!;
+  const s2 = expandPhotoEntries(scrap, 2);
+  assert.equal(s2.length, scrap.photoCategories!.length + (sg.to - sg.from + 1), 'SCRAP 묶음 반복 개수가 어긋남');
+  assert.deepEqual(
+    s2.slice(sg.from, sg.from + 2 * (sg.to - sg.from + 1)).map(e => e.label),
+    [...scrap.photoCategories!.slice(sg.from, sg.to + 1), ...scrap.photoCategories!.slice(sg.from, sg.to + 1)],
+    'SCRAP 컨테이너 묶음 순서가 어긋남'
+  );
+  assert.equal(s2[s2.length - 1].label, 'Stuffing process video', '묶음 뒤 항목이 밀려남');
+  assert.equal(sg.nameAt, undefined, 'SCRAP 은 이름 입력칸 없음');
+
+  console.log('ok:', sizes[0], `${photos.length} photos`, `cec ${one.length}/${two.length}`, `scrap ${s2.length}`);
 }
 main();

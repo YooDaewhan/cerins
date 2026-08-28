@@ -366,17 +366,21 @@ export default function PhotoReportPage() {
                     {inGroup && entry.ci === grp!.from && (
                       <div className="flex items-center gap-2 mt-3 mb-1.5">
                         <span className="text-xs font-bold text-gray-500 shrink-0">
-                          {t('Item')} {entry.gi + 1}
+                          {t(grp!.label)} {entry.gi + 1}
                         </span>
-                        <input
-                          type="text"
-                          value={groupNames[groupKey(entry.gi)] ?? ''}
-                          placeholder={t('Goods name')}
-                          onChange={e =>
-                            setGroupNames(p => ({ ...p, [groupKey(entry.gi)]: e.target.value }))
-                          }
-                          className="flex-1 border border-gray-200 rounded px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-400"
-                        />
+                        {grp!.nameAt !== undefined ? (
+                          <input
+                            type="text"
+                            value={groupNames[groupKey(entry.gi)] ?? ''}
+                            placeholder={t('Goods name')}
+                            onChange={e =>
+                              setGroupNames(p => ({ ...p, [groupKey(entry.gi)]: e.target.value }))
+                            }
+                            className="flex-1 border border-gray-200 rounded px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                          />
+                        ) : (
+                          <span className="flex-1" />
+                        )}
                         {groups > 1 && (
                           <button
                             type="button"
@@ -417,7 +421,7 @@ export default function PhotoReportPage() {
                         onClick={() => setGroupCount(p => ({ ...p, [tab]: groups + 1 }))}
                         className="mt-2 text-xs font-semibold text-blue-600 hover:underline"
                       >
-                        {t('+ add goods item')}
+                        {t('+ add {x}').replace('{x}', t(grp!.label))}
                       </button>
                     )}
                   </div>

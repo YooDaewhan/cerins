@@ -24,9 +24,9 @@ export interface ReportDef {
   photoTable?: string;
   /** 사진 첨부 항목. 항목별로 사진을 받고, 캡션(제목)으로 쓴다. */
   photoCategories?: string[];
-  /** 물품 하나가 여러 항목을 차지할 때, 반복 추가할 수 있는 photoCategories 구간(0-based).
-   *  nameAt 항목의 캡션 뒤에는 물품 이름이 `-이름` 으로 붙는다. */
-  photoGroup?: { from: number; to: number; nameAt: number };
+  /** 대상 하나가 여러 항목을 차지할 때, 반복 추가·삭제할 수 있는 photoCategories 구간(0-based).
+   *  label: 묶음 단위 이름(화면 표시용). nameAt: 지정하면 그 항목 캡션 뒤에 `-이름` 이 붙는다. */
+  photoGroup?: { from: number; to: number; label: string; nameAt?: number };
   sections: Section[];
 }
 
@@ -62,7 +62,7 @@ const CEC: ReportDef = {
     'Sealing',
   ],
   // 2~4번(Nameplate / Goods condition / Packing)은 물품 하나 단위라 통째로 반복된다.
-  photoGroup: { from: 1, to: 3, nameAt: 1 },
+  photoGroup: { from: 1, to: 3, label: 'Item', nameAt: 1 },
   sections: [
     {
       title: 'General Information',
@@ -274,6 +274,8 @@ const SCRAP: ReportDef = {
     'Weight certificate',
     'Stuffing process video',
   ],
+  // 9~13번(Container ~ Sealing)은 컨테이너 하나 단위라 통째로 반복된다.
+  photoGroup: { from: 8, to: 12, label: 'Container' },
   sections: [
     {
       title: 'General Information',

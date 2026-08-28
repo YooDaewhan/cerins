@@ -14,7 +14,7 @@ export const KO: Record<string, string> = {
   'Item': '물품',
   'Goods name': '물품 이름',
   'delete': '삭제',
-  '+ add goods item': '+ 물품 추가',
+  '+ add {x}': '+ {x} 추가',
   'jpg / jpeg / png / webp, multiple allowed': 'jpg / jpeg / png / webp, 여러 장 가능',
   'Done – download Word file': '완료 – Word 파일 다운로드',
   'Generating…': '생성 중...',
