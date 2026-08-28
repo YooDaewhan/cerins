@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { buildReport } from '@/src/lib/docxPhotoReport';
+import { buildReport, bundleWithVideos } from '@/src/lib/docxPhotoReport';
 import { fillTemplate } from '@/src/lib/docxFillTemplate';
 import { getReport, resolveWrites, type FormValues } from '@/src/lib/reportForms';
 
@@ -15,6 +15,7 @@ export async function POST(req: NextRequest) {
 
     const reportType = (formData.get('reportType') as string | null) ?? '';
     const photoFiles = formData.getAll('photos') as File[];
+    const videoFiles = (formData.getAll('videos') as File[]).filter(f => f.size > 0);
 
     let baseBuffer: Buffer;
     let filename: string;
@@ -63,6 +64,27 @@ export async function POST(req: NextRequest) {
       );
     } else if (!reportType || reportType === 'upload') {
       return NextResponse.json({ message: '사진이 최소 1장 필요합니다.' }, { status: 400 });
+    }
+
+    // 동영상은 Word 에 넣을 수 없으므로 완성된 문서와 함께 zip 으로 묶어 보낸다.
+    if (videoFiles.length > 0) {
+      const videos = await Promise.all(
+        videoFiles.map(async file => ({
+          name: file.name,
+          buffer: Buffer.from(await file.arrayBuffer()),
+        }))
+      );
+      const zipBuffer = bundleWithVideos(resultBuffer, filename, videos);
+      const zipName = filename.replace(/\.docx$/, '') + '.zip';
+
+      return new NextResponse(new Uint8Array(zipBuffer), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/zip',
+          'Content-Disposition': `attachment; filename="${zipName}"`,
+          'Content-Length': String(zipBuffer.length),
+        },
+      });
     }
 
     return new NextResponse(new Uint8Array(resultBuffer), {

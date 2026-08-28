@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import { readFileSync } from 'node:fs';
 import PizZip from 'pizzip';
 import sharp from 'sharp';
-import { buildReport } from './docxPhotoReport';
+import { buildReport, bundleWithVideos } from './docxPhotoReport';
 import { dropGroup, expandPhotoEntries, REPORTS } from './reportForms';
 
 async function main() {
@@ -94,6 +94,27 @@ async function main() {
   assert.equal(s2[s2.length - 1].label, 'Stuffing process video', '묶음 뒤 항목이 밀려남');
   assert.equal(sg.nameAt, undefined, 'SCRAP 은 이름 입력칸 없음');
 
-  console.log('ok:', sizes[0], `${photos.length} photos`, `cec ${one.length}/${two.length}`, `scrap ${s2.length}`);
+  // 동영상은 Word 대신 zip 에 따로 담긴다.
+  const vid = (n: string) => ({ name: n, buffer: Buffer.from('fake video') });
+  const bundle = new PizZip(
+    bundleWithVideos(out, 'scrap_report.docx', [
+      vid('stuffing.mp4'),
+      vid('../../etc/passwd.mp4'),
+      vid('stuffing.mp4'),
+    ])
+  );
+  const names = Object.keys(bundle.files).sort();
+  assert.deepEqual(names, [
+    'scrap_report.docx',
+    'videos/3_stuffing.mp4',
+    'videos/_.._etc_passwd.mp4',
+    'videos/stuffing.mp4',
+  ], `zip 구성이 어긋남: ${names}`);
+  assert.ok(
+    bundle.file('scrap_report.docx')!.asNodeBuffer().length === out.length,
+    'zip 안의 Word 파일이 손상됨'
+  );
+
+  console.log('ok:', sizes[0], `${photos.length} photos`, `cec ${one.length}/${two.length}`, `scrap ${s2.length}`, `zip ${names.length}`);
 }
 main();

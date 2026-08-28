@@ -149,6 +149,28 @@ export async function buildReport(
   );
 }
 
+/** 완성된 Word 파일과 동영상들을 zip 하나로 묶는다.
+ *  docx·동영상 모두 이미 압축된 포맷이라 무압축(STORE)으로 담는다. */
+export function bundleWithVideos(
+  docx: Buffer,
+  docxName: string,
+  videos: { name: string; buffer: Buffer }[]
+): Buffer {
+  const bundle = new PizZip();
+  bundle.file(docxName, docx);
+
+  const used = new Set<string>();
+  videos.forEach((v, i) => {
+    // zip 안에서 경로를 벗어나지 않도록 파일명만 남긴다.
+    let safe = v.name.replace(/[\\\/]/g, '_').replace(/^\.+/, '') || `video_${i + 1}`;
+    if (used.has(safe)) safe = `${i + 1}_${safe}`;
+    used.add(safe);
+    bundle.file(`videos/${safe}`, v.buffer);
+  });
+
+  return Buffer.from(bundle.generate({ type: 'nodebuffer', compression: 'STORE' }));
+}
+
 /** Add required drawing namespaces to <w:document> if missing. */
 function ensureNamespaces(docXml: string): string {
   const required: Array<[string, string]> = [

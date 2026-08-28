@@ -14,6 +14,8 @@ export const KO: Record<string, string> = {
   'Item': '물품',
   'Goods name': '물품 이름',
   'delete': '삭제',
+  'Videos are delivered in a zip with the Word file, not inside it.':
+    '동영상은 Word 안에 넣지 않고, 완성된 Word 파일과 함께 zip 으로 묶어 받습니다.',
   '+ add {x}': '+ {x} 추가',
   'jpg / jpeg / png / webp, multiple allowed': 'jpg / jpeg / png / webp, 여러 장 가능',
   'Done – download Word file': '완료 – Word 파일 다운로드',

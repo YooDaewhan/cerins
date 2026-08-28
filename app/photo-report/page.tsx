@@ -58,6 +58,7 @@ export default function PhotoReportPage() {
   const def = REPORTS.find(r => r.id === tab);
   const cats = def?.photoCategories;
   const grp = def?.photoGroup;
+  const videoAt = def?.videoAt;
   const groups = groupCount[tab] ?? 1;
 
   // 반복 묶음(CEC 의 물품 단위)을 펼쳐, 화면에 보이는 순서 = 캡션 번호 순서로 만든다.
@@ -125,8 +126,14 @@ export default function PhotoReportPage() {
       const labels: string[] = [];
       if (cats) {
         entries.forEach((entry, i) => {
-          for (const photo of catPhotos[catKey(entry.key)] ?? []) {
-            formData.append('photos', photo);
+          const isVideo = entry.ci === videoAt;
+          for (const file of catPhotos[catKey(entry.key)] ?? []) {
+            if (isVideo) {
+              // 동영상은 Word 에 못 넣으므로 zip 에 따로 담아 보낸다.
+              formData.append('videos', file);
+              continue;
+            }
+            formData.append('photos', file);
             labels.push(`${i + 1}. ${entryLabel(entry)}`);
           }
         });
@@ -149,7 +156,8 @@ export default function PhotoReportPage() {
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
-      anchor.download = `${def ? def.id : 'report'}_${Date.now()}.docx`;
+      const ext = res.headers.get('content-type')?.includes('zip') ? 'zip' : 'docx';
+      anchor.download = `${def ? def.id : 'report'}_${Date.now()}.${ext}`;
       anchor.style.display = 'none';
       document.body.appendChild(anchor);
       anchor.click();
@@ -361,6 +369,7 @@ export default function PhotoReportPage() {
                 const key = catKey(entry.key);
                 const files = catPhotos[key] ?? [];
                 const inGroup = grp && entry.gi >= 0;
+                const isVideo = entry.ci === videoAt;
                 return (
                   <div key={entry.key}>
                     {inGroup && entry.ci === grp!.from && (
@@ -404,13 +413,20 @@ export default function PhotoReportPage() {
                       </div>
                       <input
                         type="file"
-                        accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                        accept={isVideo ? 'video/*' : '.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp'}
                         multiple
                         onChange={e =>
                           setCatPhotos(p => ({ ...p, [key]: e.target.files ? Array.from(e.target.files) : [] }))
                         }
-                        className="block w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"
+                        className={`block w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium cursor-pointer ${
+                          isVideo
+                            ? 'file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100'
+                            : 'file:bg-green-50 file:text-green-700 hover:file:bg-green-100'
+                        }`}
                       />
+                      {isVideo && (
+                        <p className="mt-1 text-xs text-gray-400">{t('Videos are delivered in a zip with the Word file, not inside it.')}</p>
+                      )}
                       {files.length > 0 && (
                         <p className="mt-1 text-xs text-gray-400">{files.length}{t(' file(s) selected')}</p>
                       )}
