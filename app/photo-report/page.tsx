@@ -169,34 +169,29 @@ export default function PhotoReportPage() {
     return (
       <div key={f.k}>
         <span className="block text-sm font-medium text-gray-700 mb-1">{f.label}</span>
-        <div className="overflow-x-auto border border-gray-200 rounded-lg">
-          <table className="min-w-full text-xs">
-            <thead className="bg-gray-50">
-              <tr>
-                {f.cols.map(c => (
-                  <th key={c} className="px-2 py-1.5 text-left font-medium text-gray-600 whitespace-nowrap">
-                    {c}
-                  </th>
+        {/* 화면에서는 한 행을 카드로 풀어 세로로 쌓는다. 가로 스크롤 없음.
+            Word 출력은 원본 표 형식 그대로 유지된다. */}
+        <div className="space-y-2">
+          {Array.from({ length: shown }, (_, r) => (
+            <div key={r} className="border border-gray-200 rounded-lg p-3">
+              {f.rows.length > 1 && (
+                <span className="block text-xs font-semibold text-gray-400 mb-2">#{r + 1}</span>
+              )}
+              <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {f.cols.map((c, i) => (
+                  <label key={c} className="block">
+                    <span className="block text-xs text-gray-500 mb-0.5">{c}</span>
+                    <input
+                      type="text"
+                      value={grid[r]?.[i] ?? ''}
+                      onChange={e => setCellValue(f, r, i, e.target.value)}
+                      className="w-full border border-gray-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+                    />
+                  </label>
                 ))}
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: shown }, (_, r) => (
-                <tr key={r} className="border-t border-gray-100">
-                  {f.cols.map((_, c) => (
-                    <td key={c} className="p-1">
-                      <input
-                        type="text"
-                        value={grid[r]?.[c] ?? ''}
-                        onChange={e => setCellValue(f, r, c, e.target.value)}
-                        className="w-full min-w-[110px] border border-gray-200 rounded px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
-                      />
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+              </div>
+            </div>
+          ))}
         </div>
         {shown < f.rows.length && (
           <button
