@@ -18,8 +18,9 @@ export default function PhotoReportPage() {
   const [gridRows, setGridRows] = useState<Record<string, number>>({});
   const [docxFile, setDocxFile] = useState<File | null>(null);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
-  const [columns, setColumns] = useState(3);
-  const [rows, setRows] = useState(4);
+  // 항목별 사진 / 캡션. key = `${tab}.${항목 index}`
+  const [catPhotos, setCatPhotos] = useState<Record<string, File[]>>({});
+  const [catLabels, setCatLabels] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<Status>(null);
 
@@ -46,6 +47,7 @@ export default function PhotoReportPage() {
   const t = (s: string) => (lang === 'ko' ? KO[s] ?? s : s);
 
   const def = REPORTS.find(r => r.id === tab);
+  const cats = def?.photoCategories;
   const current = values[tab] ?? {};
 
   function setValue(k: string, v: FormValues[string]) {
@@ -64,6 +66,8 @@ export default function PhotoReportPage() {
     setValue(f.k, grid);
   }
 
+  const catKey = (i: number) => `${tab}.${i}`;
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setStatus(null);
@@ -81,11 +85,25 @@ export default function PhotoReportPage() {
     try {
       const formData = new FormData();
       formData.append('reportType', tab);
-      formData.append('columns', String(columns));
-      formData.append('rows', String(rows));
       if (def) formData.append('values', JSON.stringify(current));
       else if (docxFile) formData.append('docx', docxFile);
-      for (const photo of photoFiles) formData.append('photos', photo);
+
+      // 사진은 항목 순서대로 이어붙이고, 같은 순서의 캡션 배열을 함께 보낸다.
+      const labels: string[] = [];
+      if (cats) {
+        cats.forEach((c, i) => {
+          for (const photo of catPhotos[catKey(i)] ?? []) {
+            formData.append('photos', photo);
+            labels.push(`${i + 1}. ${catLabels[catKey(i)] ?? c}`);
+          }
+        });
+      } else {
+        for (const photo of photoFiles) {
+          formData.append('photos', photo);
+          labels.push(photo.name);
+        }
+      }
+      formData.append('labels', JSON.stringify(labels));
 
       const res = await fetch('/api/photo-report', { method: 'POST', body: formData });
 
@@ -301,36 +319,53 @@ export default function PhotoReportPage() {
           )}
 
           {/* Photos */}
-          <fieldset className="border border-gray-200 rounded-xl p-4">
+          <fieldset className="border border-gray-200 rounded-xl p-4 space-y-3">
             <legend className="px-2 text-sm font-bold text-gray-700">{t('Photos')}</legend>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-gray-400">{t('jpg / jpeg / png / webp, multiple allowed')}</span>
-              <div className="flex gap-1">
-                <select
-                  value={columns}
-                  onChange={e => setColumns(Number(e.target.value))}
-                  className="text-xs text-gray-600 border border-gray-300 rounded px-2 py-1 bg-white"
-                >
-                  {[2, 3, 4, 5].map(n => <option key={n} value={n}>{n}{t('columns')}</option>)}
-                </select>
-                <select
-                  value={rows}
-                  onChange={e => setRows(Number(e.target.value))}
-                  className="text-xs text-gray-600 border border-gray-300 rounded px-2 py-1 bg-white"
-                >
-                  {[2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{n}{t('rows')}</option>)}
-                </select>
-              </div>
-            </div>
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-              multiple
-              onChange={e => setPhotoFiles(e.target.files ? Array.from(e.target.files) : [])}
-              className="block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"
-            />
-            {photoFiles.length > 0 && (
-              <p className="mt-1 text-xs text-gray-400">{photoFiles.length}{t(' file(s) selected')}</p>
+            <p className="text-xs text-gray-400">{t('jpg / jpeg / png / webp, multiple allowed')}</p>
+
+            {cats ? (
+              cats.map((c, i) => {
+                const key = catKey(i);
+                const files = catPhotos[key] ?? [];
+                return (
+                  <div key={key} className="border border-gray-200 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-xs font-semibold text-gray-400 w-5 shrink-0">{i + 1}.</span>
+                      <input
+                        type="text"
+                        value={catLabels[key] ?? c}
+                        onChange={e => setCatLabels(p => ({ ...p, [key]: e.target.value }))}
+                        className="flex-1 border border-gray-200 rounded px-2 py-1 text-sm font-medium text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                      />
+                    </div>
+                    <input
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                      multiple
+                      onChange={e =>
+                        setCatPhotos(p => ({ ...p, [key]: e.target.files ? Array.from(e.target.files) : [] }))
+                      }
+                      className="block w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"
+                    />
+                    {files.length > 0 && (
+                      <p className="mt-1 text-xs text-gray-400">{files.length}{t(' file(s) selected')}</p>
+                    )}
+                  </div>
+                );
+              })
+            ) : (
+              <>
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                  multiple
+                  onChange={e => setPhotoFiles(e.target.files ? Array.from(e.target.files) : [])}
+                  className="block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"
+                />
+                {photoFiles.length > 0 && (
+                  <p className="mt-1 text-xs text-gray-400">{photoFiles.length}{t(' file(s) selected')}</p>
+                )}
+              </>
             )}
           </fieldset>
 

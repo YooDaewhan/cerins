@@ -22,6 +22,8 @@ export interface ReportDef {
   title: string;
   /** 사진은 문서 끝에 따로 붙이므로 템플릿의 빈 사진 표는 제거한다. */
   photoTable?: string;
+  /** 사진 첨부 항목. 항목별로 사진을 받고, 캡션(제목)으로 쓴다. */
+  photoCategories?: string[];
   sections: Section[];
 }
 
@@ -47,6 +49,15 @@ const CEC: ReportDef = {
   label: 'CEC',
   title: 'CEC Inspection Report',
   photoTable: 'T12',
+  photoCategories: [
+    'Inspection site',
+    'Nameplate',
+    'Goods condition',
+    'Packing',
+    'Shipping mark',
+    'Container',
+    'Sealing',
+  ],
   sections: [
     {
       title: 'General Information',
@@ -241,6 +252,23 @@ const SCRAP: ReportDef = {
   label: 'SCRAP',
   title: 'PSIC Inspection Report (Scrap)',
   photoTable: 'T4',
+  photoCategories: [
+    'Inspection site',
+    'Inspection site with inspector',
+    'Radiation detector (Serial No. )',
+    'Radioactive level of background',
+    'Products',
+    'Measuring Balded metal size (W: L: H: )',
+    'PMI Testing',
+    'Radioactive level of the scrap',
+    'Container (No. )',
+    'Empty container',
+    'Radioactive level of the container',
+    'Stuffing',
+    'Sealing (No. )',
+    'Weight certificate',
+    'Stuffing process video',
+  ],
   sections: [
     {
       title: 'General Information',

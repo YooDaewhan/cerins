@@ -20,6 +20,9 @@ type MaybeImage = ImageData | null;
 //                            = (colW_dxa - padding_dxa) / 15
 const CELL_PADDING_DXA = 57 * 2; // 57 dxa each side
 const EMU_PER_PX = 9525;
+const COLS = 3;
+// 사진은 칸 너비를 꽉 채우되 세로로 길어지지 않도록 4:3 으로 잘라 크기를 고정한다.
+const ASPECT_H_OVER_W = 3 / 4;
 
 /** 문서의 페이지 크기와 여백을 읽어 실제 본문 너비(dxa)를 반환한다. */
 function getContentWidthDxa(docXml: string): number {
@@ -47,12 +50,9 @@ function getContentWidthDxa(docXml: string): number {
 
 export async function buildReport(
   docxBuffer: Buffer,
-  photos: { name: string; buffer: Buffer }[],
-  columns: number = 3,
-  rows: number = 4
+  photos: { name: string; buffer: Buffer }[]
 ): Promise<Buffer> {
-  const cols = Math.max(1, Math.min(6, columns));
-  const rowsPerPage = Math.max(1, Math.min(10, rows));
+  const cols = COLS;
 
   const zip = new PizZip(docxBuffer);
 
@@ -81,7 +81,12 @@ export async function buildReport(
   const images: ImageData[] = await Promise.all(
     photos.map(async (photo, idx) => {
       const resized = await sharp(photo.buffer)
-        .resize({ width: contentWidthPx, withoutEnlargement: false })
+        .resize({
+          width: contentWidthPx,
+          height: Math.round(contentWidthPx * ASPECT_H_OVER_W),
+          fit: 'cover',
+          withoutEnlargement: false,
+        })
         .jpeg({ quality: 82 })
         .toBuffer();
 
@@ -130,7 +135,7 @@ export async function buildReport(
   docXml = ensureNamespaces(docXml);
 
   // Build the photo section and insert before the final <w:sectPr> (or before </w:body>)
-  const sectionXml = buildPhotoSection(images, cols, rowsPerPage, colW, tableWidthDxa);
+  const sectionXml = buildPhotoSection(images, cols, colW, tableWidthDxa);
   docXml = insertBeforeSectPr(docXml, sectionXml);
 
   zip.file('word/document.xml', docXml);
@@ -173,32 +178,29 @@ function insertBeforeSectPr(docXml: string, insertXml: string): string {
   return docXml.replace('</w:body>', insertXml + '\n</w:body>');
 }
 
-/** Build page-break + heading + N-column photo table XML.
- *  photos are split into pages of (cols × rowsPerPage). */
+/** Build page-break + heading + one continuous N-column photo table.
+ *  사진은 항목 구분 없이 순서대로 이어 붙고, 각 칸 아래에 항목 이름이 캡션으로 들어간다. */
 function buildPhotoSection(
   images: ImageData[],
   cols: number,
-  rowsPerPage: number,
   colW: number,
   tableWidthDxa: number
 ): string {
-  const photosPerPage = cols * rowsPerPage;
   const gridCols = Array.from({ length: cols }, () => `<w:gridCol w:w="${colW}"/>`).join('');
 
-  const buildTable = (pageImages: ImageData[], idOffset: number): string => {
-    const tableRows: string[] = [];
-    for (let i = 0; i < pageImages.length; i += cols) {
-      const chunk: MaybeImage[] = pageImages.slice(i, i + cols);
-      while (chunk.length < cols) chunk.push(null);
-      tableRows.push(
-        `<w:tr>${chunk.map((img, j) => buildImageCell(img, idOffset + i + j + 1, colW)).join('')}</w:tr>`
-      );
-      tableRows.push(
-        `<w:tr>${chunk.map(img => buildNameCell(img?.name ?? '', colW)).join('')}</w:tr>`
-      );
-    }
+  const tableRows: string[] = [];
+  for (let i = 0; i < images.length; i += cols) {
+    const chunk: MaybeImage[] = images.slice(i, i + cols);
+    while (chunk.length < cols) chunk.push(null);
+    // cantSplit: 사진과 캡션이 페이지 경계에서 잘리지 않게 한 행을 통째로 넘긴다.
+    tableRows.push(
+      `<w:tr><w:trPr><w:cantSplit/></w:trPr>${chunk
+        .map((img, j) => buildImageCell(img, i + j + 1, colW))
+        .join('')}</w:tr>`
+    );
+  }
 
-    return `<w:tbl>
+  const table = `<w:tbl>
   <w:tblPr>
     <w:tblW w:w="${tableWidthDxa}" w:type="dxa"/>
     <w:tblInd w:w="0" w:type="dxa"/>
@@ -221,7 +223,6 @@ function buildPhotoSection(
   <w:tblGrid>${gridCols}</w:tblGrid>
   ${tableRows.join('\n  ')}
 </w:tbl>`;
-  };
 
   const heading = `<w:p>
   <w:pPr>
@@ -236,22 +237,10 @@ function buildPhotoSection(
 
   const pageBreak = `<w:p><w:r><w:br w:type="page"/></w:r></w:p>`;
 
-  const parts: string[] = [];
-  for (let p = 0; p < images.length; p += photosPerPage) {
-    const pageImages = images.slice(p, p + photosPerPage);
-    if (p === 0) {
-      // 첫 페이지: 페이지 브레이크 + 제목 + 표
-      parts.push(pageBreak + '\n' + heading + '\n' + buildTable(pageImages, 0));
-    } else {
-      // 이후 페이지: 페이지 브레이크 + 표 (제목 없음)
-      parts.push(pageBreak + '\n' + buildTable(pageImages, p));
-    }
-  }
-
-  return parts.join('\n');
+  return pageBreak + '\n' + heading + '\n' + table;
 }
 
-/** Cell containing a centered image that fills the cell width. */
+/** Cell containing a centered image plus its caption underneath. */
 function buildImageCell(img: MaybeImage, docPrId: number, colW: number): string {
   const content = img
     ? `<w:p>
@@ -298,7 +287,8 @@ function buildImageCell(img: MaybeImage, docPrId: number, colW: number): string 
         </wp:inline>
       </w:drawing>
     </w:r>
-  </w:p>`
+  </w:p>
+  ${buildCaption(img.name)}`
     : `<w:p><w:pPr><w:jc w:val="center"/></w:pPr></w:p>`;
 
   return `<w:tc>
@@ -307,21 +297,18 @@ function buildImageCell(img: MaybeImage, docPrId: number, colW: number): string 
 </w:tc>`;
 }
 
-/** Cell containing the original filename, centered. */
-function buildNameCell(name: string, colW: number): string {
-  return `<w:tc>
-  <w:tcPr><w:tcW w:w="${colW}" w:type="dxa"/></w:tcPr>
-  <w:p>
+/** Caption paragraph (항목 이름), centered under the image. */
+function buildCaption(name: string): string {
+  return `<w:p>
     <w:pPr>
       <w:jc w:val="center"/>
-      <w:spacing w:before="0" w:after="60"/>
+      <w:spacing w:before="40" w:after="60"/>
     </w:pPr>
     <w:r>
       <w:rPr><w:sz w:val="16"/><w:szCs w:val="16"/></w:rPr>
       <w:t xml:space="preserve">${escapeXml(name)}</w:t>
     </w:r>
-  </w:p>
-</w:tc>`;
+  </w:p>`;
 }
 
 function escapeXml(str: string): string {

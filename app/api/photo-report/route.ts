@@ -53,9 +53,14 @@ export async function POST(req: NextRequest) {
           buffer: Buffer.from(await file.arrayBuffer()),
         }))
       );
-      const columns = parseInt((formData.get('columns') as string) ?? '3', 10) || 3;
-      const rows = parseInt((formData.get('rows') as string) ?? '4', 10) || 4;
-      resultBuffer = await buildReport(baseBuffer, photos, columns, rows);
+      let labels: string[] = [];
+      try {
+        labels = JSON.parse((formData.get('labels') as string) ?? '[]');
+      } catch { labels = []; }
+      resultBuffer = await buildReport(
+        baseBuffer,
+        photos.map((p, i) => ({ ...p, name: labels[i] ?? p.name })),
+      );
     } else if (!reportType || reportType === 'upload') {
       return NextResponse.json({ message: '사진이 최소 1장 필요합니다.' }, { status: 400 });
     }

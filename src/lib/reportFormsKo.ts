@@ -16,8 +16,6 @@ export const KO: Record<string, string> = {
   'Generating…': '생성 중...',
   'Selected': '선택됨',
   ' file(s) selected': '개 파일 선택됨',
-  'columns': '열',
-  'rows': '행',
   '+ add row': '+ 행 추가',
   'Uploaded files are not stored on the server; they are discarded right after the request.':
     '업로드 파일은 서버에 저장되지 않으며 요청 처리 후 즉시 폐기됩니다.',
