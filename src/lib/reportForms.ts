@@ -49,7 +49,7 @@ const CEC: ReportDef = {
   photoTable: 'T12',
   sections: [
     {
-      title: '기본 정보',
+      title: 'General Information',
       fields: [
         { t: 'text', k: 'jobFileNo', label: 'Job File No', cell: 'T0.R0.C1' },
         { t: 'text', k: 'date', label: 'Date', cell: 'T0.R0.C2', prefix: ' ' },
@@ -91,14 +91,14 @@ const CEC: ReportDef = {
       title: 'OPERATION TEST RESULT',
       fields: [
         {
-          t: 'radio', k: 'opResult', label: '결과',
+          t: 'radio', k: 'opResult', label: 'Result',
           opts: [
             { v: 'sat', label: 'Satisfactory', cb: 0 },
             { v: 'unsat', label: 'Unsatisfactory', cb: 1 },
             { v: 'cond', label: 'Conditional', cb: 2 },
           ],
         },
-        { t: 'text', k: 'opReason', label: 'Unsatisfactory/Conditional 사유', cell: 'T3.R1.C0@1', lines: 3 },
+        { t: 'text', k: 'opReason', label: 'If unsatisfactory result or conditional, specify the reasons', cell: 'T3.R1.C0@1', lines: 3 },
       ],
     },
     {
@@ -128,31 +128,31 @@ const CEC: ReportDef = {
       title: 'INSPECTION RESULT OF PACKING',
       fields: [
         {
-          t: 'radio', k: 'packResult', label: '결과',
+          t: 'radio', k: 'packResult', label: 'Result',
           opts: [
             { v: 'sat', label: 'Satisfactory', cb: 7 },
             { v: 'unsat', label: 'Unsatisfactory', cb: 8 },
             { v: 'cond', label: 'Conditional', cb: 9 },
           ],
         },
-        { t: 'text', k: 'packReason', label: 'Unsatisfactory/Conditional 사유', cell: 'T5.R1.C0@1', lines: 3 },
+        { t: 'text', k: 'packReason', label: 'If unsatisfactory result or conditional, specify the reasons', cell: 'T5.R1.C0@1', lines: 3 },
       ],
     },
     {
       title: 'PHOTOGRAPHS OF INSPECTION ACTIVITY',
       fields: [
-        { t: 'radio', k: 'ph1', label: '검사 장소 + 검사원(필수) 사진', opts: YESNO(10, 11) },
-        { t: 'radio', k: 'ph2', label: '작동 시험 사진 (검사원 필수)', opts: YESNO(12, 13) },
-        { t: 'radio', k: 'ph3', label: '명판 포함 제품 사진 (4장 이상)', opts: YESNO(14, 15) },
-        { t: 'radio', k: 'ph4', label: '포장 과정 사진', opts: YESNO(16, 17) },
-        { t: 'radio', k: 'ph5', label: '컨테이너 적입/봉인 과정 사진 (6장 이상)', opts: YESNO(18, 19) },
+        { t: 'radio', k: 'ph1', label: 'Photograph(s) of the place of inspection with inspector', opts: YESNO(10, 11) },
+        { t: 'radio', k: 'ph2', label: 'Photograph(s) of operation test at the place of inspection', opts: YESNO(12, 13) },
+        { t: 'radio', k: 'ph3', label: 'Photographs of each goods/package showing their name-plates (at least 4)', opts: YESNO(14, 15) },
+        { t: 'radio', k: 'ph4', label: 'Photographs of packing process', opts: YESNO(16, 17) },
+        { t: 'radio', k: 'ph5', label: 'Photographs of container stuffing and sealing process (at least 6)', opts: YESNO(18, 19) },
       ],
     },
     {
       title: 'DOCUMENTS EXAMINED DURING INSPECTION',
       fields: [
         {
-          t: 'checks', k: 'docs', label: '검토 문서',
+          t: 'checks', k: 'docs', label: 'Documents examined',
           opts: [
             { v: 'checklist', label: 'Inspection Checklist/Points provided by Coordinator', cb: 20 },
             { v: 'price', label: 'Original (Purchase) Price Copy', cb: 21 },
@@ -161,14 +161,14 @@ const CEC: ReportDef = {
             { v: 'others', label: 'Others', cb: 24 },
           ],
         },
-        { t: 'text', k: 'docsOther', label: 'Others – 내용 기재', cell: 'T7.R5.C1@1', lines: 2 },
+        { t: 'text', k: 'docsOther', label: 'Others – specify and attach/enclose', cell: 'T7.R5.C1@1', lines: 2 },
       ],
     },
     {
       title: 'DETAIL OF PRODUCT',
       fields: [
         {
-          t: 'grid', k: 'products', label: '제품 상세',
+          t: 'grid', k: 'products', label: 'Product details',
           cols: [
             'Goods description',
             'Re-conditioned/repaired (Y/N)',
@@ -187,20 +187,20 @@ const CEC: ReportDef = {
       title: 'ATTACHMENT',
       fields: [
         {
-          t: 'radio', k: 'hasAttachment', label: '첨부 여부',
+          t: 'radio', k: 'hasAttachment', label: 'Attachment (if any)',
           opts: [
             { v: 'yes', label: 'YES', cb: 25 },
             { v: 'no', label: 'NO', cb: 26 },
           ],
         },
-        { t: 'grid', k: 'attachments', label: '첨부 목록', cols: ['Attachment'], rows: gridRows(9, 1, 5, 1, 1) },
+        { t: 'grid', k: 'attachments', label: 'If YES, list down and attach/enclose', cols: ['Attachment'], rows: gridRows(9, 1, 5, 1, 1) },
       ],
     },
     {
       title: 'CONCLUSION OF INSPECTION',
       fields: [
         {
-          t: 'radio', k: 'conclusion', label: '결론',
+          t: 'radio', k: 'conclusion', label: 'Result',
           opts: [
             { v: 'sat', label: 'Satisfactory', cb: 27 },
             { v: 'cond', label: 'Conditional', cb: 28 },
@@ -209,7 +209,7 @@ const CEC: ReportDef = {
             { v: 'reinspection', label: 'Re-inspection', cb: 31 },
           ],
         },
-        { t: 'text', k: 'conclusionReason', label: 'Satisfactory 이외의 사유', cell: 'T10.R1.C0@1', lines: 3 },
+        { t: 'text', k: 'conclusionReason', label: 'If not satisfactory, specify the reasons', cell: 'T10.R1.C0@1', lines: 3 },
       ],
     },
     {
@@ -242,7 +242,7 @@ const SCRAP: ReportDef = {
   photoTable: 'T4',
   sections: [
     {
-      title: '기본 정보',
+      title: 'General Information',
       fields: [
         { t: 'text', k: 'jobFileNo', label: 'Job File No.', cell: 'T0.R0.C0', replace: true, prefix: 'Job File No. ', ph: 'CERINS-XXXXXX/KR' },
         { t: 'text', k: 'date', label: 'Date', cell: 'T0.R0.C2', replace: true, ph: 'MMMM DD, YYYY' },
@@ -257,16 +257,16 @@ const SCRAP: ReportDef = {
         { t: 'text', k: 'quantity', label: 'Quantity', cell: 'T1.R3.C2' },
         { t: 'text', k: 'netWeight', label: 'Net weight', cell: 'T1.R3.C3' },
         {
-          t: 'checks', k: 'gradeKind', label: '규격 종류',
+          t: 'checks', k: 'gradeKind', label: 'Grade type',
           opts: [
             { v: 'isri', label: 'ISRI grade', cb: 0 },
             { v: 'steel', label: 'Steel grade', cb: 1 },
             { v: 'others', label: 'Others', cb: 2 },
           ],
         },
-        { t: 'text', k: 'isriGrade', label: 'ISRI grade 내용', cell: 'T1.R4.C3' },
-        { t: 'text', k: 'steelGrade', label: 'Steel grade 내용', cell: 'T1.R5.C3' },
-        { t: 'text', k: 'otherGrade', label: 'Others 내용', cell: 'T1.R6.C3' },
+        { t: 'text', k: 'isriGrade', label: 'ISRI grade', cell: 'T1.R4.C3' },
+        { t: 'text', k: 'steelGrade', label: 'Steel grade', cell: 'T1.R5.C3' },
+        { t: 'text', k: 'otherGrade', label: 'Others', cell: 'T1.R6.C3' },
       ],
     },
     {
@@ -296,7 +296,7 @@ const SCRAP: ReportDef = {
             { v: 'others', label: 'Others', cb: 6 },
           ],
         },
-        { t: 'text', k: 'qualityOther', label: 'Others 인 경우 내용', cell: 'T2.R9.C1@1', lines: 2 },
+        { t: 'text', k: 'qualityOther', label: 'If other conditions or others are applicable, please specify', cell: 'T2.R9.C1@1', lines: 2 },
         {
           t: 'radio', k: 'shred', label: 'Shredded or Un-shredded',
           opts: [
@@ -305,7 +305,7 @@ const SCRAP: ReportDef = {
             { v: 'mixed', label: 'Mixed', cb: 9 },
           ],
         },
-        { t: 'text', k: 'shredNote', label: 'Mixed 인 경우 내용', cell: 'T2.R11.C1@1', lines: 2 },
+        { t: 'text', k: 'shredNote', label: 'If mixed, please specify', cell: 'T2.R11.C1@1', lines: 2 },
       ],
     },
     {
@@ -324,26 +324,26 @@ const SCRAP: ReportDef = {
         { t: 'text', k: 'bgRadiation', label: 'Background radiation level (µSv/h)', cell: 'T2.R19.C1' },
         { t: 'text', k: 'maxRadiation', label: 'Maximum radiation level on the scrap (µSv/h)', cell: 'T2.R20.C1' },
         {
-          t: 'radio', k: 'radResult', label: '판정',
+          t: 'radio', k: 'radResult', label: 'Result',
           opts: [
             { v: 'compliance', label: 'Compliance', cb: 10 },
             { v: 'unsat', label: 'Unsatisfactory', cb: 11 },
           ],
         },
-        { t: 'text', k: 'radReason', label: 'Unsatisfactory 사유', cell: 'T2.R23.C0@1', lines: 2 },
+        { t: 'text', k: 'radReason', label: 'If unsatisfactory result, specify the reasons', cell: 'T2.R23.C0@1', lines: 2 },
       ],
     },
     {
       title: 'EXPLOSIVE MATERIAL',
       fields: [
         {
-          t: 'radio', k: 'expResult', label: '판정',
+          t: 'radio', k: 'expResult', label: 'Result',
           opts: [
             { v: 'compliance', label: 'Compliance', cb: 12 },
             { v: 'unsat', label: 'Unsatisfactory', cb: 13 },
           ],
         },
-        { t: 'text', k: 'expReason', label: 'Unsatisfactory 사유', cell: 'T2.R27.C0@1', lines: 2 },
+        { t: 'text', k: 'expReason', label: 'If unsatisfactory result, specify the reasons', cell: 'T2.R27.C0@1', lines: 2 },
       ],
     },
     {
@@ -372,12 +372,12 @@ const SCRAP: ReportDef = {
     {
       title: 'ATTACHMENTS',
       fields: [
-        { t: 'radio', k: 'at1', label: '검사 중 촬영 사진 (날짜·시간 표시)', opts: YESNO(18, 19) },
-        { t: 'radio', k: 'at2', label: '검사 장소 + PSIA 검사원 사진/영상', opts: YESNO(20, 21) },
-        { t: 'radio', k: 'at3', label: '검사 장비 사진/영상 (시리얼 번호 식별)', opts: YESNO(22, 23) },
-        { t: 'radio', k: 'at4', label: '컨테이너 적입 과정 사진/영상', opts: YESNO(24, 25) },
-        { t: 'radio', k: 'at5', label: '봉인 과정 사진/영상', opts: YESNO(26, 27) },
-        { t: 'radio', k: 'at6', label: 'Video clips (5분 이상)', opts: YESNO(28, 29) },
+        { t: 'radio', k: 'at1', label: 'Pictures taken during inspection (date & time shown)', opts: YESNO(18, 19) },
+        { t: 'radio', k: 'at2', label: 'Photograph(s) or video clipping of the place of inspection with PSIA inspector', opts: YESNO(20, 21) },
+        { t: 'radio', k: 'at3', label: 'Photograph(s) or video clipping of the testing instrument(s)', opts: YESNO(22, 23) },
+        { t: 'radio', k: 'at4', label: 'Photograph(s) or video clipping of the process of stuffing of containers', opts: YESNO(24, 25) },
+        { t: 'radio', k: 'at5', label: 'Photograph(s) or video clipping of the sealing process', opts: YESNO(26, 27) },
+        { t: 'radio', k: 'at6', label: 'Video clips (at least 5 minutes)', opts: YESNO(28, 29) },
         { t: 'radio', k: 'at7', label: 'Weight tickets', opts: YESNO(30, 31) },
         {
           t: 'checks', k: 'docs', label: 'Documents examined during inspection',
@@ -390,14 +390,14 @@ const SCRAP: ReportDef = {
             { v: 'other', label: 'Other documents if any', cb: 37 },
           ],
         },
-        { t: 'text', k: 'othersSpecify', label: 'Others if any – 내용 기재', cell: 'T2.R63.C0@2', lines: 2 },
+        { t: 'text', k: 'othersSpecify', label: 'Others if any – specify and attach', cell: 'T2.R63.C0@2', lines: 2 },
       ],
     },
     {
       title: 'CONCLUSION OF INSPECTION',
       fields: [
         {
-          t: 'radio', k: 'conclusion', label: '결론',
+          t: 'radio', k: 'conclusion', label: 'Result',
           opts: [
             { v: 'sat', label: 'Satisfactory', cb: 38 },
             { v: 'cond', label: 'Conditional', cb: 39 },
@@ -406,7 +406,7 @@ const SCRAP: ReportDef = {
             { v: 'reinspection', label: 'Re-inspection', cb: 42 },
           ],
         },
-        { t: 'text', k: 'conclusionReason', label: 'Satisfactory 이외의 사유', cell: 'T2.R67.C0@1', lines: 3 },
+        { t: 'text', k: 'conclusionReason', label: 'If not satisfactory, specify the reasons', cell: 'T2.R67.C0@1', lines: 3 },
       ],
     },
     {
@@ -439,7 +439,7 @@ const PSIC: ReportDef = {
   photoTable: 'T3',
   sections: [
     {
-      title: '기본 정보',
+      title: 'General Information',
       fields: [
         { t: 'text', k: 'itemNo', label: 'ITEM NO', cell: 'T0.R0.C1' },
         { t: 'text', k: 'reportNo', label: 'REPORT NO.', cell: 'T0.R0.C3', replace: true, ph: 'K-YYYY-MM-DD' },

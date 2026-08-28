@@ -102,3 +102,21 @@ for (const def of REPORTS) {
     assert.deepEqual([...readCells(out).keys()], [...readCells(template).keys()]);
   });
 }
+
+test("한글 사전: 폼에 쓰이는 모든 문자열에 번역이 있다", async () => {
+  const { KO } = await import("@/src/lib/reportFormsKo");
+  const missing: string[] = [];
+  for (const def of REPORTS) {
+    const add = (s: string) => { if (!KO[s]) missing.push(s); };
+    add(def.title);
+    for (const sec of def.sections) {
+      add(sec.title);
+      for (const f of sec.fields) {
+        add(f.label);
+        if (f.t === "radio" || f.t === "checks") f.opts.forEach(o => add(o.label));
+        if (f.t === "grid") f.cols.forEach(add);
+      }
+    }
+  }
+  assert.deepEqual(missing, [], `번역 누락: ${missing.join(", ")}`);
+});

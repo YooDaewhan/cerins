@@ -2,15 +2,17 @@
 
 import { useState } from 'react';
 import { REPORTS, type Field, type FormValues } from '@/src/lib/reportForms';
+import { KO } from '@/src/lib/reportFormsKo';
 
 type Status = { type: 'error' | 'success'; message: string } | null;
 
-const TABS = [...REPORTS.map(r => ({ id: r.id, label: r.label })), { id: 'upload', label: '직접 업로드' }];
+const TABS = [...REPORTS.map(r => ({ id: r.id, label: r.label })), { id: 'upload', label: 'Upload' }];
 
 const inputCls =
   'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400';
 
 export default function PhotoReportPage() {
+  const [lang, setLang] = useState<'ko' | 'en'>('ko');
   const [tab, setTab] = useState(TABS[0].id);
   const [values, setValues] = useState<Record<string, FormValues>>({});
   const [gridRows, setGridRows] = useState<Record<string, number>>({});
@@ -20,6 +22,9 @@ export default function PhotoReportPage() {
   const [rows, setRows] = useState(4);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<Status>(null);
+
+  // 화면 라벨만 번역한다. 생성되는 Word 파일은 원본 영문 양식 그대로다.
+  const t = (s: string) => (lang === 'ko' ? KO[s] ?? s : s);
 
   const def = REPORTS.find(r => r.id === tab);
   const current = values[tab] ?? {};
@@ -96,7 +101,7 @@ export default function PhotoReportPage() {
       const v = (current[f.k] as string) ?? '';
       return (
         <label key={f.k} className="block">
-          <span className="block text-sm font-medium text-gray-700 mb-1">{f.label}</span>
+          <span className="block text-sm font-medium text-gray-700 mb-1">{t(f.label)}</span>
           {f.lines && f.lines > 1 ? (
             <textarea
               rows={f.lines}
@@ -122,7 +127,7 @@ export default function PhotoReportPage() {
       const v = (current[f.k] as string) ?? '';
       return (
         <div key={f.k}>
-          <span className="block text-sm font-medium text-gray-700 mb-1">{f.label}</span>
+          <span className="block text-sm font-medium text-gray-700 mb-1">{t(f.label)}</span>
           <div className="flex flex-wrap gap-x-5 gap-y-2">
             {f.opts.map(o => (
               <label key={o.v} className="flex items-center gap-1.5 text-sm text-gray-700">
@@ -132,7 +137,7 @@ export default function PhotoReportPage() {
                   checked={v === o.v}
                   onChange={() => setValue(f.k, o.v)}
                 />
-                {o.label}
+                {t(o.label)}
               </label>
             ))}
           </div>
@@ -144,7 +149,7 @@ export default function PhotoReportPage() {
       const v = (current[f.k] as string[]) ?? [];
       return (
         <div key={f.k}>
-          <span className="block text-sm font-medium text-gray-700 mb-1">{f.label}</span>
+          <span className="block text-sm font-medium text-gray-700 mb-1">{t(f.label)}</span>
           <div className="flex flex-col gap-1.5">
             {f.opts.map(o => (
               <label key={o.v} className="flex items-start gap-1.5 text-sm text-gray-700">
@@ -156,7 +161,7 @@ export default function PhotoReportPage() {
                     setValue(f.k, e.target.checked ? [...v, o.v] : v.filter(x => x !== o.v))
                   }
                 />
-                {o.label}
+                {t(o.label)}
               </label>
             ))}
           </div>
@@ -168,7 +173,7 @@ export default function PhotoReportPage() {
     const grid = (current[f.k] as string[][]) ?? [];
     return (
       <div key={f.k}>
-        <span className="block text-sm font-medium text-gray-700 mb-1">{f.label}</span>
+        <span className="block text-sm font-medium text-gray-700 mb-1">{t(f.label)}</span>
         {/* 화면에서는 한 행을 카드로 풀어 세로로 쌓는다. 가로 스크롤 없음.
             Word 출력은 원본 표 형식 그대로 유지된다. */}
         <div className="space-y-2">
@@ -180,7 +185,7 @@ export default function PhotoReportPage() {
               <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {f.cols.map((c, i) => (
                   <label key={c} className="block">
-                    <span className="block text-xs text-gray-500 mb-0.5">{c}</span>
+                    <span className="block text-xs text-gray-500 mb-0.5">{t(c)}</span>
                     <input
                       type="text"
                       value={grid[r]?.[i] ?? ''}
@@ -199,7 +204,7 @@ export default function PhotoReportPage() {
             onClick={() => setGridRows(p => ({ ...p, [`${tab}.${f.k}`]: shown + 1 }))}
             className="mt-1 text-xs text-blue-600 hover:underline"
           >
-            + 행 추가 ({shown}/{f.rows.length})
+            {t('+ add row')} ({shown}/{f.rows.length})
           </button>
         )}
       </div>
@@ -210,26 +215,42 @@ export default function PhotoReportPage() {
     <main className="min-h-screen bg-gray-100 p-4 sm:p-6">
       <div className="bg-white rounded-2xl shadow-md w-full max-w-4xl mx-auto p-6 sm:p-8 space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">검사 보고서 생성</h1>
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-2xl font-bold text-gray-800">{t('Inspection Report Builder')}</h1>
+            <div className="flex rounded-lg border border-gray-300 overflow-hidden shrink-0 text-xs font-semibold">
+              {(['ko', 'en'] as const).map(l => (
+                <button
+                  key={l}
+                  type="button"
+                  onClick={() => setLang(l)}
+                  className={`px-3 py-1.5 transition-colors ${
+                    lang === l ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
+                  }`}
+                >
+                  {l === 'ko' ? '한' : 'EN'}
+                </button>
+              ))}
+            </div>
+          </div>
           <p className="mt-1 text-sm text-gray-500">
-            양식을 선택해 입력하고, 사진을 첨부하면 Word 보고서로 내려받습니다.
+            {t('Fill in the form, attach photos, and download the Word report.')}
           </p>
         </div>
 
         {/* Tabs */}
         <div className="flex gap-1 border-b border-gray-200">
-          {TABS.map(t => (
+          {TABS.map(tb => (
             <button
-              key={t.id}
+              key={tb.id}
               type="button"
-              onClick={() => { setTab(t.id); setStatus(null); }}
+              onClick={() => { setTab(tb.id); setStatus(null); }}
               className={`px-4 py-2 text-sm font-semibold rounded-t-lg -mb-px border-b-2 transition-colors ${
-                tab === t.id
+                tab === tb.id
                   ? 'border-blue-600 text-blue-700 bg-blue-50'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
-              {t.label}
+              {t(tb.label)}
             </button>
           ))}
         </div>
@@ -237,10 +258,10 @@ export default function PhotoReportPage() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {def ? (
             <>
-              <p className="text-sm text-gray-400">{def.title}</p>
+              <p className="text-sm text-gray-400">{t(def.title)}</p>
               {def.sections.map(s => (
                 <fieldset key={s.title} className="border border-gray-200 rounded-xl p-4 space-y-4">
-                  <legend className="px-2 text-sm font-bold text-gray-700">{s.title}</legend>
+                  <legend className="px-2 text-sm font-bold text-gray-700">{t(s.title)}</legend>
                   {s.fields.map(renderField)}
                 </fieldset>
               ))}
@@ -248,7 +269,7 @@ export default function PhotoReportPage() {
           ) : (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                기본 Word 파일 <span className="text-gray-400">(.docx)</span>
+                {t('Base Word file')} <span className="text-gray-400">(.docx)</span>
               </label>
               <input
                 type="file"
@@ -256,29 +277,29 @@ export default function PhotoReportPage() {
                 onChange={e => setDocxFile(e.target.files?.[0] ?? null)}
                 className="block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
               />
-              {docxFile && <p className="mt-1 text-xs text-gray-400 truncate">선택됨: {docxFile.name}</p>}
+              {docxFile && <p className="mt-1 text-xs text-gray-400 truncate">{t('Selected')}: {docxFile.name}</p>}
             </div>
           )}
 
           {/* Photos */}
           <fieldset className="border border-gray-200 rounded-xl p-4">
-            <legend className="px-2 text-sm font-bold text-gray-700">사진 첨부</legend>
+            <legend className="px-2 text-sm font-bold text-gray-700">{t('Photos')}</legend>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-gray-400">jpg / jpeg / png / webp, 여러 장 가능</span>
+              <span className="text-xs text-gray-400">{t('jpg / jpeg / png / webp, multiple allowed')}</span>
               <div className="flex gap-1">
                 <select
                   value={columns}
                   onChange={e => setColumns(Number(e.target.value))}
                   className="text-xs text-gray-600 border border-gray-300 rounded px-2 py-1 bg-white"
                 >
-                  {[2, 3, 4, 5].map(n => <option key={n} value={n}>{n}열</option>)}
+                  {[2, 3, 4, 5].map(n => <option key={n} value={n}>{n}{t('columns')}</option>)}
                 </select>
                 <select
                   value={rows}
                   onChange={e => setRows(Number(e.target.value))}
                   className="text-xs text-gray-600 border border-gray-300 rounded px-2 py-1 bg-white"
                 >
-                  {[2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{n}행</option>)}
+                  {[2, 3, 4, 5, 6].map(n => <option key={n} value={n}>{n}{t('rows')}</option>)}
                 </select>
               </div>
             </div>
@@ -290,7 +311,7 @@ export default function PhotoReportPage() {
               className="block w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"
             />
             {photoFiles.length > 0 && (
-              <p className="mt-1 text-xs text-gray-400">{photoFiles.length}개 파일 선택됨</p>
+              <p className="mt-1 text-xs text-gray-400">{photoFiles.length}{t(' file(s) selected')}</p>
             )}
           </fieldset>
 
@@ -299,7 +320,7 @@ export default function PhotoReportPage() {
             disabled={loading}
             className="w-full py-3 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? '생성 중...' : '완료 – Word 파일 다운로드'}
+            {loading ? t('Generating…') : t('Done – download Word file')}
           </button>
 
           {status && (
@@ -316,7 +337,7 @@ export default function PhotoReportPage() {
         </form>
 
         <p className="text-xs text-gray-400 text-center">
-          업로드 파일은 서버에 저장되지 않으며 요청 처리 후 즉시 폐기됩니다.
+          {t('Uploaded files are not stored on the server; they are discarded right after the request.')}
         </p>
       </div>
     </main>
