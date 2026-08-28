@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import PizZip from 'pizzip';
 import sharp from 'sharp';
 import { buildReport } from './docxPhotoReport';
+import { expandPhotoEntries, REPORTS } from './reportForms';
 
 async function main() {
   const base = readFileSync('src/lib/reportTemplates/cec.docx');
@@ -38,6 +39,21 @@ async function main() {
   const [w, h] = sizes[0].split('x').map(Number);
   assert.ok(Math.abs(w / h - 4 / 3) < 0.02, `비율이 4:3 아님: ${sizes[0]}`);
 
-  console.log('ok:', sizes[0], `${photos.length} photos`);
+  // 물품 묶음 반복: CEC 2~4번이 통째로 늘어나고 번호는 이어서 매겨진다.
+  const cec = REPORTS.find(r => r.id === 'cec')!;
+  const one = expandPhotoEntries(cec, 1);
+  assert.deepEqual(one.map(e => e.label), cec.photoCategories, '묶음 1개일 때 원래 목록과 달라짐');
+
+  const two = expandPhotoEntries(cec, 2);
+  assert.deepEqual(
+    two.map(e => e.label),
+    ['Inspection site', 'Nameplate', 'Goods condition', 'Packing',
+      'Nameplate', 'Goods condition', 'Packing', 'Shipping mark', 'Container', 'Sealing'],
+    '물품 추가 순서가 어긋남'
+  );
+  assert.equal(new Set(two.map(e => e.key)).size, two.length, 'key 중복');
+  assert.deepEqual(two.filter(e => e.ci === cec.photoGroup!.nameAt).map(e => e.gi), [0, 1], 'Nameplate 묶음 번호 어긋남');
+
+  console.log('ok:', sizes[0], `${photos.length} photos`, `entries 1→${one.length} 2→${two.length}`);
 }
 main();

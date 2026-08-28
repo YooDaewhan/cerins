@@ -24,6 +24,9 @@ export interface ReportDef {
   photoTable?: string;
   /** 사진 첨부 항목. 항목별로 사진을 받고, 캡션(제목)으로 쓴다. */
   photoCategories?: string[];
+  /** 물품 하나가 여러 항목을 차지할 때, 반복 추가할 수 있는 photoCategories 구간(0-based).
+   *  nameAt 항목의 캡션 뒤에는 물품 이름이 `-이름` 으로 붙는다. */
+  photoGroup?: { from: number; to: number; nameAt: number };
   sections: Section[];
 }
 
@@ -58,6 +61,8 @@ const CEC: ReportDef = {
     'Container',
     'Sealing',
   ],
+  // 2~4번(Nameplate / Goods condition / Packing)은 물품 하나 단위라 통째로 반복된다.
+  photoGroup: { from: 1, to: 3, nameAt: 1 },
   sections: [
     {
       title: 'General Information',
@@ -503,6 +508,36 @@ const PSIC: ReportDef = {
 };
 
 export const REPORTS: ReportDef[] = [CEC, SCRAP, PSIC];
+
+export interface PhotoEntry {
+  /** catPhotos / catLabels 의 키 */
+  key: string;
+  label: string;
+  /** photoCategories 안의 위치 */
+  ci: number;
+  /** 물품 묶음 번호(0-based). 묶음이 아니면 -1 */
+  gi: number;
+}
+
+/** photoGroup 구간을 groups 개만큼 반복해 펼친 사진 항목 목록.
+ *  배열 순서가 곧 화면 순서이자 Word 캡션의 번호 순서다. */
+export function expandPhotoEntries(def: ReportDef, groups: number): PhotoEntry[] {
+  const cats = def.photoCategories ?? [];
+  const grp = def.photoGroup;
+  const n = Math.max(1, groups);
+  return cats.flatMap((c, i) => {
+    if (!grp || i < grp.from || i > grp.to) return [{ key: `${i}`, label: c, ci: i, gi: -1 }];
+    if (i > grp.from) return []; // 묶음은 시작 위치에서 한 번에 펼친다
+    return Array.from({ length: n }, (_x, gi) =>
+      cats.slice(grp.from, grp.to + 1).map((gc, j) => ({
+        key: `${grp.from + j}#${gi}`,
+        label: gc,
+        ci: grp.from + j,
+        gi,
+      }))
+    ).flat();
+  });
+}
 
 export function getReport(id: string): ReportDef | undefined {
   return REPORTS.find(r => r.id === id);

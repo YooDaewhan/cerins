@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { REPORTS, type Field, type FormValues } from '@/src/lib/reportForms';
+import { REPORTS, expandPhotoEntries, type Field, type FormValues, type PhotoEntry } from '@/src/lib/reportForms';
 import { KO } from '@/src/lib/reportFormsKo';
 
 type Status = { type: 'error' | 'success'; message: string } | null;
@@ -21,6 +21,8 @@ export default function PhotoReportPage() {
   // 항목별 사진 / 캡션. key = `${tab}.${항목 index}`
   const [catPhotos, setCatPhotos] = useState<Record<string, File[]>>({});
   const [catLabels, setCatLabels] = useState<Record<string, string>>({});
+  const [groupNames, setGroupNames] = useState<Record<string, string>>({});
+  const [groupCount, setGroupCount] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<Status>(null);
 
@@ -48,6 +50,21 @@ export default function PhotoReportPage() {
 
   const def = REPORTS.find(r => r.id === tab);
   const cats = def?.photoCategories;
+  const grp = def?.photoGroup;
+  const groups = groupCount[tab] ?? 1;
+
+  // 반복 묶음(CEC 의 물품 단위)을 펼쳐, 화면에 보이는 순서 = 캡션 번호 순서로 만든다.
+  const entries = def ? expandPhotoEntries(def, groups) : [];
+
+  /** 캡션에 쓸 이름. 물품 묶음의 nameAt 항목에는 물품 이름을 붙인다. */
+  function entryLabel(e: PhotoEntry) {
+    const base = catLabels[catKey(e.key)] ?? e.label;
+    if (grp && e.gi >= 0 && e.ci === grp.nameAt) {
+      const n = (groupNames[`${tab}.${e.gi}`] ?? '').trim();
+      if (n) return `${base}-${n}`;
+    }
+    return base;
+  }
   const current = values[tab] ?? {};
 
   function setValue(k: string, v: FormValues[string]) {
@@ -66,7 +83,7 @@ export default function PhotoReportPage() {
     setValue(f.k, grid);
   }
 
-  const catKey = (i: number) => `${tab}.${i}`;
+  const catKey = (k: string) => `${tab}.${k}`;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -91,10 +108,10 @@ export default function PhotoReportPage() {
       // 사진은 항목 순서대로 이어붙이고, 같은 순서의 캡션 배열을 함께 보낸다.
       const labels: string[] = [];
       if (cats) {
-        cats.forEach((c, i) => {
-          for (const photo of catPhotos[catKey(i)] ?? []) {
+        entries.forEach((entry, i) => {
+          for (const photo of catPhotos[catKey(entry.key)] ?? []) {
             formData.append('photos', photo);
-            labels.push(`${i + 1}. ${catLabels[catKey(i)] ?? c}`);
+            labels.push(`${i + 1}. ${entryLabel(entry)}`);
           }
         });
       } else {
@@ -324,31 +341,59 @@ export default function PhotoReportPage() {
             <p className="text-xs text-gray-400">{t('jpg / jpeg / png / webp, multiple allowed')}</p>
 
             {cats ? (
-              cats.map((c, i) => {
-                const key = catKey(i);
+              entries.map((entry, i) => {
+                const key = catKey(entry.key);
                 const files = catPhotos[key] ?? [];
+                const inGroup = grp && entry.gi >= 0;
                 return (
-                  <div key={key} className="border border-gray-200 rounded-lg p-3">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className="text-xs font-semibold text-gray-400 w-5 shrink-0">{i + 1}.</span>
+                  <div key={entry.key}>
+                    {inGroup && entry.ci === grp!.from && (
+                      <div className="flex items-center gap-2 mt-3 mb-1.5">
+                        <span className="text-xs font-bold text-gray-500 shrink-0">
+                          {t('Item')} {entry.gi + 1}
+                        </span>
+                        <input
+                          type="text"
+                          value={groupNames[`${tab}.${entry.gi}`] ?? ''}
+                          placeholder={t('Goods name')}
+                          onChange={e =>
+                            setGroupNames(p => ({ ...p, [`${tab}.${entry.gi}`]: e.target.value }))
+                          }
+                          className="flex-1 border border-gray-200 rounded px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        />
+                      </div>
+                    )}
+                    <div className={`border border-gray-200 rounded-lg p-3 ${inGroup ? 'ml-3 border-l-2 border-l-blue-200' : ''}`}>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-xs font-semibold text-gray-400 w-5 shrink-0">{i + 1}.</span>
+                        <input
+                          type="text"
+                          value={catLabels[key] ?? entry.label}
+                          onChange={e => setCatLabels(p => ({ ...p, [key]: e.target.value }))}
+                          className="flex-1 border border-gray-200 rounded px-2 py-1 text-sm font-medium text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        />
+                      </div>
                       <input
-                        type="text"
-                        value={catLabels[key] ?? c}
-                        onChange={e => setCatLabels(p => ({ ...p, [key]: e.target.value }))}
-                        className="flex-1 border border-gray-200 rounded px-2 py-1 text-sm font-medium text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        type="file"
+                        accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                        multiple
+                        onChange={e =>
+                          setCatPhotos(p => ({ ...p, [key]: e.target.files ? Array.from(e.target.files) : [] }))
+                        }
+                        className="block w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"
                       />
+                      {files.length > 0 && (
+                        <p className="mt-1 text-xs text-gray-400">{files.length}{t(' file(s) selected')}</p>
+                      )}
                     </div>
-                    <input
-                      type="file"
-                      accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-                      multiple
-                      onChange={e =>
-                        setCatPhotos(p => ({ ...p, [key]: e.target.files ? Array.from(e.target.files) : [] }))
-                      }
-                      className="block w-full text-sm text-gray-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-green-50 file:text-green-700 hover:file:bg-green-100 cursor-pointer"
-                    />
-                    {files.length > 0 && (
-                      <p className="mt-1 text-xs text-gray-400">{files.length}{t(' file(s) selected')}</p>
+                    {inGroup && entry.ci === grp!.to && entry.gi === groups - 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setGroupCount(p => ({ ...p, [tab]: groups + 1 }))}
+                        className="mt-2 text-xs font-semibold text-blue-600 hover:underline"
+                      >
+                        {t('+ add goods item')}
+                      </button>
                     )}
                   </div>
                 );
