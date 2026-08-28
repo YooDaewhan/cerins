@@ -23,8 +23,12 @@ export const KO: Record<string, string> = {
   'Selected': '선택됨',
   ' file(s) selected': '개 파일 선택됨',
   '+ add row': '+ 행 추가',
-  'Uploaded files are not stored on the server; they are discarded right after the request.':
-    '업로드 파일은 서버에 저장되지 않으며 요청 처리 후 즉시 폐기됩니다.',
+  'Report name': '작성자 이름',
+  'e.g. 유지환': '예) 유지환',
+  'Saved as: 260828_Inspection Report_name': '저장 파일명: 260828_CEC Inspection Report_이름 형식으로 만들어집니다.',
+  'Admin page': '관리자 페이지',
+  'The generated report is stored on the server; admins can download it again from the admin page.':
+    '생성된 보고서는 서버에 보관되며, 관리자 페이지에서 다시 내려받을 수 있습니다.',
 
   // ── 보고서 제목
   'CEC Inspection Report': 'CEC 검사 보고서',

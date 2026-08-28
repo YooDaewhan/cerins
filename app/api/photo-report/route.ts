@@ -4,10 +4,13 @@ import path from 'node:path';
 import { buildReport, bundleWithVideos } from '@/src/lib/docxPhotoReport';
 import { fillTemplate } from '@/src/lib/docxFillTemplate';
 import { getReport, resolveWrites, type FormValues } from '@/src/lib/reportForms';
+import { savePhotoReport, buildReportFilename } from '@/src/lib/photoReports';
+import { getCurrentUser } from '@/src/lib/auth';
 
 export const runtime = 'nodejs';
 
 const TEMPLATE_DIR = path.join(process.cwd(), 'src', 'lib', 'reportTemplates');
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,6 +19,11 @@ export async function POST(req: NextRequest) {
     const reportType = (formData.get('reportType') as string | null) ?? '';
     const photoFiles = formData.getAll('photos') as File[];
     const videoFiles = (formData.getAll('videos') as File[]).filter(f => f.size > 0);
+
+    const reporterName = ((formData.get('reporterName') as string | null) ?? '').trim();
+    if (!reporterName) {
+      return NextResponse.json({ message: '이름을 입력해주세요.' }, { status: 400 });
+    }
 
     let baseBuffer: Buffer;
     let filename: string;
@@ -36,14 +44,14 @@ export async function POST(req: NextRequest) {
       const template = await readFile(path.join(TEMPLATE_DIR, `${def.id}.docx`));
       const { writes, checks } = resolveWrites(def, values);
       baseBuffer = fillTemplate(template, writes, checks, photoFiles.length > 0 ? def.photoTable : undefined);
-      filename = `${def.id}_report.docx`;
+      filename = buildReportFilename(def.title, reporterName, 'docx');
     } else {
       const docxFile = formData.get('docx') as File | null;
       if (!docxFile || docxFile.size === 0) {
         return NextResponse.json({ message: 'Word 파일(.docx)이 필요합니다.' }, { status: 400 });
       }
       baseBuffer = Buffer.from(await docxFile.arrayBuffer());
-      filename = 'report.docx';
+      filename = buildReportFilename('Inspection Report', reporterName, 'docx');
     }
 
     let resultBuffer = baseBuffer;
@@ -67,6 +75,11 @@ export async function POST(req: NextRequest) {
     }
 
     // 동영상은 Word 에 넣을 수 없으므로 완성된 문서와 함께 zip 으로 묶어 보낸다.
+    let payload = resultBuffer;
+    let outName = filename;
+    let mimeType =
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+
     if (videoFiles.length > 0) {
       const videos = await Promise.all(
         videoFiles.map(async file => ({
@@ -74,26 +87,28 @@ export async function POST(req: NextRequest) {
           buffer: Buffer.from(await file.arrayBuffer()),
         }))
       );
-      const zipBuffer = bundleWithVideos(resultBuffer, filename, videos);
-      const zipName = filename.replace(/\.docx$/, '') + '.zip';
-
-      return new NextResponse(new Uint8Array(zipBuffer), {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/zip',
-          'Content-Disposition': `attachment; filename="${zipName}"`,
-          'Content-Length': String(zipBuffer.length),
-        },
-      });
+      payload = bundleWithVideos(resultBuffer, filename, videos);
+      outName = filename.replace(/[.]docx$/, '') + '.zip';
+      mimeType = 'application/zip';
     }
 
-    return new NextResponse(new Uint8Array(resultBuffer), {
+    // 결과물은 서버에도 보관해 관리자 페이지에서 다시 받을 수 있게 한다.
+    const user = await getCurrentUser();
+    await savePhotoReport({
+      reportType: reportType || 'upload',
+      filename: outName,
+      mimeType,
+      buffer: payload,
+      createdBy: user?.id ?? null,
+    });
+
+    return new NextResponse(new Uint8Array(payload), {
       status: 200,
       headers: {
-        'Content-Type':
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'Content-Disposition': `attachment; filename="${filename}"`,
-        'Content-Length': String(resultBuffer.length),
+        'Content-Type': mimeType,
+        // 한글 이름이 들어가므로 RFC 5987 로 인코딩한다.
+        'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(outName)}`,
+        'Content-Length': String(payload.length),
       },
     });
   } catch (err) {

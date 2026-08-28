@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import {
   REPORTS,
@@ -23,6 +24,7 @@ export default function PhotoReportPage() {
   const [tab, setTab] = useState(TABS[0].id);
   const [values, setValues] = useState<Record<string, FormValues>>({});
   const [gridRows, setGridRows] = useState<Record<string, number>>({});
+  const [reporterName, setReporterName] = useState('');
   const [docxFile, setDocxFile] = useState<File | null>(null);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   // 항목별 사진 / 캡션. key = `${tab}.${항목 index}`
@@ -106,6 +108,10 @@ export default function PhotoReportPage() {
     e.preventDefault();
     setStatus(null);
 
+    if (!reporterName.trim()) {
+      setStatus({ type: 'error', message: '이름을 입력해주세요.' });
+      return;
+    }
     if (!def && !docxFile) {
       setStatus({ type: 'error', message: '기본 Word 파일(.docx)을 선택해주세요.' });
       return;
@@ -119,6 +125,7 @@ export default function PhotoReportPage() {
     try {
       const formData = new FormData();
       formData.append('reportType', tab);
+      formData.append('reporterName', reporterName.trim());
       if (def) formData.append('values', JSON.stringify(current));
       else if (docxFile) formData.append('docx', docxFile);
 
@@ -156,8 +163,13 @@ export default function PhotoReportPage() {
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
+      // 파일명 규칙(날짜_형식_이름)은 서버가 정하고, 응답 헤더에서 그대로 가져다 쓴다.
+      const disposition = res.headers.get('content-disposition') ?? '';
+      const encoded = /filename\*=UTF-8''([^;]+)/.exec(disposition)?.[1];
       const ext = res.headers.get('content-type')?.includes('zip') ? 'zip' : 'docx';
-      anchor.download = `${def ? def.id : 'report'}_${Date.now()}.${ext}`;
+      anchor.download = encoded
+        ? decodeURIComponent(encoded)
+        : `${def ? def.id : 'report'}.${ext}`;
       anchor.style.display = 'none';
       document.body.appendChild(anchor);
       anchor.click();
@@ -295,19 +307,27 @@ export default function PhotoReportPage() {
         <div>
           <div className="flex items-start justify-between gap-3">
             <h1 className="text-2xl font-bold text-gray-800">{t('Inspection Report Builder')}</h1>
-            <div className="flex rounded-lg border border-gray-300 overflow-hidden shrink-0 text-xs font-semibold">
-              {(['ko', 'en'] as const).map(l => (
-                <button
-                  key={l}
-                  type="button"
-                  onClick={() => setLang(l)}
-                  className={`px-3 py-1.5 transition-colors ${
-                    lang === l ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
-                  }`}
-                >
-                  {l === 'ko' ? '한' : 'EN'}
-                </button>
-              ))}
+            <div className="flex items-center gap-2 shrink-0">
+              <Link
+                href="/photo-report/admin"
+                className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+              >
+                {t('Admin page')}
+              </Link>
+              <div className="flex rounded-lg border border-gray-300 overflow-hidden text-xs font-semibold">
+                {(['ko', 'en'] as const).map(l => (
+                  <button
+                    key={l}
+                    type="button"
+                    onClick={() => setLang(l)}
+                    className={`px-3 py-1.5 transition-colors ${
+                      lang === l ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
+                    }`}
+                  >
+                    {l === 'ko' ? '한' : 'EN'}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
           <p className="mt-1 text-sm text-gray-500">
@@ -334,6 +354,24 @@ export default function PhotoReportPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* 저장 파일명(날짜_형식_이름)에 들어가는 작성자 이름. 필수. */}
+          <label className="block">
+            <span className="block text-sm font-medium text-gray-700 mb-1">
+              {t('Report name')} <span className="text-red-500">*</span>
+            </span>
+            <input
+              type="text"
+              required
+              value={reporterName}
+              onChange={e => setReporterName(e.target.value)}
+              placeholder={t('e.g. 유지환')}
+              className={inputCls}
+            />
+            <span className="mt-1 block text-xs text-gray-400">
+              {t('Saved as: 260828_Inspection Report_name')}
+            </span>
+          </label>
+
           {def ? (
             <>
               <p className="text-sm text-gray-400">{t(def.title)}</p>
@@ -481,7 +519,7 @@ export default function PhotoReportPage() {
         </form>
 
         <p className="text-xs text-gray-400 text-center">
-          {t('Uploaded files are not stored on the server; they are discarded right after the request.')}
+          {t('The generated report is stored on the server; admins can download it again from the admin page.')}
         </p>
       </div>
     </main>
