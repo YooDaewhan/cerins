@@ -1,7 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { REPORTS, expandPhotoEntries, type Field, type FormValues, type PhotoEntry } from '@/src/lib/reportForms';
+import {
+  REPORTS,
+  dropGroup,
+  expandPhotoEntries,
+  type Field,
+  type FormValues,
+  type PhotoEntry,
+} from '@/src/lib/reportForms';
 import { KO } from '@/src/lib/reportFormsKo';
 
 type Status = { type: 'error' | 'success'; message: string } | null;
@@ -60,7 +67,7 @@ export default function PhotoReportPage() {
   function entryLabel(e: PhotoEntry) {
     const base = catLabels[catKey(e.key)] ?? e.label;
     if (grp && e.gi >= 0 && e.ci === grp.nameAt) {
-      const n = (groupNames[`${tab}.${e.gi}`] ?? '').trim();
+      const n = (groupNames[groupKey(e.gi)] ?? '').trim();
       if (n) return `${base}-${n}`;
     }
     return base;
@@ -84,6 +91,15 @@ export default function PhotoReportPage() {
   }
 
   const catKey = (k: string) => `${tab}.${k}`;
+  const groupKey = (gi: number) => `${tab}.item#${gi}`;
+
+  /** 물품 묶음 하나를 지우고, 딸린 사진·이름과 뒤 묶음 번호를 함께 정리한다. */
+  function removeGroup(gi: number) {
+    setCatPhotos(m => dropGroup(m, tab, gi));
+    setCatLabels(m => dropGroup(m, tab, gi));
+    setGroupNames(m => dropGroup(m, tab, gi));
+    setGroupCount(p => ({ ...p, [tab]: Math.max(1, groups - 1) }));
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -354,13 +370,22 @@ export default function PhotoReportPage() {
                         </span>
                         <input
                           type="text"
-                          value={groupNames[`${tab}.${entry.gi}`] ?? ''}
+                          value={groupNames[groupKey(entry.gi)] ?? ''}
                           placeholder={t('Goods name')}
                           onChange={e =>
-                            setGroupNames(p => ({ ...p, [`${tab}.${entry.gi}`]: e.target.value }))
+                            setGroupNames(p => ({ ...p, [groupKey(entry.gi)]: e.target.value }))
                           }
                           className="flex-1 border border-gray-200 rounded px-2 py-1 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-400"
                         />
+                        {groups > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeGroup(entry.gi)}
+                            className="shrink-0 text-xs text-red-500 hover:underline"
+                          >
+                            {t('delete')}
+                          </button>
+                        )}
                       </div>
                     )}
                     <div className={`border border-gray-200 rounded-lg p-3 ${inGroup ? 'ml-3 border-l-2 border-l-blue-200' : ''}`}>

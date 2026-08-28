@@ -509,6 +509,23 @@ const PSIC: ReportDef = {
 
 export const REPORTS: ReportDef[] = [CEC, SCRAP, PSIC];
 
+/** 물품 묶음 gi 를 지우고 뒤 묶음 번호를 한 칸씩 당긴 새 맵을 만든다.
+ *  `${tab}.…#${gi}` 형태의 키만 건드리고 나머지는 그대로 둔다. */
+export function dropGroup<T>(map: Record<string, T>, tab: string, gi: number): Record<string, T> {
+  const out: Record<string, T> = {};
+  for (const [k, v] of Object.entries(map)) {
+    const m = k.match(/^(.*#)(\d+)$/);
+    if (!m || !k.startsWith(`${tab}.`)) {
+      out[k] = v;
+      continue;
+    }
+    const g = Number(m[2]);
+    if (g === gi) continue;
+    out[g > gi ? `${m[1]}${g - 1}` : k] = v;
+  }
+  return out;
+}
+
 export interface PhotoEntry {
   /** catPhotos / catLabels 의 키 */
   key: string;

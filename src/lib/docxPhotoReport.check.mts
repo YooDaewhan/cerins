@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import PizZip from 'pizzip';
 import sharp from 'sharp';
 import { buildReport } from './docxPhotoReport';
-import { expandPhotoEntries, REPORTS } from './reportForms';
+import { dropGroup, expandPhotoEntries, REPORTS } from './reportForms';
 
 async function main() {
   const base = readFileSync('src/lib/reportTemplates/cec.docx');
@@ -53,6 +53,30 @@ async function main() {
   );
   assert.equal(new Set(two.map(e => e.key)).size, two.length, 'key 중복');
   assert.deepEqual(two.filter(e => e.ci === cec.photoGroup!.nameAt).map(e => e.gi), [0, 1], 'Nameplate 묶음 번호 어긋남');
+
+  // 묶음 삭제: 해당 묶음의 사진/이름만 빠지고 뒤 번호가 한 칸 당겨진다.
+  const before = {
+    'cec.0': 'site',
+    'cec.1#0': 'nameplate0',
+    'cec.2#0': 'cond0',
+    'cec.1#1': 'nameplate1',
+    'cec.item#0': 'A',
+    'cec.item#1': 'B',
+    'scrap.1#0': '다른 탭',
+  };
+  assert.deepEqual(dropGroup(before, 'cec', 0), {
+    'cec.0': 'site',
+    'cec.1#0': 'nameplate1',
+    'cec.item#0': 'B',
+    'scrap.1#0': '다른 탭',
+  }, '묶음 삭제 후 키가 어긋남');
+  assert.deepEqual(dropGroup(before, 'cec', 1), {
+    'cec.0': 'site',
+    'cec.1#0': 'nameplate0',
+    'cec.2#0': 'cond0',
+    'cec.item#0': 'A',
+    'scrap.1#0': '다른 탭',
+  }, '마지막 묶음 삭제가 앞 묶음을 건드림');
 
   console.log('ok:', sizes[0], `${photos.length} photos`, `entries 1→${one.length} 2→${two.length}`);
 }
