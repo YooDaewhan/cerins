@@ -6,10 +6,10 @@
  */
 
 export type Field =
-  | { t: 'text'; k: string; label: string; cell: string; lines?: number; replace?: boolean; prefix?: string; ph?: string }
+  | { t: 'text'; k: string; label: string; cell: string; lines?: number; replace?: boolean; prefix?: string; ph?: string; date?: true; today?: true }
   | { t: 'radio'; k: string; label: string; opts: { v: string; label: string; cb?: number; cell?: string }[] }
   | { t: 'checks'; k: string; label: string; opts: { v: string; label: string; cb: number }[] }
-  | { t: 'grid'; k: string; label: string; cols: string[]; rows: string[][] };
+  | { t: 'grid'; k: string; label: string; cols: string[]; rows: string[][]; dateCols?: number[] };
 
 export interface Section {
   title: string;
@@ -52,7 +52,7 @@ const CEC: ReportDef = {
       title: 'General Information',
       fields: [
         { t: 'text', k: 'jobFileNo', label: 'Job File No', cell: 'T0.R0.C1' },
-        { t: 'text', k: 'date', label: 'Date', cell: 'T0.R0.C2', prefix: ' ' },
+        { t: 'text', k: 'date', label: 'Date', cell: 'T0.R0.C2', prefix: ' ', date: true, today: true },
         { t: 'text', k: 'client', label: 'Client', cell: 'T0.R1.C1' },
       ],
     },
@@ -67,7 +67,7 @@ const CEC: ReportDef = {
     {
       title: 'INSPECTED',
       fields: [
-        { t: 'text', k: 'inspDate', label: 'Date of Inspection (dd-mm-yyyy)', cell: 'T2.R1.C0' },
+        { t: 'text', k: 'inspDate', label: 'Date of Inspection', cell: 'T2.R1.C0', date: true },
         { t: 'text', k: 'opTestMark', label: 'Operation Test', cell: 'T2.R1.C1', ph: '✔ / N/A' },
         { t: 'text', k: 'packingMark', label: 'Packing', cell: 'T2.R1.C2', ph: '✔ / N/A' },
         { t: 'text', k: 'loadingMark', label: 'Loading Supervision', cell: 'T2.R1.C3', ph: '✔ / N/A' },
@@ -79,11 +79,12 @@ const CEC: ReportDef = {
           k: 'times',
           label: 'Time of Operation Test / Packing Inspection / Loading Supervision',
           cols: [
-            'OT Date (XX-XX)', 'OT From', 'OT To',
-            'Pack Date (XX-XX)', 'Pack From', 'Pack To',
-            'Load Date (XX-XX)', 'Load From', 'Load To',
+            'OT Date', 'OT From', 'OT To',
+            'Pack Date', 'Pack From', 'Pack To',
+            'Load Date', 'Load From', 'Load To',
           ],
           rows: gridRows(2, 7, 10, 1, 9),
+          dateCols: [0, 3, 6],
         },
       ],
     },
@@ -219,7 +220,7 @@ const CEC: ReportDef = {
         { t: 'text', k: 'appName', label: 'Name', cell: 'T11.R1.C1' },
         { t: 'text', k: 'appTitle', label: 'Title', cell: 'T11.R2.C1' },
         { t: 'text', k: 'appContact', label: 'Contact points (Tel., email, etc.)', cell: 'T11.R3.C1' },
-        { t: 'text', k: 'appDate', label: 'Date', cell: 'T11.R5.C1' },
+        { t: 'text', k: 'appDate', label: 'Date', cell: 'T11.R5.C1', date: true },
       ],
     },
     {
@@ -228,7 +229,7 @@ const CEC: ReportDef = {
         { t: 'text', k: 'insCompany', label: 'Company name or CERINS branch office name', cell: 'T11.R9.C1' },
         { t: 'text', k: 'insName', label: 'Name', cell: 'T11.R10.C1' },
         { t: 'text', k: 'insTitle', label: 'Title', cell: 'T11.R11.C1' },
-        { t: 'text', k: 'insDate', label: 'Date', cell: 'T11.R13.C1' },
+        { t: 'text', k: 'insDate', label: 'Date', cell: 'T11.R13.C1', date: true },
       ],
     },
   ],
@@ -245,7 +246,7 @@ const SCRAP: ReportDef = {
       title: 'General Information',
       fields: [
         { t: 'text', k: 'jobFileNo', label: 'Job File No.', cell: 'T0.R0.C0', replace: true, prefix: 'Job File No. ', ph: 'CERINS-XXXXXX/KR' },
-        { t: 'text', k: 'date', label: 'Date', cell: 'T0.R0.C2', replace: true, ph: 'MMMM DD, YYYY' },
+        { t: 'text', k: 'date', label: 'Date', cell: 'T0.R0.C2', replace: true, date: true, today: true },
       ],
     },
     {
@@ -272,7 +273,7 @@ const SCRAP: ReportDef = {
     {
       title: 'INSPECTED',
       fields: [
-        { t: 'text', k: 'inspDate', label: 'Date of inspection (dd-mm-yyyy)', cell: 'T2.R0.C1' },
+        { t: 'text', k: 'inspDate', label: 'Date of inspection', cell: 'T2.R0.C1', date: true },
         { t: 'text', k: 'timeFrom', label: 'Time of Inspection – From', cell: 'T2.R2.C1' },
         { t: 'text', k: 'timeTo', label: 'Time of Inspection – To', cell: 'T2.R2.C2' },
         { t: 'text', k: 'roundTrip', label: 'Round-trip Travel Time', cell: 'T2.R2.C3' },
@@ -314,8 +315,8 @@ const SCRAP: ReportDef = {
         { t: 'text', k: 'meterMaker', label: 'Manufacturer', cell: 'T2.R13.C1' },
         { t: 'text', k: 'meterModel', label: 'Model', cell: 'T2.R14.C1' },
         { t: 'text', k: 'meterSerial', label: 'Serial No.', cell: 'T2.R15.C1' },
-        { t: 'text', k: 'calLast', label: 'Last date of calibration', cell: 'T2.R16.C1' },
-        { t: 'text', k: 'calNext', label: 'Next date of calibration', cell: 'T2.R17.C1' },
+        { t: 'text', k: 'calLast', label: 'Last date of calibration', cell: 'T2.R16.C1', date: true },
+        { t: 'text', k: 'calNext', label: 'Next date of calibration', cell: 'T2.R17.C1', date: true },
       ],
     },
     {
@@ -416,7 +417,7 @@ const SCRAP: ReportDef = {
         { t: 'text', k: 'appName', label: 'Name', cell: 'T3.R1.C1' },
         { t: 'text', k: 'appTitle', label: 'Title', cell: 'T3.R2.C1' },
         { t: 'text', k: 'appContact', label: 'Contact points (Tel., email, etc.)', cell: 'T3.R3.C1' },
-        { t: 'text', k: 'appDate', label: 'Date', cell: 'T3.R5.C1' },
+        { t: 'text', k: 'appDate', label: 'Date', cell: 'T3.R5.C1', date: true },
       ],
     },
     {
@@ -425,7 +426,7 @@ const SCRAP: ReportDef = {
         { t: 'text', k: 'insCompany', label: 'Company name or CERINS branch office name', cell: 'T3.R9.C1' },
         { t: 'text', k: 'insName', label: 'Name', cell: 'T3.R10.C1' },
         { t: 'text', k: 'insTitle', label: 'Title', cell: 'T3.R11.C1' },
-        { t: 'text', k: 'insDate', label: 'Date', cell: 'T3.R13.C1' },
+        { t: 'text', k: 'insDate', label: 'Date', cell: 'T3.R13.C1', date: true },
       ],
     },
   ],
@@ -447,7 +448,7 @@ const PSIC: ReportDef = {
         { t: 'text', k: 'brand', label: 'BRAND', cell: 'T0.R1.C3' },
         { t: 'text', k: 'subcontractor', label: 'Subcontractor', cell: 'T0.R2.C1' },
         { t: 'text', k: 'factoryNo', label: 'Factory No', cell: 'T0.R2.C3' },
-        { t: 'text', k: 'inspectionDate', label: 'INSPECTION DATE', cell: 'T0.R2.C5' },
+        { t: 'text', k: 'inspectionDate', label: 'INSPECTION DATE', cell: 'T0.R2.C5', date: true },
         { t: 'text', k: 'piPoNo', label: 'PI# & PO No.', cell: 'T0.R3.C1' },
         { t: 'text', k: 'lotSize', label: 'Lot Size', cell: 'T0.R3.C3' },
         { t: 'text', k: 'barCodeNo', label: 'BAR CODE NO.', cell: 'T0.R3.C5' },

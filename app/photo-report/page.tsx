@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { REPORTS, type Field, type FormValues } from '@/src/lib/reportForms';
 import { KO } from '@/src/lib/reportFormsKo';
 
@@ -22,6 +22,25 @@ export default function PhotoReportPage() {
   const [rows, setRows] = useState(4);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<Status>(null);
+
+  // today 로 표시된 날짜 칸은 오늘 날짜(0000-00-00)로 채운다.
+  // SSR/CSR 날짜가 어긋나 hydration 이 깨지지 않도록 마운트 후에 넣는다.
+  useEffect(() => {
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    setValues(prev => {
+      const next = { ...prev };
+      for (const r of REPORTS) {
+        for (const s of r.sections) {
+          for (const f of s.fields) {
+            if (f.t !== 'text' || !f.today) continue;
+            next[r.id] = { ...(next[r.id] ?? {}), [f.k]: today };
+          }
+        }
+      }
+      return next;
+    });
+  }, []);
 
   // 화면 라벨만 번역한다. 생성되는 Word 파일은 원본 영문 양식 그대로다.
   const t = (s: string) => (lang === 'ko' ? KO[s] ?? s : s);
@@ -112,7 +131,7 @@ export default function PhotoReportPage() {
             />
           ) : (
             <input
-              type="text"
+              type={f.date ? 'date' : 'text'}
               value={v}
               placeholder={f.ph}
               onChange={e => setValue(f.k, e.target.value)}
@@ -187,7 +206,7 @@ export default function PhotoReportPage() {
                   <label key={c} className="block">
                     <span className="block text-xs text-gray-500 mb-0.5">{t(c)}</span>
                     <input
-                      type="text"
+                      type={f.dateCols?.includes(i) ? 'date' : 'text'}
                       value={grid[r]?.[i] ?? ''}
                       onChange={e => setCellValue(f, r, i, e.target.value)}
                       className="w-full border border-gray-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
