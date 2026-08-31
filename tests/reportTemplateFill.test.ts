@@ -172,11 +172,17 @@ test("CEC: 컨테이너 표도 입력한 행 수만큼 생긴다", () => {
   assert.ok(fifteen.get("T4.R20.C1")?.includes("TAIL"), "표 뒤 셀이 밀리지 않음");
 });
 
-test("한글 사전: 폼에 쓰이는 모든 문자열에 번역이 있다", async () => {
-  const { KO } = await import("@/src/lib/reportFormsKo");
+test("번역 사전: 폼에 쓰이는 모든 문자열에 번역이 있다", async () => {
+  const dicts = [
+    ["ko", (await import("@/src/lib/reportFormsKo")).KO],
+    ["zh", (await import("@/src/lib/reportFormsZh")).ZH],
+    ["vi", (await import("@/src/lib/reportFormsVi")).VI],
+  ] as const;
   const missing: string[] = [];
   for (const def of REPORTS) {
-    const add = (s: string) => { if (!KO[s]) missing.push(s); };
+    const add = (s: string) => {
+      for (const [lang, dict] of dicts) if (!dict[s]) missing.push(`[${lang}] ${s}`);
+    };
     add(def.title);
     for (const sec of def.sections) {
       add(sec.title);

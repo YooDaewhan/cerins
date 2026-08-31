@@ -12,16 +12,27 @@ import {
   type PhotoEntry,
 } from '@/src/lib/reportForms';
 import { KO } from '@/src/lib/reportFormsKo';
+import { ZH } from '@/src/lib/reportFormsZh';
+import { VI } from '@/src/lib/reportFormsVi';
 
 type Status = { type: 'error' | 'success'; message: string } | null;
 
 const TABS = [...REPORTS.map(r => ({ id: r.id, label: r.label })), { id: 'upload', label: 'Upload' }];
 
+// 화면 라벨용 사전. en 은 영문 원문 그대로라 사전이 없다.
+const LANGS = [
+  { id: 'ko', label: '한', dict: KO },
+  { id: 'en', label: 'EN', dict: null },
+  { id: 'zh', label: '中', dict: ZH },
+  { id: 'vi', label: 'VI', dict: VI },
+] as const;
+type Lang = (typeof LANGS)[number]['id'];
+
 const inputCls =
   'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400';
 
 export default function PhotoReportPage() {
-  const [lang, setLang] = useState<'ko' | 'en'>('ko');
+  const [lang, setLang] = useState<Lang>('ko');
   const [tab, setTab] = useState(TABS[0].id);
   const [values, setValues] = useState<Record<string, FormValues>>({});
   const [gridRows, setGridRows] = useState<Record<string, number>>({});
@@ -56,7 +67,8 @@ export default function PhotoReportPage() {
   }, []);
 
   // 화면 라벨만 번역한다. 생성되는 Word 파일은 원본 영문 양식 그대로다.
-  const t = (s: string) => (lang === 'ko' ? KO[s] ?? s : s);
+  const dict = LANGS.find(l => l.id === lang)?.dict;
+  const t = (s: string) => dict?.[s] ?? s;
 
   const def = REPORTS.find(r => r.id === tab);
   const cats = def?.photoCategories;
@@ -333,16 +345,16 @@ export default function PhotoReportPage() {
                 {t('Admin page')}
               </Link>
               <div className="flex rounded-lg border border-gray-300 overflow-hidden text-xs font-semibold">
-                {(['ko', 'en'] as const).map(l => (
+                {LANGS.map(l => (
                   <button
-                    key={l}
+                    key={l.id}
                     type="button"
-                    onClick={() => setLang(l)}
+                    onClick={() => setLang(l.id)}
                     className={`px-3 py-1.5 transition-colors ${
-                      lang === l ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
+                      lang === l.id ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
                     }`}
                   >
-                    {l === 'ko' ? '한' : 'EN'}
+                    {l.label}
                   </button>
                 ))}
               </div>
