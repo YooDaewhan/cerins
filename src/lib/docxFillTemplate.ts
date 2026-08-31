@@ -246,8 +246,15 @@ export function fillTemplate(
     }
   }
 
-  // 사진 자리표시 빈 표 제거
+  // 사진 자리표시 빈 표 제거. 딸린 안내 문구('PHOTO REPORT', '-END-')도 같이 걷어낸다.
   if (dropTable) {
+    for (const m of xml.matchAll(/<w:p(?=[ >])[\s\S]*?<\/w:p>/g)) {
+      const text = [...m[0].matchAll(/<w:t[^>]*>([^<]*)<\/w:t>/g)].map(a => a[1]).join('').trim();
+      if (/^(photo\s*report|[-–]\s*end\s*[-–]?)$/i.test(text)) {
+        edits.push({ start: m.index, end: m.index + m[0].length, text: '' });
+      }
+    }
+
     const range = cells.get(`${dropTable}.R0.C0`);
     if (range) {
       const tblStart = Math.max(

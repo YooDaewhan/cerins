@@ -135,6 +135,17 @@ test("SCRAP: 컨테이너 표가 입력한 행 수만큼 생기고 뒤 셀이 �
   assert.ok(twelve.cells.get("T2.R47.C1")?.includes("TAIL"), "표 뒤 셀이 밀리지 않음");
 });
 
+test("사진을 붙이면 템플릿의 자리표시 문구(PHOTO REPORT / -END-)가 사라진다", () => {
+  for (const def of REPORTS) {
+    const template = readFileSync(path.join(TEMPLATE_DIR, `${def.id}.docx`));
+    const { writes, checks, rowBlocks } = resolveWrites(def, {});
+    const out = fillTemplate(template, writes, checks, def.photoTable, rowBlocks);
+    const text = [...new PizZip(out).file("word/document.xml")!.asText()
+      .matchAll(/<w:t[^>]*>([^<]*)<\/w:t>/g)].map(m => m[1]).join("\n");
+    assert.equal(/^\s*(PHOTO REPORT|[-–]\s*end\s*[-–]?)\s*$/im.test(text), false, `${def.id}: 자리표시 문구가 남음`);
+  }
+});
+
 test("CEC: 컨테이너 표도 입력한 행 수만큼 생긴다", () => {
   const def = REPORTS.find(r => r.id === "cec")!;
   const template = readFileSync(path.join(TEMPLATE_DIR, "cec.docx"));

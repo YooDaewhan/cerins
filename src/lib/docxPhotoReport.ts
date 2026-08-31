@@ -12,8 +12,6 @@ interface ImageData {
   heightEmu: number;
 }
 
-type MaybeImage = ImageData | null;
-
 // 1 dxa(twip) = 914400/1440 = 635 EMU
 // 1px at 96DPI = 914400/96 = 9525 EMU
 // → cell content width (px) = (colW_dxa - padding_dxa) * 635 / 9525
@@ -212,8 +210,8 @@ function buildPhotoSection(
 
   const tableRows: string[] = [];
   for (let i = 0; i < images.length; i += cols) {
-    const chunk: MaybeImage[] = images.slice(i, i + cols);
-    while (chunk.length < cols) chunk.push(null);
+    // 마지막 줄이 덜 찼으면 남는 칸은 아예 만들지 않는다(빈 칸 없음).
+    const chunk = images.slice(i, i + cols);
     // 사진 행과 캡션 행을 나눠야 그 사이에 표 선이 그어진다.
     // cantSplit + 사진 문단의 keepNext 로 둘이 페이지 경계에서 떨어지지 않게 묶는다.
     tableRows.push(
@@ -221,7 +219,7 @@ function buildPhotoSection(
         .map((img, j) => buildImageCell(img, i + j + 1, colW))
         .join('')}</w:tr>`,
       `<w:tr><w:trPr><w:cantSplit/></w:trPr>${chunk
-        .map(img => buildNameCell(img?.name ?? '', colW))
+        .map(img => buildNameCell(img.name, colW))
         .join('')}</w:tr>`
     );
   }
@@ -267,9 +265,8 @@ function buildPhotoSection(
 }
 
 /** Cell containing a centered image. keepNext 로 아래 캡션 행과 붙어 다닌다. */
-function buildImageCell(img: MaybeImage, docPrId: number, colW: number): string {
-  const content = img
-    ? `<w:p>
+function buildImageCell(img: ImageData, docPrId: number, colW: number): string {
+  const content = `<w:p>
     <w:pPr>
       <w:keepNext/>
       <w:jc w:val="center"/>
@@ -314,8 +311,7 @@ function buildImageCell(img: MaybeImage, docPrId: number, colW: number): string 
         </wp:inline>
       </w:drawing>
     </w:r>
-  </w:p>`
-    : `<w:p><w:pPr><w:keepNext/><w:jc w:val="center"/></w:pPr></w:p>`;
+  </w:p>`;
 
   return `<w:tc>
   <w:tcPr><w:tcW w:w="${colW}" w:type="dxa"/></w:tcPr>

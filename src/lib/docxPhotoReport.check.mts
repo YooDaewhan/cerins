@@ -30,6 +30,8 @@ async function main() {
   assert.ok(xml.includes('<w:keepNext/>'), 'keepNext 누락 — 사진과 캡션이 떨어질 수 있음');
   // 사진 행 + 캡션 행이 따로 있어야 그 사이에 표 선이 그어진다.
   assert.equal((added.match(/<w:tr>/g) ?? []).length, 4, '사진 행/캡션 행이 분리되지 않음');
+  // 4장 / 3열 → 마지막 줄은 1칸만. 남는 칸을 빈 칸으로 채우지 않는다.
+  assert.equal((added.match(/<w:tc>/g) ?? []).length, 2 * photos.length, '빈 칸이 만들어짐');
   assert.equal((xml.match(/<w:br w:type="page"\/>/g) ?? []).length, 1, '페이지 나눔이 이어지지 않음');
 
   const sizes = await Promise.all(
