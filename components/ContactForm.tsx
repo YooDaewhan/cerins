@@ -156,7 +156,7 @@ export default function ContactForm({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
         <div>
-          <label className={labelClass}>Email *</label>
+          <label className={labelClass}>e-MAIL *</label>
           <input
             type="email"
             name="email"

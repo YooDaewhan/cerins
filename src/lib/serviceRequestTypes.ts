@@ -202,7 +202,7 @@ export const REQUEST_FILE_META: Record<
 > = {
   MANUAL: { label: "매뉴얼", required: false },
   DRAWING: { label: "도면 또는 사진", required: false },
-  EXISTING_CERTIFICATE: { label: "기 발급 인증서", required: false },
+  EXISTING_CERTIFICATE: { label: "기 발급 인증서 (ex: CE, KC 등)", required: false },
   OTHER: { label: "기타", required: false },
 };
 
