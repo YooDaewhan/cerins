@@ -15,6 +15,21 @@ interface Props {
   placeholder?: string;
 }
 
+// ponytail: % 버튼 방식. 드래그 핸들은 NodeView 필요해지면 그때.
+const ResizableImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      width: {
+        default: null,
+        parseHTML: (el) => el.style.width || el.getAttribute("width"),
+        renderHTML: (attrs) =>
+          attrs.width ? { style: `width:${attrs.width}` } : {},
+      },
+    };
+  },
+});
+
 const Video = Node.create({
   name: "video",
   group: "block",
@@ -52,7 +67,7 @@ export default function TiptapEditor({ value, onChange, placeholder }: Props) {
         autolink: true,
         HTMLAttributes: { rel: "noopener noreferrer", target: "_blank" },
       }),
-      Image.configure({ inline: false }),
+      ResizableImage.configure({ inline: false }),
       TableKit.configure({ table: { resizable: true } }),
       Video,
       Placeholder.configure({
@@ -163,6 +178,16 @@ function Toolbar({ editor }: { editor: Editor | null }) {
     }
   }
 
+  function promptImageWidth() {
+    const cur = (editor!.getAttributes("image").width as string) ?? "";
+    const input = window.prompt("이미지 폭 (예: 50% 또는 300px)", cur);
+    if (input === null) return;
+    const v = input.trim();
+    // ponytail: 숫자만 넣으면 px로 간주
+    const width = v === "" ? null : /^[0-9.]+$/.test(v) ? `${v}px` : v;
+    editor!.chain().focus().updateAttributes("image", { width }).run();
+  }
+
   function promptImageUrl() {
     const url = window.prompt("이미지 URL", "https://");
     if (!url) return;
@@ -269,6 +294,49 @@ function Toolbar({ editor }: { editor: Editor | null }) {
       >
         🖼 URL
       </button>
+      {editor.isActive("image") && (
+        <>
+          {["25%", "50%", "75%", "100%"].map((w) => (
+            <button
+              key={w}
+              type="button"
+              className={btn(editor.getAttributes("image").width === w)}
+              onClick={() =>
+                editor
+                  .chain()
+                  .focus()
+                  .updateAttributes("image", { width: w })
+                  .run()
+              }
+              title={`이미지 폭 ${w}`}
+            >
+              {w}
+            </button>
+          ))}
+          <button
+            type="button"
+            className={btn(false)}
+            onClick={promptImageWidth}
+            title="이미지 폭 직접 입력"
+          >
+            직접
+          </button>
+          <button
+            type="button"
+            className={btn(false)}
+            onClick={() =>
+              editor
+                .chain()
+                .focus()
+                .updateAttributes("image", { width: null })
+                .run()
+            }
+            title="원본 크기"
+          >
+            원본
+          </button>
+        </>
+      )}
       <span className="w-px bg-gray-200 mx-1" />
       <button
         type="button"
