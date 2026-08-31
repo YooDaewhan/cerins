@@ -93,7 +93,7 @@ export default async function CertificationItemPage({ params }: Props) {
         <div className="flex flex-col lg:flex-row gap-10">
           <aside className="lg:w-56 flex-shrink-0">
             <div className="bg-[#f8f9fc] border border-gray-100 rounded-lg overflow-hidden">
-              <div className="px-4 py-3 bg-(--brand)">
+              <div className="px-4 py-3 bg-[#4C4C3C]">
                 <span className="text-xs font-bold text-white uppercase tracking-wider">
                   {parent.translation.title}
                 </span>
