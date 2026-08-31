@@ -6,6 +6,7 @@ import {
   REPORTS,
   dropGroup,
   expandPhotoEntries,
+  filledRows,
   type Field,
   type FormValues,
   type PhotoEntry,
@@ -61,7 +62,10 @@ export default function PhotoReportPage() {
   const cats = def?.photoCategories;
   const grp = def?.photoGroup;
   const videoAt = def?.videoAt;
-  const groups = groupCount[tab] ?? 1;
+  // fill 이 걸린 묶음(SCRAP 컨테이너)은 표에 입력한 행 수만큼 사진 묶음도 따라 생긴다.
+  const groups = grp?.fill
+    ? Math.max(1, filledRows(values[tab]?.[grp.fill.grid]))
+    : groupCount[tab] ?? 1;
 
   // 반복 묶음(CEC 의 물품 단위)을 펼쳐, 화면에 보이는 순서 = 캡션 번호 순서로 만든다.
   const entries = def ? expandPhotoEntries(def, groups) : [];
@@ -442,7 +446,7 @@ export default function PhotoReportPage() {
                         ) : (
                           <span className="flex-1" />
                         )}
-                        {groups > 1 && (
+                        {groups > 1 && !grp!.fill && (
                           <button
                             type="button"
                             onClick={() => removeGroup(entry.gi)}
@@ -483,7 +487,7 @@ export default function PhotoReportPage() {
                         <p className="mt-1 text-xs text-gray-400">{files.length}{t(' file(s) selected')}</p>
                       )}
                     </div>
-                    {inGroup && entry.ci === grp!.to && entry.gi === groups - 1 && (
+                    {inGroup && !grp!.fill && entry.ci === grp!.to && entry.gi === groups - 1 && (
                       <button
                         type="button"
                         onClick={() => setGroupCount(p => ({ ...p, [tab]: groups + 1 }))}

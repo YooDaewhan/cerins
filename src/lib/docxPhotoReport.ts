@@ -210,17 +210,19 @@ function buildPhotoSection(
 
   const tableRows: string[] = [];
   for (let i = 0; i < images.length; i += cols) {
-    // 마지막 줄이 덜 찼으면 남는 칸은 아예 만들지 않는다(빈 칸 없음).
     const chunk = images.slice(i, i + cols);
+    // 마지막 줄이 덜 찼을 때 칸을 아예 빼면 남은 사진이 가운데로 밀린다.
+    // 자리는 남기고 선만 지워 왼쪽부터 차게 한다.
+    const blanks = Array.from({ length: cols - chunk.length }, () => buildBlankCell(colW)).join('');
     // 사진 행과 캡션 행을 나눠야 그 사이에 표 선이 그어진다.
     // cantSplit + 사진 문단의 keepNext 로 둘이 페이지 경계에서 떨어지지 않게 묶는다.
     tableRows.push(
       `<w:tr><w:trPr><w:cantSplit/></w:trPr>${chunk
         .map((img, j) => buildImageCell(img, i + j + 1, colW))
-        .join('')}</w:tr>`,
+        .join('')}${blanks}</w:tr>`,
       `<w:tr><w:trPr><w:cantSplit/></w:trPr>${chunk
         .map(img => buildNameCell(img.name, colW))
-        .join('')}</w:tr>`
+        .join('')}${blanks}</w:tr>`
     );
   }
 
@@ -316,6 +318,22 @@ function buildImageCell(img: ImageData, docPrId: number, colW: number): string {
   return `<w:tc>
   <w:tcPr><w:tcW w:w="${colW}" w:type="dxa"/></w:tcPr>
   ${content}
+</w:tc>`;
+}
+
+/** 마지막 줄의 남는 자리. 왼쪽 선(앞 사진 칸을 닫는 선)만 남기고 나머지는 지운다. */
+function buildBlankCell(colW: number): string {
+  return `<w:tc>
+  <w:tcPr>
+    <w:tcW w:w="${colW}" w:type="dxa"/>
+    <w:tcBorders>
+      <w:top w:val="nil"/>
+      <w:bottom w:val="nil"/>
+      <w:right w:val="nil"/>
+      <w:left w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+    </w:tcBorders>
+  </w:tcPr>
+  <w:p><w:pPr><w:spacing w:before="0" w:after="0"/></w:pPr></w:p>
 </w:tc>`;
 }
 
