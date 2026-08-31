@@ -73,16 +73,17 @@ for (const def of REPORTS) {
         values[f.k] = f.opts.map(o => o.v);
         checkCount += f.opts.length;
       } else {
-        // 첫 행만 채운다
-        values[f.k] = [f.cols.map((_, c) => `G_${f.k}_${c}`)];
+        // 첫 행만 확인한다. rowBlock 표는 템플릿 행 수를 그대로 채워 뒤 셀 좌표가 밀리지 않게 한다.
+        const rows = f.rowBlock ? f.rows.length : 1;
+        values[f.k] = Array.from({ length: rows }, () => f.cols.map((_, c) => `G_${f.k}_${c}`));
         f.rows[0].forEach((cell, c) => expected.push({ cell, value: `G_${f.k}_${c}` }));
       }
     };
     def.sections.forEach(s => s.fields.forEach(walk));
 
     const template = readFileSync(path.join(TEMPLATE_DIR, `${def.id}.docx`));
-    const { writes, checks } = resolveWrites(def, values);
-    const out = fillTemplate(template, writes, checks);
+    const { writes, checks, rowBlocks } = resolveWrites(def, values);
+    const out = fillTemplate(template, writes, checks, undefined, rowBlocks);
 
     const cells = readCells(out);
     for (const e of expected) {
@@ -102,6 +103,63 @@ for (const def of REPORTS) {
     assert.deepEqual([...readCells(out).keys()], [...readCells(template).keys()]);
   });
 }
+
+test("SCRAP: 컨테이너 표가 입력한 행 수만큼 생기고 뒤 셀이 따라 밀린다", () => {
+  const def = REPORTS.find(r => r.id === "scrap")!;
+  const template = readFileSync(path.join(TEMPLATE_DIR, "scrap.docx"));
+
+  const run = (n: number) => {
+    const values: FormValues = {
+      // 열 순서: 크기 / 컨테이너 번호 / 봉인 번호 / 수량(KG) / 방사선량
+      containers: Array.from({ length: n }, (_x, i) => ["20", `CONT${i}`, `SEAL${i}`, "20000", "0.1"]),
+      bbType: "TAIL",
+    };
+    const { writes, checks, rowBlocks } = resolveWrites(def, values);
+    const out = fillTemplate(template, writes, checks, undefined, rowBlocks);
+    return { cells: readCells(out), xml: new PizZip(out).file("word/document.xml")!.asText() };
+  };
+
+  // 5행: 남는 5행이 지워지고, 표 뒤의 Break-bulk 칸(R45)이 5행 앞으로 당겨진다.
+  const five = run(5);
+  assert.ok(five.cells.get("T2.R36.C2")?.includes("CONT4"), "5번째 컨테이너가 마지막 행에 없음");
+  assert.ok(five.cells.get("T2.R40.C1")?.includes("TAIL"), "표 뒤 셀이 당겨지지 않음");
+  // 숫자만 넣은 수량 칸에는 단위가 붙는다.
+  assert.ok(five.cells.get("T2.R32.C4")?.includes("20000 (KG)"), "(KG) 가 붙지 않음");
+  assert.equal(five.xml.includes("<w:highlight"), false, "형광펜 표시가 남아 있음");
+
+  // 12행: 템플릿 10행을 넘어 2행이 복제되고 일련번호가 이어진다.
+  const twelve = run(12);
+  assert.ok(twelve.cells.get("T2.R43.C2")?.includes("CONT11"), "12번째 컨테이너 행이 없음");
+  assert.equal(twelve.cells.get("T2.R42.C0"), "11", "복제 행의 일련번호가 어긋남");
+  assert.equal(twelve.cells.get("T2.R43.C0"), "12", "복제 행의 일련번호가 어긋남");
+  assert.ok(twelve.cells.get("T2.R47.C1")?.includes("TAIL"), "표 뒤 셀이 밀리지 않음");
+});
+
+test("CEC: 컨테이너 표도 입력한 행 수만큼 생긴다", () => {
+  const def = REPORTS.find(r => r.id === "cec")!;
+  const template = readFileSync(path.join(TEMPLATE_DIR, "cec.docx"));
+
+  const run = (n: number) => {
+    const values: FormValues = {
+      // 열 순서: Sl.No. / 종류 / LCL·FCL / 컨테이너 번호 / 봉인 번호 / 수량
+      containers: Array.from({ length: n }, (_x, i) => [`${i + 1}`, "20", "FCL", `CONT${i}`, `SEAL${i}`, "10 pallets"]),
+      bbType: "TAIL",
+    };
+    const { writes, checks, rowBlocks } = resolveWrites(def, values);
+    return readCells(fillTemplate(template, writes, checks, undefined, rowBlocks));
+  };
+
+  // 템플릿 12행 → 4행. 표 뒤의 Break-bulk 칸(R17)이 8행 앞으로 당겨진다.
+  const four = run(4);
+  assert.ok(four.get("T4.R6.C3")?.includes("CONT3"), "4번째 컨테이너가 마지막 행에 없음");
+  assert.ok(four.get("T4.R9.C1")?.includes("TAIL"), "표 뒤 셀이 당겨지지 않음");
+
+  // 15행: 3행이 복제된다. 원본 행에 일련번호가 없으므로 번호도 붙지 않는다.
+  const fifteen = run(15);
+  assert.ok(fifteen.get("T4.R17.C3")?.includes("CONT14"), "15번째 컨테이너 행이 없음");
+  assert.equal(fifteen.get("T4.R17.C0"), "15", "복제 행의 Sl. No. 가 입력값과 다름");
+  assert.ok(fifteen.get("T4.R20.C1")?.includes("TAIL"), "표 뒤 셀이 밀리지 않음");
+});
 
 test("한글 사전: 폼에 쓰이는 모든 문자열에 번역이 있다", async () => {
   const { KO } = await import("@/src/lib/reportFormsKo");

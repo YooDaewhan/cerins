@@ -24,7 +24,80 @@ interface Edit {
   text: string;
 }
 
+/** 입력한 행 수에 맞춰 크기를 바꿀 표 행 구간. count 가 목표 행 수. */
+export interface RowBlock {
+  table: number;
+  from: number;
+  to: number;
+  count: number;
+}
+
 const CELL_RANGE_RE = /<w:tbl(?=[ >])|<\/w:tbl>|<w:tr(?=[ >])|<\/w:tr>|<w:tc(?=[ >])|<\/w:tc>/g;
+const ROW_RANGE_RE = /<w:tbl(?=[ >])|<\/w:tbl>|<w:tr(?=[ >])|<\/w:tr>/g;
+
+/** 문서 XML을 훑어 `T#.R#` → 행(<w:tr>) 전체 범위를 만든다. */
+function indexRows(xml: string): Map<string, { start: number; end: number }> {
+  const map = new Map<string, { start: number; end: number }>();
+  const tblStack: { id: number; row: number }[] = [];
+  const open: { key: string; start: number }[] = [];
+  let tblCount = 0;
+
+  ROW_RANGE_RE.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = ROW_RANGE_RE.exec(xml)) !== null) {
+    const tag = m[0];
+    if (tag === '<w:tbl') tblStack.push({ id: tblCount++, row: -1 });
+    else if (tag === '</w:tbl>') tblStack.pop();
+    else if (tag === '<w:tr') {
+      const tb = tblStack[tblStack.length - 1];
+      if (!tb) continue;
+      tb.row++;
+      open.push({ key: `T${tb.id}.R${tb.row}`, start: m.index });
+    } else {
+      const o = open.pop();
+      if (o) map.set(o.key, { start: o.start, end: m.index + '</w:tr>'.length });
+    }
+  }
+  return map;
+}
+
+/** 행 하나를 복제용으로 비운다. 첫 칸에는 일련번호를 넣는다. */
+function blankRow(tr: string, no: number): string {
+  let first = true;
+  return tr.replace(/(<w:t(?: [^>]*)?>)[^<]*(<\/w:t>)/g, (_m, o: string, c: string) => {
+    const v = first ? String(no) : '';
+    first = false;
+    return `${o}${v}${c}`;
+  });
+}
+
+/** 표의 행 구간을 목표 개수에 맞춰 지우거나 마지막 행을 복제해 늘린다.
+ *  셀 좌표를 다시 계산해야 하므로 값 채우기 전에 먼저 돌린다. */
+function resizeRowBlocks(xml: string, blocks: RowBlock[]): string {
+  const rows = indexRows(xml);
+  const ops = blocks
+    .map(b => ({ b, last: rows.get(`T${b.table}.R${b.to}`) }))
+    .filter((x): x is { b: RowBlock; last: { start: number; end: number } } => !!x.last)
+    // 뒤쪽부터 손봐야 앞쪽 오프셋이 틀어지지 않는다.
+    .sort((a, z) => z.last.start - a.last.start);
+
+  let out = xml;
+  for (const { b, last } of ops) {
+    const size = b.to - b.from + 1;
+    const n = Math.max(1, b.count);
+    if (n === size) continue;
+    if (n < size) {
+      const cut = rows.get(`T${b.table}.R${b.from + n}`);
+      if (!cut) continue;
+      out = out.slice(0, cut.start) + out.slice(last.end);
+    } else {
+      const tpl = out.slice(last.start, last.end);
+      const extra = Array.from({ length: n - size }, (_x, i) => blankRow(tpl, size + i + 1)).join('');
+      out = out.slice(0, last.end) + extra + out.slice(last.end);
+    }
+  }
+  return out;
+}
 
 /** 문서 XML을 훑어 `T#.R#.C#` → 셀 내부 XML 범위를 만든다. */
 function indexCells(xml: string): Map<string, { start: number; end: number }> {
@@ -107,13 +180,14 @@ export function fillTemplate(
   writes: CellWrite[],
   checkIndexes: number[],
   /** 삭제할 빈 사진 표 (예: 'T12') — 사진은 별도로 뒤에 붙이므로 템플릿의 빈 표는 제거한다. */
-  dropTable?: string
+  dropTable?: string,
+  rowBlocks: RowBlock[] = []
 ): Buffer {
   const zip = new PizZip(templateBuffer);
   const docFile = zip.file('word/document.xml');
   if (!docFile) throw new Error('템플릿이 올바른 .docx 파일이 아닙니다.');
 
-  const xml = docFile.asText();
+  const xml = resizeRowBlocks(docFile.asText(), rowBlocks);
   const cells = indexCells(xml);
   const edits: Edit[] = [];
 
@@ -191,6 +265,9 @@ export function fillTemplate(
   edits.sort((a, b) => b.start - a.start || b.end - a.end);
   let out = xml;
   for (const e of edits) out = out.slice(0, e.start) + e.text + out.slice(e.end);
+
+  // 템플릿에 남아 있는 빨강·노랑 형광펜 표시는 결과물에서 지운다.
+  out = out.replace(/<w:highlight\b[^>]*\/>/g, '');
 
   zip.file('word/document.xml', out);
   return Buffer.from(

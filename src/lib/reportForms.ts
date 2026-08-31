@@ -9,7 +9,11 @@ export type Field =
   | { t: 'text'; k: string; label: string; cell: string; lines?: number; replace?: boolean; prefix?: string; ph?: string; date?: true; today?: true }
   | { t: 'radio'; k: string; label: string; opts: { v: string; label: string; cb?: number; cell?: string }[] }
   | { t: 'checks'; k: string; label: string; opts: { v: string; label: string; cb: number }[] }
-  | { t: 'grid'; k: string; label: string; cols: string[]; rows: string[][]; dateCols?: number[] };
+  | { t: 'grid'; k: string; label: string; cols: string[]; rows: string[][]; dateCols?: number[];
+      /** 입력한 행 수에 맞춰 표 행을 늘리거나 줄인다(행 수 제한 없음). rows 와 같은 행 범위. */
+      rowBlock?: { table: number; from: number; to: number };
+      /** 숫자만 입력했을 때 뒤에 붙일 단위. { 열번호: 'KG' } */
+      unitCols?: Record<number, string> };
 
 export interface Section {
   title: string;
@@ -28,7 +32,9 @@ export interface ReportDef {
   videoAt?: number;
   /** 대상 하나가 여러 항목을 차지할 때, 반복 추가·삭제할 수 있는 photoCategories 구간(0-based).
    *  label: 묶음 단위 이름(화면 표시용). nameAt: 지정하면 그 항목 캡션 뒤에 `-이름` 이 붙는다. */
-  photoGroup?: { from: number; to: number; label: string; nameAt?: number };
+  photoGroup?: { from: number; to: number; label: string; nameAt?: number;
+    /** 묶음 항목 캡션에 grid 값을 자동으로 넣는다. at = { photoCategories 위치: grid 열번호 } */
+    fill?: { grid: string; at: Record<number, number> } };
   sections: Section[];
 }
 
@@ -136,6 +142,7 @@ const CEC: ReportDef = {
           t: 'grid', k: 'containers', label: 'In case of break-bulk and/or container cargo',
           cols: ['Sl. No.', 'Type of container (20’, 40’ …)', 'LCL / FCL', 'Container No.', 'Seal No.', 'Quantity & type of break-bulk packing'],
           rows: gridRows(4, 3, 14, 0, 5),
+          rowBlock: { table: 4, from: 3, to: 14 },
         },
         { t: 'text', k: 'bbType', label: 'Break-bulk: Type of packing', cell: 'T4.R17.C1' },
         { t: 'text', k: 'bbQty', label: 'Break-bulk: Quantity of packing', cell: 'T4.R17.C3' },
@@ -277,7 +284,8 @@ const SCRAP: ReportDef = {
     'Stuffing process video',
   ],
   // 9~13번(Container ~ Sealing)은 컨테이너 하나 단위라 통째로 반복된다.
-  photoGroup: { from: 8, to: 12, label: 'Container' },
+  // 컨테이너 번호(1열) / 봉인 번호(2열)는 PACKING 표에 입력한 값이 캡션에 자동으로 들어간다.
+  photoGroup: { from: 8, to: 12, label: 'Container', fill: { grid: 'containers', at: { 8: 1, 12: 2 } } },
   videoAt: 14, // 15. Stuffing process video
   sections: [
     {
@@ -401,6 +409,8 @@ const SCRAP: ReportDef = {
           t: 'grid', k: 'containers', label: 'In case of break-bulk and/or container cargo',
           cols: ['Size of container (20’/40’…)', 'Container No.', 'Seal No.', 'Quantity & type (KG)', 'Container Radiation Level (µSv/h)'],
           rows: gridRows(2, 32, 41, 1, 5),
+          rowBlock: { table: 2, from: 32, to: 41 },
+          unitCols: { 3: 'KG' },
         },
         { t: 'text', k: 'bbType', label: 'Break-bulk: Type of packing', cell: 'T2.R45.C1', replace: true, ph: 'N/A' },
         { t: 'text', k: 'bbQty', label: 'Break-bulk: Quantity of packing', cell: 'T2.R45.C3', replace: true, ph: 'N/A' },
@@ -567,10 +577,50 @@ export function getReport(id: string): ReportDef | undefined {
 
 export type FormValues = Record<string, string | string[] | string[][]>;
 
+/** 마지막으로 값이 채워진 행 수(뒤쪽 빈 행은 버린다). 아무것도 없으면 0. */
+export function filledRows(grid: unknown): number {
+  if (!Array.isArray(grid)) return 0;
+  let n = 0;
+  (grid as string[][]).forEach((row, r) => {
+    if (Array.isArray(row) && row.some(c => (c ?? '').trim() !== '')) n = r + 1;
+  });
+  return n;
+}
+
+/** 숫자만 입력했으면 단위를 붙인다. ('20000' → '20000 (KG)') */
+function withUnit(value: string, unit?: string): string {
+  if (!unit) return value;
+  return /^[0-9.,]+$/.test(value.trim()) ? `${value.trim()} (${unit})` : value;
+}
+
+/** 행 수가 바뀐 표에서, 그 블록 뒤에 있는 셀 좌표의 행 번호를 밀어준다. */
+function shiftCell(cell: string, blocks: RowBlock[]): string {
+  return cell.replace(/^T(\d+)\.R(\d+)\./, (m, t, r) => {
+    const b = blocks.find(x => x.table === Number(t) && Number(r) > x.to);
+    if (!b) return m;
+    return `T${t}.R${Number(r) + b.count - (b.to - b.from + 1)}.`;
+  });
+}
+
+export interface RowBlock { table: number; from: number; to: number; count: number }
+
 /** 폼 입력값을 템플릿 채우기 지시(셀 쓰기 + 체크박스 인덱스)로 변환한다. */
 export function resolveWrites(def: ReportDef, values: FormValues) {
   const writes: { cell: string; value: string; replace?: boolean; prefix?: string }[] = [];
   const checks: number[] = [];
+  const rowBlocks: RowBlock[] = [];
+  // 행 수가 바뀌는 표는 먼저 개수를 정해야 뒤쪽 셀 좌표를 밀 수 있다.
+  for (const section of def.sections) {
+    for (const f of section.fields) {
+      if (f.t === 'grid' && f.rowBlock) {
+        // 아무것도 입력하지 않았으면 템플릿을 건드리지 않는다.
+        const count = filledRows(values[f.k]);
+        if (count > 0) rowBlocks.push({ ...f.rowBlock, count });
+      }
+    }
+  }
+  // 행이 늘어난 표 안의 셀은 밀면 안 되므로 따로 모아 마지막에 합친다.
+  const blockWrites: typeof writes = [];
 
   for (const section of def.sections) {
     for (const f of section.fields) {
@@ -588,15 +638,22 @@ export function resolveWrites(def: ReportDef, values: FormValues) {
         for (const opt of f.opts) if ((v as string[]).includes(opt.v)) checks.push(opt.cb);
       } else {
         if (!Array.isArray(v)) continue;
-        (v as string[][]).forEach((row, r) => {
-          const cells = f.rows[r];
+        const rows = f.rowBlock ? filledRows(v) : f.rows.length;
+        (v as string[][]).slice(0, rows).forEach((row, r) => {
+          // 행을 늘린 표는 좌표를 첫 행 패턴에서 만들어낸다(템플릿 행 수를 넘어도 된다).
+          const cells = f.rowBlock
+            ? f.rows[0].map(c => c.replace(/\.R\d+\./, `.R${f.rowBlock!.from + r}.`))
+            : f.rows[r];
           if (!cells || !Array.isArray(row)) return;
           row.forEach((cellValue, c) => {
-            if (cells[c] && cellValue) writes.push({ cell: cells[c], value: cellValue });
+            if (!cells[c] || !cellValue) return;
+            const w = { cell: cells[c], value: withUnit(cellValue, f.unitCols?.[c]) };
+            (f.rowBlock ? blockWrites : writes).push(w);
           });
         });
       }
     }
   }
-  return { writes, checks };
+  for (const w of writes) w.cell = shiftCell(w.cell, rowBlocks);
+  return { writes: [...writes, ...blockWrites], checks, rowBlocks };
 }

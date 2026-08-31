@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
       }
 
       const template = await readFile(path.join(TEMPLATE_DIR, `${def.id}.docx`));
-      const { writes, checks } = resolveWrites(def, values);
-      baseBuffer = fillTemplate(template, writes, checks, photoFiles.length > 0 ? def.photoTable : undefined);
+      const { writes, checks, rowBlocks } = resolveWrites(def, values);
+      baseBuffer = fillTemplate(template, writes, checks, photoFiles.length > 0 ? def.photoTable : undefined, rowBlocks);
       filename = buildReportFilename(def.title, reporterName, 'docx');
     } else {
       const docxFile = formData.get('docx') as File | null;

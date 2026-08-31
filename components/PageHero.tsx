@@ -7,8 +7,8 @@ interface PageHeroProps {
   image?: string | null;
 }
 
-export default function PageHero({ title, subtitle, breadcrumb, image }: PageHeroProps) {
-  const bg = image && image.length > 0 ? image : getDefaultHeroImage();
+export default async function PageHero({ title, subtitle, breadcrumb, image }: PageHeroProps) {
+  const bg = image && image.length > 0 ? image : await getDefaultHeroImage();
 
   return (
     <div

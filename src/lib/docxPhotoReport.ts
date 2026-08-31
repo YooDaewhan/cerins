@@ -257,7 +257,7 @@ function buildPhotoSection(
   </w:pPr>
   <w:r>
     <w:rPr><w:b/><w:sz w:val="36"/><w:szCs w:val="36"/></w:rPr>
-    <w:t>사진 첨부</w:t>
+    <w:t>Photo report</w:t>
   </w:r>
 </w:p>`;
 

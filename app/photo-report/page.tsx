@@ -66,14 +66,26 @@ export default function PhotoReportPage() {
   // 반복 묶음(CEC 의 물품 단위)을 펼쳐, 화면에 보이는 순서 = 캡션 번호 순서로 만든다.
   const entries = def ? expandPhotoEntries(def, groups) : [];
 
-  /** 캡션에 쓸 이름. 물품 묶음의 nameAt 항목에는 물품 이름을 붙인다. */
-  function entryLabel(e: PhotoEntry) {
-    const base = catLabels[catKey(e.key)] ?? e.label;
-    if (grp && e.gi >= 0 && e.ci === grp.nameAt) {
+  /** 캡션 기본값. 물품 이름과 표에 입력한 번호(컨테이너·봉인)를 자동으로 넣는다. */
+  function autoLabel(e: PhotoEntry) {
+    if (!grp || e.gi < 0) return e.label;
+    if (e.ci === grp.nameAt) {
       const n = (groupNames[groupKey(e.gi)] ?? '').trim();
-      if (n) return `${base}-${n}`;
+      if (n) return `${e.label}-${n}`;
     }
-    return base;
+    const col = grp.fill?.at[e.ci];
+    if (grp.fill && col !== undefined) {
+      const rows = (values[tab]?.[grp.fill.grid] as string[][] | undefined) ?? [];
+      const v = (rows[e.gi]?.[col] ?? '').trim();
+      // 'Container (No. )' → 'Container (No. ABCD1234)'
+      if (v) return e.label.replace(/\)\s*$/, `${v})`);
+    }
+    return e.label;
+  }
+
+  /** 캡션에 쓸 이름. 사용자가 직접 고친 값이 있으면 그대로 쓴다. */
+  function entryLabel(e: PhotoEntry) {
+    return catLabels[catKey(e.key)] ?? autoLabel(e);
   }
   const current = values[tab] ?? {};
 
@@ -82,7 +94,9 @@ export default function PhotoReportPage() {
   }
 
   function visibleRows(f: Extract<Field, { t: 'grid' }>) {
-    return Math.min(gridRows[`${tab}.${f.k}`] ?? Math.min(3, f.rows.length), f.rows.length);
+    const want = gridRows[`${tab}.${f.k}`] ?? Math.min(3, f.rows.length);
+    // rowBlock 인 표는 입력한 행 수만큼 문서에 생기므로 템플릿 행 수 제한이 없다.
+    return f.rowBlock ? want : Math.min(want, f.rows.length);
   }
 
   function setCellValue(f: Extract<Field, { t: 'grid' }>, r: number, c: number, v: string) {
@@ -141,7 +155,7 @@ export default function PhotoReportPage() {
               continue;
             }
             formData.append('photos', file);
-            labels.push(`${i + 1}. ${entryLabel(entry)}`);
+            labels.push(entryLabel(entry));
           }
         });
       } else {
@@ -288,13 +302,13 @@ export default function PhotoReportPage() {
             </div>
           ))}
         </div>
-        {shown < f.rows.length && (
+        {(f.rowBlock || shown < f.rows.length) && (
           <button
             type="button"
             onClick={() => setGridRows(p => ({ ...p, [`${tab}.${f.k}`]: shown + 1 }))}
             className="mt-1 text-xs text-blue-600 hover:underline"
           >
-            {t('+ add row')} ({shown}/{f.rows.length})
+            {t('+ add row')} ({shown}{f.rowBlock ? '' : `/${f.rows.length}`})
           </button>
         )}
       </div>
@@ -444,7 +458,7 @@ export default function PhotoReportPage() {
                         <span className="text-xs font-semibold text-gray-400 w-5 shrink-0">{i + 1}.</span>
                         <input
                           type="text"
-                          value={catLabels[key] ?? entry.label}
+                          value={entryLabel(entry)}
                           onChange={e => setCatLabels(p => ({ ...p, [key]: e.target.value }))}
                           className="flex-1 border border-gray-200 rounded px-2 py-1 text-sm font-medium text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-400"
                         />
