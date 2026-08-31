@@ -195,13 +195,13 @@ function Viewer({
   }, [go, onClose]);
 
   const pageCls = "absolute inset-0 w-full h-full object-contain bg-white";
-  // 슬라이드가 16:9라 펼치면 32:9 — 비율 고정이므로 폭 상한을 낮춰야 전체가 작아진다.
-  const bookWidth = `min(96vw, 1480px, calc(82vh * ${(aspect * 2).toFixed(3)}))`;
+  // 슬라이드가 16:9라 펼치면 32:9 — 비율 고정이라 폭/높이 상한이 곧 책 크기다.
+  const bookWidth = `min(99vw, 2400px, calc(94vh * ${(aspect * 2).toFixed(3)}))`;
   const canPrev = start > 1;
   const canNext = total > 0 && start + 2 <= total;
 
   return (
-    <div className="fixed inset-0 z-[120] bg-black/80 flex flex-col items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[120] bg-black/80 flex flex-col items-center justify-center p-2" onClick={onClose}>
       <style>{`
         @keyframes cerins-page-next { from { transform: rotateY(0deg) } to { transform: rotateY(-180deg) } }
         @keyframes cerins-page-prev { from { transform: rotateY(-180deg) } to { transform: rotateY(0deg) } }

@@ -192,9 +192,6 @@ export const REQUEST_FILE_TYPES = [
   "MANUAL",
   "DRAWING",
   "EXISTING_CERTIFICATE",
-  "TEST_REPORT",
-  "AUTHORIZATION",
-  "JOS",
   "OTHER",
 ] as const;
 export type RequestFileType = (typeof REQUEST_FILE_TYPES)[number];
@@ -203,13 +200,17 @@ export const REQUEST_FILE_META: Record<
   RequestFileType,
   { label: string; required: boolean }
 > = {
-  MANUAL: { label: "메뉴얼", required: false },
-  DRAWING: { label: "도면", required: false },
+  MANUAL: { label: "매뉴얼", required: false },
+  DRAWING: { label: "도면 또는 사진", required: false },
   EXISTING_CERTIFICATE: { label: "기 발급 인증서", required: false },
-  TEST_REPORT: { label: "테스트 리포트", required: false },
-  AUTHORIZATION: { label: "권한위임계약서", required: false },
-  JOS: { label: "JOS", required: false },
-  OTHER: { label: "기타 자료", required: false },
+  OTHER: { label: "기타", required: false },
+};
+
+// 더 이상 접수받지 않지만 과거 의뢰에 남아 있는 파일 종류(라벨 표시·조회용).
+const LEGACY_REQUEST_FILE_LABELS: Record<string, string> = {
+  TEST_REPORT: "테스트 리포트",
+  AUTHORIZATION: "권한위임계약서",
+  JOS: "JOS",
 };
 
 // Step 0 제출 시 반드시 있어야 하는 파일 종류.
@@ -246,6 +247,7 @@ export type FileType =
 
 export const ALL_FILE_TYPES: string[] = [
   ...REQUEST_FILE_TYPES,
+  ...Object.keys(LEGACY_REQUEST_FILE_LABELS),
   ...QUOTATION_FILE_TYPES,
   FINAL_FILE_TYPE,
   "CUSTOMER_SUPPLEMENT",
@@ -253,6 +255,7 @@ export const ALL_FILE_TYPES: string[] = [
 ];
 
 export const FILE_TYPE_LABELS: Record<string, string> = {
+  ...LEGACY_REQUEST_FILE_LABELS,
   ...Object.fromEntries(
     (Object.keys(REQUEST_FILE_META) as RequestFileType[]).map((t) => [
       t,

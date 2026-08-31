@@ -10,6 +10,7 @@ import {
   MESSAGE_TYPE_LABELS,
   QUOTATION_FILE_TYPES,
   QUOTATION_FILE_LABELS,
+  REQUEST_FILE_TYPES,
   fileTypeLabel,
   FINAL_FILE_TYPE,
   type ServiceType,
@@ -24,15 +25,7 @@ import {
   type UploadFieldItem,
 } from "@/components/requests/UploadFields";
 
-const REQUEST_RESUBMIT_TYPES = [
-  "MANUAL",
-  "DRAWING",
-  "JOS",
-  "EXISTING_CERTIFICATE",
-  "TEST_REPORT",
-  "AUTHORIZATION",
-  "OTHER",
-] as const;
+const REQUEST_RESUBMIT_TYPES = REQUEST_FILE_TYPES;
 
 interface StaffCandidate {
   id: number;

@@ -14,6 +14,7 @@ export default function ProductInspectionRequestForm({ defaults, detailHrefBase 
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState(defaults.contact_email);
   const [title, setTitle] = useState("");
+  const [productName, setProductName] = useState("");
   const [description, setDescription] = useState("");
   const [photos, setPhotos] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +39,7 @@ export default function ProductInspectionRequestForm({ defaults, detailHrefBase 
       fd.set("contact_phone", phone);
       fd.set("contact_email", email);
       fd.set("title", title);
+      fd.set("product_name", productName);
       fd.set("description", description);
       for (const f of photos) fd.append("files_PRODUCT_INSPECTION_PHOTO", f);
       const res = await fetch("/api/requests", { method: "POST", body: fd });
@@ -76,6 +78,9 @@ export default function ProductInspectionRequestForm({ defaults, detailHrefBase 
         <h2 className="text-sm font-bold text-gray-800">의뢰 내용</h2>
         <Field label="의뢰 제목" required>
           <input className={inputCls} value={title} onChange={(e) => setTitle(e.target.value)} required />
+        </Field>
+        <Field label="제품명" required>
+          <input className={inputCls} value={productName} onChange={(e) => setProductName(e.target.value)} required />
         </Field>
         <Field label="의뢰 내용" required>
           <textarea className={`${inputCls} min-h-32`} value={description} onChange={(e) => setDescription(e.target.value)} required />

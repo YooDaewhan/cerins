@@ -18,10 +18,8 @@ export default function ScrapIndiaRequestForm({ defaults, detailHrefBase }: Prop
   const [description, setDescription] = useState("");
 
   const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
   const [timeUndecided, setTimeUndecided] = useState(false);
   const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
   const [location, setLocation] = useState("");
   const [locationDetail, setLocationDetail] = useState("");
   const [siteName, setSiteName] = useState("");
@@ -35,16 +33,16 @@ export default function ScrapIndiaRequestForm({ defaults, detailHrefBase }: Prop
     e.preventDefault();
     setError(null);
 
-    if (!startDate || !endDate) {
-      setError("검사 요청 시작일과 종료일은 필수입니다.");
-      return;
-    }
-    if (endDate < startDate) {
-      setError("검사 요청 종료일은 시작일보다 빠를 수 없습니다.");
+    if (!startDate) {
+      setError("검사 요청일은 필수입니다.");
       return;
     }
     if (!location.trim()) {
       setError("검사 장소는 필수입니다.");
+      return;
+    }
+    if (!siteName.trim() || !sitePhone.trim()) {
+      setError("현장 담당자명과 연락처는 필수입니다.");
       return;
     }
 
@@ -59,11 +57,7 @@ export default function ScrapIndiaRequestForm({ defaults, detailHrefBase }: Prop
       fd.set("title", title);
       fd.set("description", description);
       fd.set("requested_start_date", startDate);
-      fd.set("requested_end_date", endDate);
-      if (!timeUndecided) {
-        fd.set("requested_start_time", startTime);
-        fd.set("requested_end_time", endTime);
-      }
+      if (!timeUndecided) fd.set("requested_start_time", startTime);
       fd.set("requested_location", location);
       fd.set("requested_location_detail", locationDetail);
       fd.set("site_contact_name", siteName);
@@ -113,27 +107,17 @@ export default function ScrapIndiaRequestForm({ defaults, detailHrefBase }: Prop
 
       <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
         <h2 className="text-sm font-bold text-gray-800">검사 요청 정보</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="검사 요청 시작일" required>
-            <input type="date" className={inputCls} value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
-          </Field>
-          <Field label="검사 요청 종료일" required>
-            <input type="date" className={inputCls} value={endDate} onChange={(e) => setEndDate(e.target.value)} required />
-          </Field>
-        </div>
+        <Field label="검사 요청일" required>
+          <input type="date" className={inputCls} value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
+        </Field>
         <label className="flex items-center gap-2 text-sm text-gray-600">
           <input type="checkbox" checked={timeUndecided} onChange={(e) => setTimeUndecided(e.target.checked)} />
           시간 미정
         </label>
         {!timeUndecided && (
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="검사 요청 시작시간">
-              <input type="time" className={inputCls} value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-            </Field>
-            <Field label="검사 요청 종료시간">
-              <input type="time" className={inputCls} value={endTime} onChange={(e) => setEndTime(e.target.value)} />
-            </Field>
-          </div>
+          <Field label="검사 요청 시간">
+            <input type="time" className={inputCls} value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+          </Field>
         )}
         <Field label="검사 장소" required>
           <input className={inputCls} value={location} onChange={(e) => setLocation(e.target.value)} required />
@@ -142,18 +126,18 @@ export default function ScrapIndiaRequestForm({ defaults, detailHrefBase }: Prop
           <input className={inputCls} value={locationDetail} onChange={(e) => setLocationDetail(e.target.value)} />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="현장 담당자명">
-            <input className={inputCls} value={siteName} onChange={(e) => setSiteName(e.target.value)} />
+          <Field label="현장 담당자명" required>
+            <input className={inputCls} required value={siteName} onChange={(e) => setSiteName(e.target.value)} />
           </Field>
-          <Field label="현장 담당자 연락처">
-            <input className={inputCls} value={sitePhone} onChange={(e) => setSitePhone(e.target.value)} />
+          <Field label="현장 담당자 연락처" required>
+            <input className={inputCls} required value={sitePhone} onChange={(e) => setSitePhone(e.target.value)} placeholder="010-0000-0000" />
           </Field>
         </div>
         <Field label="검사 관련 요청사항">
           <textarea className={`${inputCls} min-h-20`} value={requestNote} onChange={(e) => setRequestNote(e.target.value)} />
         </Field>
         <p className="text-[11px] text-gray-400">
-          하루만 검사하는 경우 시작일과 종료일을 같은 날짜로 입력하세요. 시간이 확정되지 않았다면 &quot;시간 미정&quot;을 선택하세요.
+          시간이 확정되지 않았다면 &quot;시간 미정&quot;을 선택하세요.
           검사 후 제출 서류는 현장검사 완료 후 마이페이지에서 업로드하시면 됩니다.
         </p>
       </section>
