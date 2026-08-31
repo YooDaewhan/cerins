@@ -111,13 +111,8 @@ export default async function InspectionDetailPage({ params }: Props) {
           </aside>
 
           <div className="flex-1 min-w-0">
-            <div
-              className="post-content text-gray-600"
-              dangerouslySetInnerHTML={{ __html: page.translation.content }}
-            />
-
             {children.length > 0 && (
-              <div className="mt-10">
+              <div className="mb-10">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="w-1 h-6 bg-[#c9a84c] rounded" />
                   <h2 className="text-xl font-bold text-(--brand)">세부 항목</h2>
@@ -160,6 +155,12 @@ export default async function InspectionDetailPage({ params }: Props) {
                 </div>
               </div>
             )}
+
+            <div
+              className="post-content text-gray-600"
+              dangerouslySetInnerHTML={{ __html: page.translation.content }}
+            />
+
 
             <div className="mt-8 pt-6 border-t border-gray-100">
               <Link href={buildLocalizedPath(code, "/inspection")} className="text-sm text-gray-400 hover:text-(--brand) transition flex items-center gap-1">

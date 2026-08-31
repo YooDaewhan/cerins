@@ -106,13 +106,8 @@ export default async function CertificationDetailPage({ params }: Props) {
               </p>
             </div>
 
-            <div
-              className="post-content text-gray-600"
-              dangerouslySetInnerHTML={{ __html: page.translation.content }}
-            />
-
             {children.length > 0 && (
-              <div className="mt-12">
+              <div className="mb-10">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="w-1 h-6 bg-[#c9a84c] rounded" />
                   <h2 className="text-xl font-bold text-(--brand)">인증 항목</h2>
@@ -155,6 +150,12 @@ export default async function CertificationDetailPage({ params }: Props) {
                 </div>
               </div>
             )}
+
+            <div
+              className="post-content text-gray-600"
+              dangerouslySetInnerHTML={{ __html: page.translation.content }}
+            />
+
 
             <div className="mt-12 bg-(--brand) rounded-lg p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
