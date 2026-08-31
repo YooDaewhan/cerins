@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import PageHero from "@/components/PageHero";
+import SidePhoto from "@/components/SidePhoto";
 import {
   getAlternateUrls,
   getEnabledLocales,
@@ -55,11 +56,12 @@ export default async function ServicesPage({ params }: Props) {
         breadcrumb="Services"
         image={page.translation.hero_image}
       />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 flex flex-col lg:flex-row gap-8 items-start">
         <div
-          className="post-content text-gray-600"
+          className="post-content text-gray-600 flex-1 min-w-0"
           dangerouslySetInnerHTML={{ __html: page.translation.content }}
         />
+        <SidePhoto url={page.translation.side_image} alt={page.translation.title} />
       </div>
     </>
   );

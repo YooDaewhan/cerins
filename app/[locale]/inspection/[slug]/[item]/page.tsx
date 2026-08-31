@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
+import SidePhoto from "@/components/SidePhoto";
 import {
   buildLocalizedPath,
   getAlternateUrls,
@@ -142,6 +143,10 @@ export default async function InspectionItemPage({ params }: Props) {
               </Link>
             </div>
           </div>
+          <SidePhoto
+            url={page.translation.side_image}
+            alt={page.translation.title}
+          />
         </div>
       </div>
     </>
