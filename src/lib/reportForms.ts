@@ -7,6 +7,8 @@
 
 export type Field =
   | { t: 'text'; k: string; label: string; cell: string; lines?: number; replace?: boolean; prefix?: string; ph?: string; date?: true; today?: true }
+  /** 마우스·터치로 그린 서명. 값은 PNG data URL 이고 해당 셀에 그림으로 들어간다. */
+  | { t: 'sign'; k: string; label: string; cell: string }
   | { t: 'radio'; k: string; label: string; opts: { v: string; label: string; cb?: number; cell?: string }[] }
   | { t: 'checks'; k: string; label: string; opts: { v: string; label: string; cb: number }[] }
   | { t: 'grid'; k: string; label: string; cols: string[]; rows: string[][]; dateCols?: number[];
@@ -245,6 +247,7 @@ const CEC: ReportDef = {
         { t: 'text', k: 'appName', label: 'Name', cell: 'T11.R1.C1' },
         { t: 'text', k: 'appTitle', label: 'Title', cell: 'T11.R2.C1' },
         { t: 'text', k: 'appContact', label: 'Contact points (Tel., email, etc.)', cell: 'T11.R3.C1' },
+        { t: 'sign', k: 'appSign', label: 'Signature', cell: 'T11.R4.C1' },
         { t: 'text', k: 'appDate', label: 'Date', cell: 'T11.R5.C1', date: true },
       ],
     },
@@ -254,6 +257,7 @@ const CEC: ReportDef = {
         { t: 'text', k: 'insCompany', label: 'Company name or CERINS branch office name', cell: 'T11.R9.C1' },
         { t: 'text', k: 'insName', label: 'Name', cell: 'T11.R10.C1' },
         { t: 'text', k: 'insTitle', label: 'Title', cell: 'T11.R11.C1' },
+        { t: 'sign', k: 'insSign', label: 'Signature', cell: 'T11.R12.C1' },
         { t: 'text', k: 'insDate', label: 'Date', cell: 'T11.R13.C1', date: true },
       ],
     },
@@ -465,6 +469,7 @@ const SCRAP: ReportDef = {
         { t: 'text', k: 'appName', label: 'Name', cell: 'T3.R1.C1' },
         { t: 'text', k: 'appTitle', label: 'Title', cell: 'T3.R2.C1' },
         { t: 'text', k: 'appContact', label: 'Contact points (Tel., email, etc.)', cell: 'T3.R3.C1' },
+        { t: 'sign', k: 'appSign', label: 'Signature', cell: 'T3.R4.C1' },
         { t: 'text', k: 'appDate', label: 'Date', cell: 'T3.R5.C1', date: true },
       ],
     },
@@ -474,6 +479,7 @@ const SCRAP: ReportDef = {
         { t: 'text', k: 'insCompany', label: 'Company name or CERINS branch office name', cell: 'T3.R9.C1' },
         { t: 'text', k: 'insName', label: 'Name', cell: 'T3.R10.C1' },
         { t: 'text', k: 'insTitle', label: 'Title', cell: 'T3.R11.C1' },
+        { t: 'sign', k: 'insSign', label: 'Signature', cell: 'T3.R12.C1' },
         { t: 'text', k: 'insDate', label: 'Date', cell: 'T3.R13.C1', date: true },
       ],
     },
@@ -608,6 +614,8 @@ export interface RowBlock { table: number; from: number; to: number; count: numb
 export function resolveWrites(def: ReportDef, values: FormValues) {
   const writes: { cell: string; value: string; replace?: boolean; prefix?: string }[] = [];
   const checks: number[] = [];
+  /** 서명 그림. cell 은 아래에서 writes 와 같이 행 이동을 반영한다. */
+  const signs: { cell: string; dataUrl: string }[] = [];
   const rowBlocks: RowBlock[] = [];
   // 행 수가 바뀌는 표는 먼저 개수를 정해야 뒤쪽 셀 좌표를 밀 수 있다.
   for (const section of def.sections) {
@@ -628,6 +636,9 @@ export function resolveWrites(def: ReportDef, values: FormValues) {
       if (f.t === 'text') {
         if (typeof v !== 'string' || v === '') continue;
         writes.push({ cell: f.cell, value: v, replace: f.replace, prefix: f.prefix });
+      } else if (f.t === 'sign') {
+        if (typeof v !== 'string' || !v.startsWith('data:image/png;base64,')) continue;
+        signs.push({ cell: f.cell, dataUrl: v });
       } else if (f.t === 'radio') {
         const opt = f.opts.find(o => o.v === v);
         if (!opt) continue;
@@ -655,5 +666,6 @@ export function resolveWrites(def: ReportDef, values: FormValues) {
     }
   }
   for (const w of writes) w.cell = shiftCell(w.cell, rowBlocks);
-  return { writes: [...writes, ...blockWrites], checks, rowBlocks };
+  for (const s of signs) s.cell = shiftCell(s.cell, rowBlocks);
+  return { writes: [...writes, ...blockWrites], checks, rowBlocks, signs };
 }

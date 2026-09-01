@@ -14,6 +14,11 @@ export const ZH: Record<string, string> = {
   'Item': '货物',
   'Goods name': '货物名称',
   'delete': '删除',
+  'Clear signature': '清除签名',
+  'Reset form': '重置表单',
+  'Entries are kept on this device, so you can close the browser and come back. Photos are not kept.':
+    '输入内容保存在本设备，关闭浏览器后仍可继续填写。照片不会保存。',
+  'Sign here with your mouse or finger.': '请用鼠标或手指签名。',
   'Videos are delivered in a zip with the Word file, not inside it.':
     '视频不会嵌入 Word 文件，而是与 Word 文件一起打包为 zip 下载。',
   '+ add {x}': '+ 添加{x}',
@@ -65,6 +70,7 @@ export const ZH: Record<string, string> = {
   'Job File No.': 'Job File No（管理编号）',
   'Company name': '公司名称',
   'Name': '姓名',
+  'Signature': '签名',
   'Title': '职务',
   'Contact points (Tel., email, etc.)': '联系方式（电话、邮箱等）',
   'Company name or CERINS branch office name': '公司名称或 CERINS 分公司名称',

@@ -11,6 +11,7 @@ import {
   type FormValues,
   type PhotoEntry,
 } from '@/src/lib/reportForms';
+import SignaturePad from '@/components/SignaturePad';
 import { KO } from '@/src/lib/reportFormsKo';
 import { ZH } from '@/src/lib/reportFormsZh';
 import { VI } from '@/src/lib/reportFormsVi';
@@ -31,6 +32,38 @@ type Lang = (typeof LANGS)[number]['id'];
 const inputCls =
   'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400';
 
+// ── 작성 중인 입력값 보관. 현장에서 폰 브라우저가 꺼져도 이어서 쓸 수 있게 한다.
+// 사진·동영상(File)은 직렬화가 안 되므로 저장되지 않는다.
+const DRAFT_KEY = 'photo-report-draft';
+
+interface Draft {
+  tab: string;
+  lang: string;
+  reporterName: string;
+  values: Record<string, FormValues>;
+  gridRows: Record<string, number>;
+  catLabels: Record<string, string>;
+  groupNames: Record<string, string>;
+  groupCount: Record<string, number>;
+}
+
+function loadDraft(): Draft | null {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    return raw ? (JSON.parse(raw) as Draft) : null;
+  } catch {
+    return null; // 시크릿 모드·용량 초과 등은 저장 없이 그냥 쓴다
+  }
+}
+
+function saveDraft(d: Draft): void {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+  } catch {
+    /* 저장 못 해도 입력은 계속된다 */
+  }
+}
+
 export default function PhotoReportPage() {
   const [lang, setLang] = useState<Lang>('ko');
   const [tab, setTab] = useState(TABS[0].id);
@@ -46,25 +79,55 @@ export default function PhotoReportPage() {
   const [groupCount, setGroupCount] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<Status>(null);
+  // 저장해 둔 입력값을 다 읽기 전에는 저장하지 않는다(빈 값으로 덮어쓰는 걸 막는다).
+  const [restored, setRestored] = useState(false);
 
-  // today 로 표시된 날짜 칸은 오늘 날짜(0000-00-00)로 채운다.
-  // SSR/CSR 날짜가 어긋나 hydration 이 깨지지 않도록 마운트 후에 넣는다.
+  // 오늘 날짜 기본값 + 이전에 저장해 둔 입력값 복원.
+  // SSR/CSR 이 어긋나 hydration 이 깨지지 않도록 둘 다 마운트 후에 넣는다.
   useEffect(() => {
     const d = new Date();
     const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    setValues(prev => {
-      const next = { ...prev };
-      for (const r of REPORTS) {
-        for (const s of r.sections) {
-          for (const f of s.fields) {
-            if (f.t !== 'text' || !f.today) continue;
-            next[r.id] = { ...(next[r.id] ?? {}), [f.k]: today };
-          }
+    const defaults: Record<string, FormValues> = {};
+    for (const r of REPORTS) {
+      for (const s of r.sections) {
+        for (const f of s.fields) {
+          if (f.t !== 'text' || !f.today) continue;
+          defaults[r.id] = { ...(defaults[r.id] ?? {}), [f.k]: today };
         }
       }
-      return next;
+    }
+
+    const saved = loadDraft();
+    setValues(() => {
+      const merged = { ...defaults };
+      for (const [id, v] of Object.entries(saved?.values ?? {})) {
+        merged[id] = { ...(merged[id] ?? {}), ...v };
+      }
+      return merged;
     });
+    if (saved) {
+      if (saved.tab && TABS.some(x => x.id === saved.tab)) setTab(saved.tab);
+      if (saved.lang && LANGS.some(l => l.id === saved.lang)) setLang(saved.lang as Lang);
+      setReporterName(saved.reporterName ?? '');
+      setGridRows(saved.gridRows ?? {});
+      setCatLabels(saved.catLabels ?? {});
+      setGroupNames(saved.groupNames ?? {});
+      setGroupCount(saved.groupCount ?? {});
+    }
+    setRestored(true);
   }, []);
+
+  // 입력할 때마다 이 기기에 저장한다. 폰에서 브라우저가 꺼져도 값이 남는다.
+  useEffect(() => {
+    if (!restored) return;
+    saveDraft({ tab, lang, reporterName, values, gridRows, catLabels, groupNames, groupCount });
+  }, [restored, tab, lang, reporterName, values, gridRows, catLabels, groupNames, groupCount]);
+
+  /** 저장된 입력값을 지우고 화면을 처음 상태로 되돌린다. */
+  function resetDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); } catch { /* 저장 못 하는 환경은 그냥 넘어간다 */ }
+    location.reload();
+  }
 
   // 화면 라벨만 번역한다. 생성되는 Word 파일은 원본 영문 양식 그대로다.
   const dict = LANGS.find(l => l.id === lang)?.dict;
@@ -243,6 +306,23 @@ export default function PhotoReportPage() {
       );
     }
 
+    if (f.t === 'sign') {
+      return (
+        <div key={f.k}>
+          <span className="block text-sm font-medium text-gray-700 mb-1">{t(f.label)}</span>
+          {/* 캔버스는 값이 아니라 자기 픽셀을 들고 있다. 탭을 바꾸거나 저장값을 복원하면
+              같은 자리에 다른 서명이 남지 않도록 새로 그리게 한다. */}
+          <SignaturePad
+            key={`${tab}.${restored}`}
+            value={(current[f.k] as string) ?? ''}
+            onChange={v => setValue(f.k, v)}
+            clearLabel={t('Clear signature')}
+            hint={t('Sign here with your mouse or finger.')}
+          />
+        </div>
+      );
+    }
+
     if (f.t === 'radio') {
       const v = (current[f.k] as string) ?? '';
       return (
@@ -397,8 +477,14 @@ export default function PhotoReportPage() {
               placeholder={t('e.g. 유지환')}
               className={inputCls}
             />
+            <span className="mt-1 flex items-center justify-between gap-2 text-xs text-gray-400">
+              <span>{t('Saved as: 260828_Inspection Report_name')}</span>
+              <button type="button" onClick={resetDraft} className="shrink-0 text-red-500 hover:underline">
+                {t('Reset form')}
+              </button>
+            </span>
             <span className="mt-1 block text-xs text-gray-400">
-              {t('Saved as: 260828_Inspection Report_name')}
+              {t('Entries are kept on this device, so you can close the browser and come back. Photos are not kept.')}
             </span>
           </label>
 

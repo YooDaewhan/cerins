@@ -18,10 +18,33 @@ export interface CellWrite {
   prefix?: string;
 }
 
+/** 셀에 넣을 그림(서명). PNG 만 받는다. */
+export interface CellImage {
+  /** 예: 'T3.R4.C1' */
+  cell: string;
+  data: Buffer;
+}
+
 interface Edit {
   start: number;
   end: number;
   text: string;
+}
+
+/** 셀 그림의 가로 크기(EMU). 원본 양식에 들어 있던 서명 그림과 같은 2.99cm. */
+const IMAGE_WIDTH_EMU = 1079500;
+
+/** PNG 헤더(IHDR)에서 픽셀 크기를 읽는다. PNG 가 아니면 null. */
+function pngSize(b: Buffer): { w: number; h: number } | null {
+  if (b.length < 24 || b.readUInt32BE(12) !== 0x49484452) return null; // 'IHDR'
+  const w = b.readUInt32BE(16);
+  const h = b.readUInt32BE(20);
+  return w > 0 && h > 0 ? { w, h } : null;
+}
+
+/** 인라인 그림 run. 네임스페이스를 태그마다 직접 달아 템플릿 선언에 기대지 않는다. */
+function buildImageRun(rId: string, cx: number, cy: number, id: number): string {
+  return `<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"><wp:extent cx="${cx}" cy="${cy}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="${id}" name="Signature${id}"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="${id}" name="Signature${id}"/><pic:cNvPicPr><a:picLocks noChangeAspect="1" noChangeArrowheads="1"/></pic:cNvPicPr></pic:nvPicPr><pic:blipFill><a:blip r:embed="${rId}" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr bwMode="auto"><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`;
 }
 
 /** 입력한 행 수에 맞춰 크기를 바꿀 표 행 구간. count 가 목표 행 수. */
@@ -181,7 +204,9 @@ export function fillTemplate(
   checkIndexes: number[],
   /** 삭제할 빈 사진 표 (예: 'T12') — 사진은 별도로 뒤에 붙이므로 템플릿의 빈 표는 제거한다. */
   dropTable?: string,
-  rowBlocks: RowBlock[] = []
+  rowBlocks: RowBlock[] = [],
+  /** 서명 등 셀에 박아 넣을 그림. 해당 셀 첫 문단 끝에 붙는다. */
+  images: CellImage[] = []
 ): Buffer {
   const zip = new PizZip(templateBuffer);
   const docFile = zip.file('word/document.xml');
@@ -190,6 +215,46 @@ export function fillTemplate(
   const xml = resizeRowBlocks(docFile.asText(), rowBlocks);
   const cells = indexCells(xml);
   const edits: Edit[] = [];
+
+  if (images.length > 0) {
+    const relsFile = zip.file('word/_rels/document.xml.rels');
+    const ctFile = zip.file('[Content_Types].xml');
+    if (!relsFile || !ctFile) throw new Error('템플릿이 올바른 .docx 파일이 아닙니다.');
+
+    let relsXml = relsFile.asText();
+    const usedIds = [...relsXml.matchAll(/\bId="rId(\d+)"/g)].map(m => parseInt(m[1], 10));
+    let nextRId = (usedIds.length > 0 ? Math.max(...usedIds) : 0) + 1;
+
+    images.forEach((img, i) => {
+      const size = pngSize(img.data);
+      if (!size) return;
+      const range = cells.get(img.cell.split('@')[0]);
+      if (!range) return;
+      const para = findParagraph(xml.slice(range.start, range.end), 0);
+      if (!para) return;
+
+      const rId = `rId${nextRId++}`;
+      const mediaName = `signature_${i + 1}.png`;
+      zip.file(`word/media/${mediaName}`, img.data);
+      relsXml = relsXml.replace(
+        '</Relationships>',
+        `<Relationship Id="${rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/${mediaName}"/></Relationships>`
+      );
+
+      const cy = Math.round((IMAGE_WIDTH_EMU * size.h) / size.w);
+      const at = range.start + para.end;
+      edits.push({ start: at, end: at, text: buildImageRun(rId, IMAGE_WIDTH_EMU, cy, 9000 + i) });
+    });
+
+    zip.file('word/_rels/document.xml.rels', relsXml);
+    const ctXml = ctFile.asText();
+    if (!/Extension="png"/.test(ctXml)) {
+      zip.file(
+        '[Content_Types].xml',
+        ctXml.replace('</Types>', '<Default Extension="png" ContentType="image/png"/></Types>')
+      );
+    }
+  }
 
   for (const w of writes) {
     const raw = (w.prefix ?? '') + (w.value ?? '');

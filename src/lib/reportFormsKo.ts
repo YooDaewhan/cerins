@@ -14,6 +14,11 @@ export const KO: Record<string, string> = {
   'Item': '물품',
   'Goods name': '물품 이름',
   'delete': '삭제',
+  'Clear signature': '서명 지우기',
+  'Reset form': '입력 초기화',
+  'Entries are kept on this device, so you can close the browser and come back. Photos are not kept.':
+    '입력값은 이 기기에 저장돼서, 브라우저를 닫았다 와도 이어서 쓸 수 있습니다. 사진은 저장되지 않습니다.',
+  'Sign here with your mouse or finger.': '마우스나 손가락으로 서명하세요.',
   'Videos are delivered in a zip with the Word file, not inside it.':
     '동영상은 Word 안에 넣지 않고, 완성된 Word 파일과 함께 zip 으로 묶어 받습니다.',
   '+ add {x}': '+ {x} 추가',
@@ -65,6 +70,7 @@ export const KO: Record<string, string> = {
   'Job File No.': 'Job File No (관리번호)',
   'Company name': '회사명',
   'Name': '성명',
+  'Signature': '서명',
   'Title': '직위',
   'Contact points (Tel., email, etc.)': '연락처 (전화, 이메일 등)',
   'Company name or CERINS branch office name': '회사명 또는 CERINS 지사명',

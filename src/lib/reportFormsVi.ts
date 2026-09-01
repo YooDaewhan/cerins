@@ -14,6 +14,11 @@ export const VI: Record<string, string> = {
   'Item': 'Hàng hóa',
   'Goods name': 'Tên hàng hóa',
   'delete': 'Xóa',
+  'Clear signature': 'Xóa chữ ký',
+  'Reset form': 'Đặt lại biểu mẫu',
+  'Entries are kept on this device, so you can close the browser and come back. Photos are not kept.':
+    'Nội dung nhập được lưu trên thiết bị này, có thể đóng trình duyệt rồi quay lại. Ảnh không được lưu.',
+  'Sign here with your mouse or finger.': 'Ký bằng chuột hoặc ngón tay.',
   'Videos are delivered in a zip with the Word file, not inside it.':
     'Video không được chèn vào tệp Word mà được gửi kèm trong tệp zip cùng tệp Word.',
   '+ add {x}': '+ Thêm {x}',
@@ -67,6 +72,7 @@ export const VI: Record<string, string> = {
   'Job File No.': 'Job File No (số quản lý)',
   'Company name': 'Tên công ty',
   'Name': 'Họ tên',
+  'Signature': 'Chữ ký',
   'Title': 'Chức vụ',
   'Contact points (Tel., email, etc.)': 'Thông tin liên hệ (điện thoại, email, v.v.)',
   'Company name or CERINS branch office name': 'Tên công ty hoặc tên chi nhánh CERINS',

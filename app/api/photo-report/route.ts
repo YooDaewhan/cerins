@@ -42,8 +42,19 @@ export async function POST(req: NextRequest) {
       }
 
       const template = await readFile(path.join(TEMPLATE_DIR, `${def.id}.docx`));
-      const { writes, checks, rowBlocks } = resolveWrites(def, values);
-      baseBuffer = fillTemplate(template, writes, checks, photoFiles.length > 0 ? def.photoTable : undefined, rowBlocks);
+      const { writes, checks, rowBlocks, signs } = resolveWrites(def, values);
+      // 서명은 캔버스에서 그린 PNG data URL 로 넘어온다. 지나치게 큰 값은 버린다.
+      const signatures = signs
+        .filter(s => s.dataUrl.length <= 4_000_000)
+        .map(s => ({ cell: s.cell, data: Buffer.from(s.dataUrl.slice(s.dataUrl.indexOf(',') + 1), 'base64') }));
+      baseBuffer = fillTemplate(
+        template,
+        writes,
+        checks,
+        photoFiles.length > 0 ? def.photoTable : undefined,
+        rowBlocks,
+        signatures
+      );
       filename = buildReportFilename(def.title, reporterName, 'docx');
     } else {
       const docxFile = formData.get('docx') as File | null;

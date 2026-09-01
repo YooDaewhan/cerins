@@ -48,6 +48,34 @@ function readCells(buf: Buffer): Map<string, string> {
   return map;
 }
 
+/** 셀 하나의 안쪽 XML 을 그대로 꺼낸다(그림처럼 텍스트가 아닌 내용 확인용). */
+function readCellRange(xml: string, key: string): string | null {
+  const re = /<w:tbl(?=[ >])|<\/w:tbl>|<w:tr(?=[ >])|<\/w:tr>|<w:tc(?=[ >])|<\/w:tc>/g;
+  const stack: { id: number; row: number; cell: number }[] = [];
+  const open: { key: string; start: number }[] = [];
+  let count = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(xml)) !== null) {
+    const tag = m[0];
+    if (tag === "<w:tbl") stack.push({ id: count++, row: -1, cell: -1 });
+    else if (tag === "</w:tbl>") stack.pop();
+    else if (tag === "</w:tc>") {
+      const o = open.pop();
+      if (o && o.key === key) return xml.slice(o.start, m.index);
+    } else if (tag === "</w:tr>") continue;
+    else {
+      const tb = stack[stack.length - 1];
+      if (!tb) continue;
+      if (tag === "<w:tr") { tb.row++; tb.cell = -1; }
+      else {
+        tb.cell++;
+        open.push({ key: `T${tb.id}.R${tb.row}.C${tb.cell}`, start: xml.indexOf(">", m.index) + 1 });
+      }
+    }
+  }
+  return null;
+}
+
 function countChecked(buf: Buffer): number {
   const xml = new PizZip(buf).file("word/document.xml")!.asText();
   return (xml.match(/☒/g) ?? []).length;
@@ -65,6 +93,8 @@ for (const def of REPORTS) {
         const v = `VAL_${f.k}`;
         values[f.k] = v;
         expected.push({ cell: f.cell.split("@")[0], value: v });
+      } else if (f.t === "sign") {
+        // 서명은 그림이라 셀 텍스트로 확인할 수 없다. 아래 별도 테스트에서 본다.
       } else if (f.t === "radio") {
         values[f.k] = f.opts[0].v;
         if (f.opts[0].cb !== undefined) radioCount++;
@@ -170,6 +200,65 @@ test("CEC: 컨테이너 표도 입력한 행 수만큼 생긴다", () => {
   assert.ok(fifteen.get("T4.R17.C3")?.includes("CONT14"), "15번째 컨테이너 행이 없음");
   assert.equal(fifteen.get("T4.R17.C0"), "15", "복제 행의 Sl. No. 가 입력값과 다름");
   assert.ok(fifteen.get("T4.R20.C1")?.includes("TAIL"), "표 뒤 셀이 밀리지 않음");
+});
+
+// 가로:세로 = 2:1 짜리 최소 PNG. 크기 계산이 맞는지 보려고 정사각형이 아닌 걸 쓴다.
+const PNG_2x1 =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAYAAAD0In+KAAAAC0lEQVR4nGP4DwUAI+UH+Yo0eLMAAAAASUVORK5CYII=";
+
+test("서명: 지정한 셀에 PNG 그림이 들어간다", () => {
+  for (const def of REPORTS) {
+    const signs = def.sections.flatMap(s => s.fields.filter(f => f.t === "sign"));
+    if (signs.length === 0) continue;
+
+    const values: FormValues = Object.fromEntries(signs.map(f => [f.k, PNG_2x1]));
+    const template = readFileSync(path.join(TEMPLATE_DIR, `${def.id}.docx`));
+    const resolved = resolveWrites(def, values);
+    assert.equal(resolved.signs.length, signs.length, `${def.id}: 서명 개수 불일치`);
+
+    const out = fillTemplate(
+      template,
+      resolved.writes,
+      resolved.checks,
+      undefined,
+      resolved.rowBlocks,
+      resolved.signs.map(s => ({
+        cell: s.cell,
+        data: Buffer.from(s.dataUrl.slice(s.dataUrl.indexOf(",") + 1), "base64"),
+      }))
+    );
+
+    const zip = new PizZip(out);
+    const xml = zip.file("word/document.xml")!.asText();
+    const rels = zip.file("word/_rels/document.xml.rels")!.asText();
+
+    signs.forEach((f, i) => {
+      const media = `signature_${i + 1}.png`;
+      assert.ok(zip.file(`word/media/${media}`), `${def.id}: ${media} 가 없음`);
+      const rId = new RegExp(`Id="(rId\\d+)"[^>]*Target="media/${media}"`).exec(rels)?.[1];
+      assert.ok(rId, `${def.id}: ${media} 관계가 없음`);
+      // 2:1 PNG → 세로는 가로의 절반
+      assert.ok(
+        xml.includes(`<wp:extent cx="1079500" cy="539750"/>`),
+        `${def.id}: 그림 크기가 원본 비율과 다름`
+      );
+      // 그림 run 이 지정한 셀 안에 들어갔는지 본다.
+      const cellRange = readCellRange(xml, f.cell.split("@")[0]);
+      assert.ok(cellRange && cellRange.includes(`r:embed="${rId}"`), `${def.id}: ${f.cell} 에 서명이 없음`);
+    });
+
+    assert.match(zip.file("[Content_Types].xml")!.asText(), /Extension="png"/);
+  }
+});
+
+test("서명: 안 그리면 문서에 그림이 늘지 않는다", () => {
+  for (const def of REPORTS) {
+    const template = readFileSync(path.join(TEMPLATE_DIR, `${def.id}.docx`));
+    const { writes, checks, rowBlocks, signs } = resolveWrites(def, { appSign: "", insSign: "not-a-data-url" });
+    assert.deepEqual(signs, []);
+    const out = fillTemplate(template, writes, checks, undefined, rowBlocks, []);
+    assert.equal(new PizZip(out).file(/word\/media\/signature_/).length, 0);
+  }
 });
 
 test("번역 사전: 폼에 쓰이는 모든 문자열에 번역이 있다", async () => {
