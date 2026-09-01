@@ -3,9 +3,15 @@
 import { useEffect, useRef, useState } from 'react';
 
 // 캔버스 실물 크기(px). 화면 크기와 무관하게 결과 PNG 해상도를 고정한다.
-// 3:1 은 원본 Word 양식의 서명 칸 비율에 맞춘 것.
+// 폰에서 손가락으로 쓰기 편하도록 세로를 넉넉히 준다. 내보낼 땐 그린 부분만 잘라내므로
+// 여기가 커진다고 Word 의 서명 그림이 커지지는 않는다.
 const W = 1200;
-const H = 400;
+const H = 800;
+
+/** 잘라낸 서명 둘레 여백(px). */
+const CROP_PAD = 24;
+/** 내보낼 그림의 최대 세로/가로 비. Word 서명 칸이 지나치게 높아지는 걸 막는다. */
+const MAX_H_OVER_W = 0.5;
 
 type Point = { x: number; y: number };
 
@@ -163,6 +169,38 @@ function SignatureModal({
     setCount(strokes.current.length);
   }
 
+  /** 그린 부분만 잘라 PNG 로 내보낸다. 넓은 패드 구석에 작게 써도 서명이 제 크기로 들어간다. */
+  function exportSignature(): string | null {
+    const canvas = ref.current;
+    const pts = strokes.current.flat();
+    if (!canvas || pts.length === 0) return null;
+
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const p of pts) {
+      if (p.x < x0) x0 = p.x;
+      if (p.x > x1) x1 = p.x;
+      if (p.y < y0) y0 = p.y;
+      if (p.y > y1) y1 = p.y;
+    }
+    x0 -= CROP_PAD; y0 -= CROP_PAD; x1 += CROP_PAD; y1 += CROP_PAD;
+
+    let w = x1 - x0;
+    const h = y1 - y0;
+    // 세로로 긴 서명은 잘라내지 않고 좌우를 넓혀 비율만 맞춘다.
+    if (h / w > MAX_H_OVER_W) {
+      const wide = h / MAX_H_OVER_W;
+      x0 -= (wide - w) / 2;
+      w = wide;
+    }
+
+    const out = document.createElement('canvas');
+    out.width = Math.round(w);
+    out.height = Math.round(h);
+    // 캔버스 밖 영역은 투명하게 채워진다.
+    out.getContext('2d')?.drawImage(canvas, x0, y0, w, h, 0, 0, out.width, out.height);
+    return out.toDataURL('image/png');
+  }
+
   function undo() {
     strokes.current.pop();
     redraw();
@@ -193,7 +231,7 @@ function SignatureModal({
           onPointerUp={up}
           onPointerLeave={up}
           onPointerCancel={up}
-          className="aspect-[3/1] w-full touch-none rounded-xl border border-dashed border-gray-300 bg-white"
+          className="aspect-[3/2] w-full touch-none rounded-xl border border-dashed border-gray-300 bg-white"
         />
         <div className="mt-3 flex gap-2">
           <button type="button" onClick={undo} disabled={count === 0} className={`${btn} border border-gray-300 text-gray-600`}>
@@ -211,8 +249,8 @@ function SignatureModal({
             type="button"
             disabled={count === 0}
             onClick={() => {
-              const c = ref.current;
-              if (c) onDone(c.toDataURL('image/png'));
+              const png = exportSignature();
+              if (png) onDone(png);
             }}
             className={`${btn} bg-blue-600 text-white`}
           >
