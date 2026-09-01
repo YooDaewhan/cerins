@@ -103,9 +103,11 @@ export async function POST(req: NextRequest) {
       mimeType = 'application/zip';
     }
 
-    // 결과물은 서버에도 보관해 관리자 페이지에서 다시 받을 수 있게 한다.
+    // 결과물은 서버에 보관한다. 관리자 페이지에서 다시 받을 수 있고,
+    // 작성자는 아래 링크로 받는다. 파일을 응답에 직접 실어 보내면 blob 다운로드가 되는데,
+    // 아이폰 사파리·인앱 브라우저가 그걸 무시해서 저장이 안 되는 일이 있다.
     const user = await getCurrentUser();
-    await savePhotoReport({
+    const { storedName } = await savePhotoReport({
       reportType: reportType || 'upload',
       filename: outName,
       mimeType,
@@ -113,14 +115,9 @@ export async function POST(req: NextRequest) {
       createdBy: user?.id ?? null,
     });
 
-    return new NextResponse(new Uint8Array(payload), {
-      status: 200,
-      headers: {
-        'Content-Type': mimeType,
-        // 한글 이름이 들어가므로 RFC 5987 로 인코딩한다.
-        'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(outName)}`,
-        'Content-Length': String(payload.length),
-      },
+    return NextResponse.json({
+      url: `/api/photo-report/download/${storedName}`,
+      filename: outName,
     });
   } catch (err) {
     console.error('[photo-report]', err);

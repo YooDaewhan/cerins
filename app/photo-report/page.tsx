@@ -79,6 +79,8 @@ export default function PhotoReportPage() {
   const [groupCount, setGroupCount] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<Status>(null);
+  // 자동 이동이 막히는 브라우저를 대비해, 직접 누를 수 있는 링크도 남겨 둔다.
+  const [download, setDownload] = useState<{ url: string; filename: string } | null>(null);
   // 저장해 둔 입력값을 다 읽기 전에는 저장하지 않는다(빈 값으로 덮어쓰는 걸 막는다).
   const [restored, setRestored] = useState(false);
 
@@ -200,6 +202,7 @@ export default function PhotoReportPage() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setStatus(null);
+    setDownload(null);
 
     if (!reporterName.trim()) {
       setStatus({ type: 'error', message: '이름을 입력해주세요.' });
@@ -252,22 +255,10 @@ export default function PhotoReportPage() {
         throw new Error(json.message ?? '서버 오류가 발생했습니다.');
       }
 
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      // 파일명 규칙(날짜_형식_이름)은 서버가 정하고, 응답 헤더에서 그대로 가져다 쓴다.
-      const disposition = res.headers.get('content-disposition') ?? '';
-      const encoded = /filename\*=UTF-8''([^;]+)/.exec(disposition)?.[1];
-      const ext = res.headers.get('content-type')?.includes('zip') ? 'zip' : 'docx';
-      anchor.download = encoded
-        ? decodeURIComponent(encoded)
-        : `${def ? def.id : 'report'}.${ext}`;
-      anchor.style.display = 'none';
-      document.body.appendChild(anchor);
-      anchor.click();
-      document.body.removeChild(anchor);
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      // 서버가 파일을 보관하고 링크만 준다. 일반 GET 이라야 폰에서도 확실히 저장된다.
+      const { url, filename } = (await res.json()) as { url: string; filename: string };
+      setDownload({ url, filename });
+      location.href = url;
 
       setStatus({ type: 'success', message: '보고서 생성 완료! 다운로드가 시작됩니다.' });
     } catch (err) {
@@ -620,6 +611,17 @@ export default function PhotoReportPage() {
           >
             {loading ? t('Generating…') : t('Done – download Word file')}
           </button>
+
+          {download && (
+            <a
+              href={download.url}
+              download={download.filename}
+              className="block rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-center text-sm font-semibold text-blue-700 hover:bg-blue-100"
+            >
+              {t('Download did not start? Tap here')}
+              <span className="mt-0.5 block text-xs font-normal text-blue-500">{download.filename}</span>
+            </a>
+          )}
 
           {status && (
             <div

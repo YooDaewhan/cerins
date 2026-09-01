@@ -16,6 +16,7 @@ export const ZH: Record<string, string> = {
   'delete': '删除',
   'Clear signature': '清除签名',
   'Reset form': '重置表单',
+  'Download did not start? Tap here': '没有开始下载？请点击这里',
   'Entries are kept on this device, so you can close the browser and come back. Photos are not kept.':
     '输入内容保存在本设备，关闭浏览器后仍可继续填写。照片不会保存。',
   'Sign here with your mouse or finger.': '请用鼠标或手指签名。',

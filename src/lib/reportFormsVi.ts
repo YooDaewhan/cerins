@@ -16,6 +16,7 @@ export const VI: Record<string, string> = {
   'delete': 'Xóa',
   'Clear signature': 'Xóa chữ ký',
   'Reset form': 'Đặt lại biểu mẫu',
+  'Download did not start? Tap here': 'Chưa tải xuống? Nhấn vào đây',
   'Entries are kept on this device, so you can close the browser and come back. Photos are not kept.':
     'Nội dung nhập được lưu trên thiết bị này, có thể đóng trình duyệt rồi quay lại. Ảnh không được lưu.',
   'Sign here with your mouse or finger.': 'Ký bằng chuột hoặc ngón tay.',

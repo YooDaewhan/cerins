@@ -16,6 +16,7 @@ export const KO: Record<string, string> = {
   'delete': '삭제',
   'Clear signature': '서명 지우기',
   'Reset form': '입력 초기화',
+  'Download did not start? Tap here': '다운로드가 안 됐나요? 여기를 누르세요',
   'Entries are kept on this device, so you can close the browser and come back. Photos are not kept.':
     '입력값은 이 기기에 저장돼서, 브라우저를 닫았다 와도 이어서 쓸 수 있습니다. 사진은 저장되지 않습니다.',
   'Sign here with your mouse or finger.': '마우스나 손가락으로 서명하세요.',

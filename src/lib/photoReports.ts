@@ -40,7 +40,7 @@ export async function savePhotoReport(input: {
   mimeType: string;
   buffer: Buffer;
   createdBy: number | null;
-}): Promise<number> {
+}): Promise<{ id: number; storedName: string }> {
   const ext = path.extname(input.filename);
   const storedName = `${crypto.randomUUID()}${ext}`;
   const absDir = path.join(getStorageRoot(), REL_DIR);
@@ -61,7 +61,18 @@ export async function savePhotoReport(input: {
       input.createdBy,
     ],
   );
-  return (res as { insertId: number }).insertId;
+  return { id: (res as { insertId: number }).insertId, storedName };
+}
+
+/** 저장 파일명(UUID)으로 찾는다. 이 이름 자체가 다운로드 링크의 열쇠 역할을 한다. */
+export async function getPhotoReportByStoredName(storedName: string): Promise<PhotoReportRow | null> {
+  const [rows] = await getPool().execute(
+    `SELECT id, report_type, original_name, storage_path, mime_type, file_size, created_at
+       FROM photo_reports WHERE stored_name = ? LIMIT 1`,
+    [storedName],
+  );
+  const list = rows as PhotoReportRow[];
+  return list.length === 0 ? null : list[0];
 }
 
 // 정렬 키 화이트리스트. 사용자 입력을 SQL 에 직접 넣지 않는다.
