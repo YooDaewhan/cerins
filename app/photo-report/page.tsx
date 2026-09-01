@@ -398,7 +398,9 @@ export default function PhotoReportPage() {
     <main className="min-h-screen bg-gray-100 p-4 sm:p-6">
       <div className="bg-white rounded-2xl shadow-md w-full max-w-4xl mx-auto p-6 sm:p-8 space-y-6">
         <div>
-          <div className="flex items-start justify-between gap-3">
+          {/* 폰에서는 제목과 버튼을 위아래로 나눈다. 한 줄에 두면 버튼이 안 줄어들어
+              제목이 한 글자씩 세로로 쪼개진다. */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <h1 className="text-2xl font-bold text-gray-800">{t('Inspection Report Builder')}</h1>
             <div className="flex items-center gap-2 shrink-0">
               <Link
