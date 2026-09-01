@@ -15,6 +15,12 @@ export const ZH: Record<string, string> = {
   'Goods name': '货物名称',
   'delete': '删除',
   'Clear signature': '清除签名',
+  'Tap to sign': '点击签名',
+  'Re-sign': '重新签名',
+  'Undo': '撤销一笔',
+  'Erase all': '全部清除',
+  'Cancel': '取消',
+  'Use this signature': '使用此签名',
   'Reset form': '重置表单',
   'Download did not start? Tap here': '没有开始下载？请点击这里',
   'Entries are kept on this device, so you can close the browser and come back. Photos are not kept.':

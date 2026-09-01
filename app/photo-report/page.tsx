@@ -301,15 +301,7 @@ export default function PhotoReportPage() {
       return (
         <div key={f.k}>
           <span className="block text-sm font-medium text-gray-700 mb-1">{t(f.label)}</span>
-          {/* 캔버스는 값이 아니라 자기 픽셀을 들고 있다. 탭을 바꾸거나 저장값을 복원하면
-              같은 자리에 다른 서명이 남지 않도록 새로 그리게 한다. */}
-          <SignaturePad
-            key={`${tab}.${restored}`}
-            value={(current[f.k] as string) ?? ''}
-            onChange={v => setValue(f.k, v)}
-            clearLabel={t('Clear signature')}
-            hint={t('Sign here with your mouse or finger.')}
-          />
+          <SignaturePad value={(current[f.k] as string) ?? ''} onChange={v => setValue(f.k, v)} t={t} />
         </div>
       );
     }

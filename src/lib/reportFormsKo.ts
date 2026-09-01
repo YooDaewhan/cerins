@@ -15,6 +15,12 @@ export const KO: Record<string, string> = {
   'Goods name': '물품 이름',
   'delete': '삭제',
   'Clear signature': '서명 지우기',
+  'Tap to sign': '눌러서 서명하기',
+  'Re-sign': '다시 서명',
+  'Undo': '한 획 되돌리기',
+  'Erase all': '전체 지우기',
+  'Cancel': '취소',
+  'Use this signature': '이 서명 사용',
   'Reset form': '입력 초기화',
   'Download did not start? Tap here': '다운로드가 안 됐나요? 여기를 누르세요',
   'Entries are kept on this device, so you can close the browser and come back. Photos are not kept.':

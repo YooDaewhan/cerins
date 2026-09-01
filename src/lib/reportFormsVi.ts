@@ -15,6 +15,12 @@ export const VI: Record<string, string> = {
   'Goods name': 'Tên hàng hóa',
   'delete': 'Xóa',
   'Clear signature': 'Xóa chữ ký',
+  'Tap to sign': 'Nhấn để ký',
+  'Re-sign': 'Ký lại',
+  'Undo': 'Hoàn tác một nét',
+  'Erase all': 'Xóa tất cả',
+  'Cancel': 'Hủy',
+  'Use this signature': 'Dùng chữ ký này',
   'Reset form': 'Đặt lại biểu mẫu',
   'Download did not start? Tap here': 'Chưa tải xuống? Nhấn vào đây',
   'Entries are kept on this device, so you can close the browser and come back. Photos are not kept.':
