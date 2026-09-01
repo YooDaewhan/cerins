@@ -98,17 +98,36 @@ function SignatureModal({
   // 되돌리기·확인 버튼 상태를 갱신하려고 획 수를 상태로도 들고 있는다.
   const [count, setCount] = useState(0);
 
-  // 팝업이 떠 있는 동안 뒤 페이지가 스크롤되지 않게 한다. Esc 로 닫는다.
+  // 팝업이 떠 있는 동안 뒤 페이지가 움직이지 않게 한다. Esc 로 닫는다.
   useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    // iOS 사파리는 overflow:hidden 만으로는 스크롤이 막히지 않는다. 본문을 아예 고정하고
+    // 닫을 때 원래 위치로 돌려놓는다.
+    const y = window.scrollY;
+    const s = document.body.style;
+    const prev = { position: s.position, top: s.top, width: s.width, overflow: s.overflow };
+    s.position = 'fixed';
+    s.top = `-${y}px`;
+    s.width = '100%';
+    s.overflow = 'hidden';
+
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel(); };
     window.addEventListener('keydown', onKey);
     return () => {
-      document.body.style.overflow = prev;
+      Object.assign(s, prev);
+      window.scrollTo(0, y);
       window.removeEventListener('keydown', onKey);
     };
   }, [onCancel]);
+
+  // touch-action:none 을 무시하고 스크롤하는 브라우저가 있어, 캔버스 위 터치는 직접 막는다.
+  // React 의 onTouchMove 는 passive 라 preventDefault 가 통하지 않는다.
+  useEffect(() => {
+    const c = ref.current;
+    if (!c) return;
+    const stop = (e: TouchEvent) => e.preventDefault();
+    c.addEventListener('touchmove', stop, { passive: false });
+    return () => c.removeEventListener('touchmove', stop);
+  }, []);
 
   function ctx() {
     const c = ref.current?.getContext('2d');
@@ -216,7 +235,8 @@ function SignatureModal({
   const btn = 'flex-1 rounded-xl py-3 text-sm font-semibold disabled:opacity-40';
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-center gap-3 bg-black/60 p-4">
+    // 팝업 전체에 touch-none 을 걸어, 캔버스 밖을 끌어도 화면이 밀리지 않게 한다.
+    <div className="fixed inset-0 z-50 flex touch-none flex-col justify-center gap-3 overscroll-none bg-black/60 p-4">
       <div className="mx-auto w-full max-w-2xl rounded-2xl bg-white p-4 shadow-xl">
         <p className="mb-2 text-center text-sm font-medium text-gray-600">
           {t('Sign here with your mouse or finger.')}
