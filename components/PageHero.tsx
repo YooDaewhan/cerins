@@ -13,7 +13,7 @@ export default async function PageHero({ title, subtitle, breadcrumb, image }: P
   return (
     <div
       className="relative flex items-center"
-      style={{ height: "28vh", minHeight: "200px" }}
+      style={{ height: "20vh", minHeight: "140px" }}
     >
       <div
         className="absolute inset-0 bg-cover bg-center"
