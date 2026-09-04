@@ -16,7 +16,9 @@ export type Field =
       /** 입력한 행 수에 맞춰 표 행을 늘리거나 줄인다(행 수 제한 없음). rows 와 같은 행 범위. */
       rowBlock?: { table: number; from: number; to: number };
       /** 숫자만 입력했을 때 뒤에 붙일 단위. { 열번호: 'KG' } */
-      unitCols?: Record<number, string> };
+      unitCols?: Record<number, string>;
+      /** 자유 입력 대신 정해진 값 중 하나를 고르는 열. { 열번호: ['LCL', 'FCL'] } */
+      optCols?: Record<number, string[]> };
 
 export interface Section {
   title: string;
@@ -165,6 +167,7 @@ const CEC: ReportDef = {
           cols: ['Sl. No.', 'Type of container (20’, 40’ …)', 'LCL / FCL', 'Container No.', 'Seal No.', 'Quantity & type of break-bulk packing'],
           rows: gridRows(4, 3, 14, 0, 5),
           rowBlock: { table: 4, from: 3, to: 14 },
+          optCols: { 2: ['LCL', 'FCL'] },
         },
         { t: 'text', k: 'bbType', label: 'Break-bulk: Type of packing', cell: 'T4.R17.C1' },
         { t: 'text', k: 'bbQty', label: 'Break-bulk: Quantity of packing', cell: 'T4.R17.C3' },

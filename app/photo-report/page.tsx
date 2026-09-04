@@ -406,17 +406,39 @@ export default function PhotoReportPage() {
                 <span className="block text-xs font-semibold text-gray-400 mb-2">#{r + 1}</span>
               )}
               <div className="grid gap-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                {f.cols.map((c, i) => (
-                  <label key={c} className="block">
-                    <span className="block text-xs text-gray-500 mb-0.5">{t(c)}</span>
-                    <input
-                      type={f.dateCols?.includes(i) ? 'date' : 'text'}
-                      value={grid[r]?.[i] ?? ''}
-                      onChange={e => setCellValue(f, r, i, e.target.value)}
-                      className="w-full border border-gray-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
-                    />
-                  </label>
-                ))}
+                {f.cols.map((c, i) => {
+                  const cell = grid[r]?.[i] ?? '';
+                  const opts = f.optCols?.[i];
+                  return (
+                    <label key={c} className="block">
+                      <span className="block text-xs text-gray-500 mb-0.5">{t(c)}</span>
+                      {opts ? (
+                        // 같은 값을 다시 누르면 비운다.
+                        <div className="flex rounded border border-gray-200 overflow-hidden text-sm">
+                          {opts.map(o => (
+                            <button
+                              key={o}
+                              type="button"
+                              onClick={() => setCellValue(f, r, i, cell === o ? '' : o)}
+                              className={`flex-1 px-2 py-1.5 font-medium transition-colors ${
+                                cell === o ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
+                              }`}
+                            >
+                              {o}
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <input
+                          type={f.dateCols?.includes(i) ? 'date' : 'text'}
+                          value={cell}
+                          onChange={e => setCellValue(f, r, i, e.target.value)}
+                          className="w-full border border-gray-200 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+                        />
+                      )}
+                    </label>
+                  );
+                })}
               </div>
             </div>
           ))}
