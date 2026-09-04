@@ -6,10 +6,11 @@
  */
 
 export type Field =
-  | { t: 'text'; k: string; label: string; cell: string; lines?: number; replace?: boolean; prefix?: string; ph?: string; date?: true; today?: true }
+  | { t: 'text'; k: string; label: string; cell: string; lines?: number; replace?: boolean; prefix?: string; ph?: string; date?: true; today?: true;
+      /** 다음 우편번호 검색 버튼을 붙인다. */ addr?: true }
   /** 마우스·터치로 그린 서명. 값은 PNG data URL 이고 해당 셀에 그림으로 들어간다. */
   | { t: 'sign'; k: string; label: string; cell: string }
-  | { t: 'radio'; k: string; label: string; opts: { v: string; label: string; cb?: number; cell?: string }[] }
+  | { t: 'radio'; k: string; label: string; opts: { v: string; label: string; cb?: number; cell?: string; value?: string }[] }
   | { t: 'checks'; k: string; label: string; opts: { v: string; label: string; cb: number }[] }
   | { t: 'grid'; k: string; label: string; cols: string[]; rows: string[][]; dateCols?: number[];
       /** 입력한 행 수에 맞춰 표 행을 늘리거나 줄인다(행 수 제한 없음). rows 와 같은 행 범위. */
@@ -38,6 +39,11 @@ export interface ReportDef {
     /** 묶음 항목 캡션에 grid 값을 자동으로 넣는다. at = { photoCategories 위치: grid 열번호 } */
     fill?: { grid: string; at: Record<number, number> } };
   sections: Section[];
+  /** 입력 폼을 여러 화면으로 나눈다. 각 값은 그 단계에 들어가는 sections 개수(합 = sections.length).
+   *  Word 출력에는 영향이 없다 — 화면 분할일 뿐이다. */
+  steps?: number[];
+  /** 사진 첨부 칸을 보여줄 단계(0-based). steps 가 있을 때만 쓴다. */
+  photoStep?: number;
 }
 
 /** 연속된 행/열 좌표로 grid rows 를 만든다. */
@@ -50,6 +56,12 @@ function gridRows(table: number, rowFrom: number, rowTo: number, colFrom: number
   }
   return rows;
 }
+
+/** 검사 시행 여부 토글. 셀에는 ✔ / N/A 로 들어간다. */
+const MARK = (cell: string) => [
+  { v: 'y', label: 'Y', cell, value: '✔' },
+  { v: 'n', label: 'N', cell, value: 'N/A' },
+];
 
 const YESNO = (yes: number, no: number) => [
   { v: 'yes', label: 'Yes', cb: yes },
@@ -73,6 +85,9 @@ const CEC: ReportDef = {
   ],
   // 2~4번(Nameplate / Goods condition / Packing)은 물품 하나 단위라 통째로 반복된다.
   photoGroup: { from: 1, to: 3, label: 'Item', nameAt: 1 },
+  // 5단계: 개요 / 시각·결과 / 사진·문서 / 제품·결론 / 서명
+  steps: [3, 4, 2, 3, 2],
+  photoStep: 2,
   sections: [
     {
       title: 'General Information',
@@ -94,12 +109,17 @@ const CEC: ReportDef = {
       title: 'INSPECTED',
       fields: [
         { t: 'text', k: 'inspDate', label: 'Date of Inspection', cell: 'T2.R1.C0', date: true },
-        { t: 'text', k: 'opTestMark', label: 'Operation Test', cell: 'T2.R1.C1', ph: '✔ / N/A' },
-        { t: 'text', k: 'packingMark', label: 'Packing', cell: 'T2.R1.C2', ph: '✔ / N/A' },
-        { t: 'text', k: 'loadingMark', label: 'Loading Supervision', cell: 'T2.R1.C3', ph: '✔ / N/A' },
-        { t: 'text', k: 'place', label: 'Place of Inspection and Country (full address)', cell: 'T2.R2.C1', lines: 3 },
+        { t: 'radio', k: 'opTestMark', label: 'Operation Test', opts: MARK('T2.R1.C1') },
+        { t: 'radio', k: 'packingMark', label: 'Packing', opts: MARK('T2.R1.C2') },
+        { t: 'radio', k: 'loadingMark', label: 'Loading Supervision', opts: MARK('T2.R1.C3') },
+        { t: 'text', k: 'place', label: 'Place of Inspection and Country (full address)', cell: 'T2.R2.C1', lines: 3, addr: true },
         { t: 'text', k: 'roundTrip', label: 'Round-Trip Travel Time (00:00 h)', cell: 'T2.R4.C1' },
         { t: 'text', k: 'totalDuration', label: 'Total Duration of Inspection Hours (00:00 h)', cell: 'T2.R4.C2' },
+      ],
+    },
+    {
+      title: 'TIME OF OPERATION TEST / PACKING INSPECTION / LOADING SUPERVISION',
+      fields: [
         {
           t: 'grid',
           k: 'times',
@@ -643,7 +663,7 @@ export function resolveWrites(def: ReportDef, values: FormValues) {
         const opt = f.opts.find(o => o.v === v);
         if (!opt) continue;
         if (opt.cb !== undefined) checks.push(opt.cb);
-        if (opt.cell) writes.push({ cell: opt.cell, value: 'X' });
+        if (opt.cell) writes.push({ cell: opt.cell, value: opt.value ?? 'X' });
       } else if (f.t === 'checks') {
         if (!Array.isArray(v)) continue;
         for (const opt of f.opts) if ((v as string[]).includes(opt.v)) checks.push(opt.cb);

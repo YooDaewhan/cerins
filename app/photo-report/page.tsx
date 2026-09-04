@@ -29,6 +29,21 @@ const LANGS = [
 ] as const;
 type Lang = (typeof LANGS)[number]['id'];
 
+// 다음 우편번호 검색. 스크립트는 처음 누를 때만 받아온다.
+function openPostcode(onPick: (addr: string) => void) {
+  const w = window as unknown as { daum?: { Postcode: new (o: object) => { open(): void } } };
+  const run = () =>
+    new w.daum!.Postcode({
+      oncomplete: (d: { address: string; buildingName?: string; zonecode: string }) =>
+        onPick(`${d.address}${d.buildingName ? ` (${d.buildingName})` : ''} [${d.zonecode}]`),
+    }).open();
+  if (w.daum?.Postcode) return run();
+  const el = document.createElement('script');
+  el.src = 'https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js';
+  el.onload = run;
+  document.head.appendChild(el);
+}
+
 const inputCls =
   'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400';
 
@@ -67,6 +82,8 @@ function saveDraft(d: Draft): void {
 export default function PhotoReportPage() {
   const [lang, setLang] = useState<Lang>('ko');
   const [tab, setTab] = useState(TABS[0].id);
+  // 폼이 길어 화면을 나눈 보고서(CEC)에서 지금 보고 있는 단계.
+  const [step, setStep] = useState(0);
   const [values, setValues] = useState<Record<string, FormValues>>({});
   const [gridRows, setGridRows] = useState<Record<string, number>>({});
   const [reporterName, setReporterName] = useState('');
@@ -168,6 +185,20 @@ export default function PhotoReportPage() {
   function entryLabel(e: PhotoEntry) {
     return catLabels[catKey(e.key)] ?? autoLabel(e);
   }
+  // 단계별로 보여줄 섹션 구간. steps 가 없는 보고서는 예전처럼 한 화면에 다 나온다.
+  const steps = def?.steps;
+  const lastStep = (steps?.length ?? 1) - 1;
+  const stepFrom = steps ? steps.slice(0, step).reduce((a, b) => a + b, 0) : 0;
+  const shownSections = steps
+    ? (def?.sections ?? []).slice(stepFrom, stepFrom + (steps[step] ?? 0))
+    : def?.sections ?? [];
+  const showPhotos = !steps || step === def?.photoStep;
+
+  function goStep(i: number) {
+    setStep(Math.min(Math.max(i, 0), lastStep));
+    window.scrollTo({ top: 0 });
+  }
+
   const current = values[tab] ?? {};
 
   function setValue(k: string, v: FormValues[string]) {
@@ -292,6 +323,15 @@ export default function PhotoReportPage() {
               onChange={e => setValue(f.k, e.target.value)}
               className={inputCls}
             />
+          )}
+          {f.addr && (
+            <button
+              type="button"
+              onClick={() => openPostcode(addr => setValue(f.k, addr))}
+              className="mt-1 text-xs text-blue-600 hover:underline"
+            >
+              {t('Search address')}
+            </button>
           )}
         </label>
       );
@@ -436,7 +476,7 @@ export default function PhotoReportPage() {
             <button
               key={tb.id}
               type="button"
-              onClick={() => { setTab(tb.id); setStatus(null); }}
+              onClick={() => { setTab(tb.id); setStep(0); setStatus(null); }}
               className={`px-4 py-2 text-sm font-semibold rounded-t-lg -mb-px border-b-2 transition-colors ${
                 tab === tb.id
                   ? 'border-blue-600 text-blue-700 bg-blue-50'
@@ -476,7 +516,7 @@ export default function PhotoReportPage() {
           {def ? (
             <>
               <p className="text-sm text-gray-400">{t(def.title)}</p>
-              {def.sections.map(s => (
+              {shownSections.map(s => (
                 <fieldset key={s.title} className="border border-gray-200 rounded-xl p-4 space-y-4">
                   <legend className="px-2 text-sm font-bold text-gray-700">{t(s.title)}</legend>
                   {s.fields.map(renderField)}
@@ -499,7 +539,7 @@ export default function PhotoReportPage() {
           )}
 
           {/* Photos */}
-          <fieldset className="border border-gray-200 rounded-xl p-4 space-y-3">
+          <fieldset hidden={!showPhotos} className="border border-gray-200 rounded-xl p-4 space-y-3">
             <legend className="px-2 text-sm font-bold text-gray-700">{t('Photos')}</legend>
             <p className="text-xs text-gray-400">{t('jpg / jpeg / png / webp, multiple allowed')}</p>
 
@@ -598,13 +638,53 @@ export default function PhotoReportPage() {
             )}
           </fieldset>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? t('Generating…') : t('Done – download Word file')}
-          </button>
+          {steps && (
+            <div className="flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => goStep(step - 1)}
+                disabled={step === 0}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+              >
+                ← {t('Previous')}
+              </button>
+              <div className="flex items-center gap-1.5">
+                {steps.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => goStep(i)}
+                    aria-label={`${t('Step')} ${i + 1}`}
+                    aria-current={i === step}
+                    className={`h-2.5 w-2.5 rounded-full transition-colors ${
+                      i === step ? 'bg-blue-600' : 'bg-gray-300 hover:bg-gray-400'
+                    }`}
+                  />
+                ))}
+                <span className="ml-2 text-xs font-semibold text-gray-500">
+                  {step + 1} / {steps.length}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => goStep(step + 1)}
+                disabled={step === lastStep}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+              >
+                {t('Next')} →
+              </button>
+            </div>
+          )}
+
+          {(!steps || step === lastStep) && (
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? t('Generating…') : t('Done – download Word file')}
+            </button>
+          )}
 
           {download && (
             <a
