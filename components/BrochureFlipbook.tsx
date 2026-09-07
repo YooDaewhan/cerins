@@ -37,10 +37,10 @@ async function loadPdf(url: string): Promise<PDFDocumentLoadingTask> {
   });
 }
 
-async function renderPage(doc: PDFDocumentProxy, n: number): Promise<string> {
+async function renderPage(doc: PDFDocumentProxy, n: number, maxWidth = 1600): Promise<string> {
   const page = await doc.getPage(n);
   const unit = page.getViewport({ scale: 1 });
-  const viewport = page.getViewport({ scale: Math.min(1600 / unit.width, 3) });
+  const viewport = page.getViewport({ scale: Math.min(maxWidth / unit.width, 3) });
   const canvas = document.createElement("canvas");
   canvas.width = viewport.width;
   canvas.height = viewport.height;
@@ -65,14 +65,11 @@ export default function BrochureFlipbook({ locale }: { locale: LocaleCode }) {
             onClick={() => setOpen(b)}
             className="group text-left rounded-lg border border-gray-200 overflow-hidden hover:border-(--brand) hover:shadow-lg transition"
           >
-            <div className="aspect-[4/3] bg-gradient-to-br from-(--brand) to-[#0d2a5a] flex flex-col items-center justify-center gap-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/cerins_logo.png" alt="CERINS" className="h-10 w-auto" />
-              <span className="text-white/70 text-[11px] tracking-[0.2em] uppercase">Company Introduction</span>
-              <span className="text-white text-lg font-semibold">{b.lang}</span>
-            </div>
+            <Cover file={b.file} lang={b.lang} />
             <div className="px-4 py-3 flex items-center justify-between">
-              <span className="text-sm text-gray-600 group-hover:text-(--brand)">{t.view}</span>
+              <span className="text-sm text-gray-600 group-hover:text-(--brand)">
+                <b className="font-semibold text-gray-800 group-hover:text-(--brand)">{b.lang}</b> · {t.view}
+              </span>
               <svg className="w-4 h-4 text-gray-400 group-hover:text-(--brand)" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
@@ -85,6 +82,37 @@ export default function BrochureFlipbook({ locale }: { locale: LocaleCode }) {
         <Viewer file={open.file} title={`${t.sub} — ${open.lang}`} t={t} onClose={() => setOpen(null)} />
       )}
     </section>
+  );
+}
+
+/** 카드 썸네일: 브로슈어 표지(1쪽)를 그대로 굽는다 — 언어별 실제 표지가 나온다. */
+function Cover({ file, lang }: { file: string; lang: string }) {
+  const [src, setSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    let dead = false;
+    const task: { current: PDFDocumentLoadingTask | null } = { current: null };
+    void (async () => {
+      task.current = await loadPdf(file);
+      const doc = await task.current.promise;
+      const img = await renderPage(doc, 1, 700);
+      if (!dead) setSrc(img);
+    })().catch(() => {});
+    return () => {
+      dead = true;
+      void task.current?.destroy();
+    };
+  }, [file]);
+
+  return (
+    <div className="aspect-[4/3] bg-gray-100 flex items-center justify-center overflow-hidden">
+      {src ? (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img src={src} alt={lang} className="w-full h-full object-contain" />
+      ) : (
+        <span className="text-gray-300 text-xs">…</span>
+      )}
+    </div>
   );
 }
 

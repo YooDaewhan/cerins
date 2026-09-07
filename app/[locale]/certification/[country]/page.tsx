@@ -18,6 +18,13 @@ interface Props {
   params: Promise<{ locale: string; country: string }>;
 }
 
+// ponytail: 인증 항목 slug → 인증 마크. 마크 있는 항목만 등록하면 된다.
+const CERT_MARKS: Record<string, string> = {
+  "russia-trcu": "/marks/eac.jpg",
+  "russia-trcu-ex": "/marks/eac.jpg",
+  "russia-gost-r": "/marks/gost-r.jpg",
+};
+
 export async function generateStaticParams() {
   const [locales, pages] = await Promise.all([
     getEnabledLocales(),
@@ -132,19 +139,29 @@ export default async function CertificationDetailPage({ params }: Props) {
                           </p>
                         )}
                       </div>
-                      <svg
-                        className="w-4 h-4 text-gray-300 flex-shrink-0 mt-1 group-hover:text-(--brand) transition-colors"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {CERT_MARKS[c.page.slug] && (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
+                            src={CERT_MARKS[c.page.slug]}
+                            alt=""
+                            className="h-11 w-11 object-contain"
+                          />
+                        )}
+                        <svg
+                          className="w-4 h-4 text-gray-300 group-hover:text-(--brand) transition-colors"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </div>
                     </Link>
                   ))}
                 </div>
