@@ -5,19 +5,22 @@
       "address": "서울특별시 강서구 양천로 583 우림블루나인비즈니스센터 B동 905호",
       "tel": "+82-2-337-4611",
       "email": "info@cerins.com",
-      "query": "우림블루나인비즈니스센터, 서울특별시 강서구 양천로 583"
+      "query": "우림블루나인비즈니스센터, 서울특별시 강서구 양천로 583",
+      "images": ["/headquarters/headquarters-kr.jpg"]
     },
     {
       "label": "모스크바, 러시아",
       "address": "1411 (14th floor), Nagatinsky Business Centre, 22 Andropov Avenue, Moscow, Russia",
       "tel": "+7 499-957-84-05",
-      "query": "Nagatinsky Business Centre, 22 Andropov Avenue, Moscow"
+      "query": "Nagatinsky Business Centre, 22 Andropov Avenue, Moscow",
+      "images": ["/headquarters/headquarters-ru.jpg"]
     },
     {
       "label": "알마티, 카자흐스탄",
       "address": "402 Office, Radostovsa 152/6, Bostandik reg., Almaty City, 05006, Republic of Kazakhstan",
       "tel": "+7 727 220 68 25",
-      "query": "Radostovtsa 152/6, Bostandyk, Almaty, Kazakhstan"
+      "query": "Radostovtsa 152/6, Bostandyk, Almaty, Kazakhstan",
+      "images": ["/headquarters/headquarters-kz.jpg"]
     },
     {
       "label": "구자라트, 인도",
@@ -46,7 +49,8 @@
       "label": "타슈켄트, 우즈베키스탄",
       "address": "507 Cabinet, Bobur Street, Yakkasaray District, Tashkent City, Uzbekistan",
       "tel": "+998 95 194 3747",
-      "query": "Bobur Street, Yakkasaray, Tashkent, Uzbekistan"
+      "query": "Bobur Street, Yakkasaray, Tashkent, Uzbekistan",
+      "images": ["/headquarters/headquarters-uz.jpg"]
     }
   ]
 }
