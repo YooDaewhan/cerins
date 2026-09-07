@@ -5,19 +5,19 @@ import type { PDFDocumentLoadingTask, PDFDocumentProxy } from "pdfjs-dist";
 import type { LocaleCode } from "@/src/lib/types";
 
 const BROCHURES = [
-  { lang: "English", file: "/brochures/cerins-2025-en.pdf" },
-  { lang: "中文", file: "/brochures/cerins-2025-zh.pdf" },
-  { lang: "Tiếng Việt", file: "/brochures/cerins-2025-vi.pdf" },
+  { lang: "English", file: "/brochures/cerins-2026-en.pdf" },
+  { lang: "中文", file: "/brochures/cerins-2026-zh.pdf" },
+  { lang: "Tiếng Việt", file: "/brochures/cerins-2026-vi.pdf" },
 ] as const;
 
 const T: Record<LocaleCode, { heading: string; sub: string; view: string; download: string; loading: string }> = {
-  ko: { heading: "회사소개 브로슈어", sub: "CERINS 회사소개서 (2025)", view: "책자 보기", download: "PDF 내려받기", loading: "불러오는 중…" },
-  en: { heading: "Company Brochure", sub: "CERINS Company Introduction (2025)", view: "Read", download: "Download PDF", loading: "Loading…" },
-  ja: { heading: "会社案内パンフレット", sub: "CERINS 会社紹介 (2025)", view: "見る", download: "PDF ダウンロード", loading: "読み込み中…" },
-  zh: { heading: "公司介绍手册", sub: "CERINS 公司介绍 (2025)", view: "阅读", download: "下载 PDF", loading: "加载中…" },
-  ru: { heading: "Брошюра о компании", sub: "CERINS Company Introduction (2025)", view: "Смотреть", download: "Скачать PDF", loading: "Загрузка…" },
-  kk: { heading: "Компания брошюрасы", sub: "CERINS Company Introduction (2025)", view: "Қарау", download: "PDF жүктеу", loading: "Жүктелуде…" },
-  vi: { heading: "Hồ sơ năng lực công ty", sub: "CERINS Company Introduction (2025)", view: "Xem", download: "Tải PDF", loading: "Đang tải…" },
+  ko: { heading: "회사소개 브로슈어", sub: "CERINS 회사소개서 (2026)", view: "책자 보기", download: "PDF 내려받기", loading: "불러오는 중…" },
+  en: { heading: "Company Brochure", sub: "CERINS Company Introduction (2026)", view: "Read", download: "Download PDF", loading: "Loading…" },
+  ja: { heading: "会社案内パンフレット", sub: "CERINS 会社紹介 (2026)", view: "見る", download: "PDF ダウンロード", loading: "読み込み中…" },
+  zh: { heading: "公司介绍手册", sub: "CERINS 公司介绍 (2026)", view: "阅读", download: "下载 PDF", loading: "加载中…" },
+  ru: { heading: "Брошюра о компании", sub: "CERINS Company Introduction (2026)", view: "Смотреть", download: "Скачать PDF", loading: "Загрузка…" },
+  kk: { heading: "Компания брошюрасы", sub: "CERINS Company Introduction (2026)", view: "Қарау", download: "PDF жүктеу", loading: "Жүктелуде…" },
+  vi: { heading: "Hồ sơ năng lực công ty", sub: "CERINS Company Introduction (2026)", view: "Xem", download: "Tải PDF", loading: "Đang tải…" },
 };
 
 // ponytail: 페이지를 캔버스 -> dataURL 로 굽고, 오른쪽 장을 책등(spine) 축으로 rotateY 시켜 넘긴다.
