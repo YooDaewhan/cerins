@@ -67,7 +67,7 @@ export default function BrochureFlipbook({ locale }: { locale: LocaleCode }) {
           >
             <div className="aspect-[4/3] bg-gradient-to-br from-(--brand) to-[#0d2a5a] flex flex-col items-center justify-center gap-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/cerins_white.png" alt="CERINS" className="h-8 w-auto opacity-90" />
+              <img src="/cerins_logo.png" alt="CERINS" className="h-10 w-auto" />
               <span className="text-white/70 text-[11px] tracking-[0.2em] uppercase">Company Introduction</span>
               <span className="text-white text-lg font-semibold">{b.lang}</span>
             </div>
