@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { common } from "@/src/lib/adminMessages";
+import { useAdminLocale } from "@/src/lib/useAdminLocale";
 import {
   STATUS,
   STATUS_LABELS,
@@ -28,6 +30,7 @@ const SORTS = [
 ];
 
 export default function RequestsAdminClient() {
+  const t = common(useAdminLocale());
   const [data, setData] = useState<ListResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -98,7 +101,7 @@ export default function RequestsAdminClient() {
       {error && <div className="rounded-md bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-2">{error}</div>}
 
       {loading ? (
-        <p className="text-sm text-gray-400">불러오는 중...</p>
+        <p className="text-sm text-gray-400">{t.loading}</p>
       ) : !data || data.items.length === 0 ? (
         <p className="text-sm text-gray-400">조건에 맞는 의뢰가 없습니다.</p>
       ) : (

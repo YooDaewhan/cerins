@@ -7,13 +7,13 @@ interface PageHeroProps {
   image?: string | null;
 }
 
-export default function PageHero({ title, subtitle, breadcrumb, image }: PageHeroProps) {
-  const bg = image && image.length > 0 ? image : getDefaultHeroImage();
+export default async function PageHero({ title, subtitle, breadcrumb, image }: PageHeroProps) {
+  const bg = image && image.length > 0 ? image : await getDefaultHeroImage();
 
   return (
     <div
       className="relative flex items-center"
-      style={{ height: "28vh", minHeight: "200px" }}
+      style={{ height: "20vh", minHeight: "140px" }}
     >
       <div
         className="absolute inset-0 bg-cover bg-center"

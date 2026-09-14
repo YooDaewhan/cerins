@@ -30,7 +30,9 @@ INSERT INTO locales (code, name, native_name, is_enabled, sort_order) VALUES
   ('en', 'English',  'English',  1, 2),
   ('ja', 'Japanese', '日本語',   1, 3),
   ('zh', 'Chinese',  '中文',     1, 4),
-  ('ru', 'Russian',  'Русский',  1, 5);
+  ('ru', 'Russian',  'Русский',  1, 5),
+  ('kk', 'Kazakh',   'Қазақша',  1, 6),
+  ('vi', 'Vietnamese','Tiếng Việt', 1, 7);
 
 -- ---------------------------------------------------------------------
 -- 2. pages
@@ -133,6 +135,7 @@ CREATE TABLE page_translations (
   title            VARCHAR(255) NOT NULL,
   subtitle         VARCHAR(255) NULL,
   hero_image       VARCHAR(512) NULL,
+  side_image       VARCHAR(512) NULL,
   content          JSON         NOT NULL,
   meta_title       VARCHAR(255) NOT NULL,
   meta_description TEXT         NOT NULL,
@@ -901,7 +904,8 @@ INSERT INTO menus (id, parent_id, page_id, url, mega_image_url, sort_order, is_v
   (100, NULL, 2, NULL, 'https://images.unsplash.com/photo-1494412574643-ff11b0a5c1c3?w=1400&q=80&auto=format&fit=crop', 10, 1, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
   (200, NULL, 3, NULL, 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1400&q=80&auto=format&fit=crop', 20, 1, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
   (300, NULL, 4, NULL, 'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?w=1400&q=80&auto=format&fit=crop', 30, 1, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
-  (400, NULL, 5, NULL, NULL, 40, 1, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
+  -- '문의' 탭 → 서비스 의뢰(/requests). 문의 폼(/contact)은 FAQ 목록에서 진입.
+  (400, NULL, NULL, '/requests', NULL, 40, 1, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
   (500, NULL, 6, NULL, NULL, 50, 1, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
   (600, NULL, 7, NULL, NULL, 60, 1, '2026-01-01 00:00:00', '2026-01-01 00:00:00'),
 
@@ -1012,6 +1016,8 @@ CREATE TABLE posts (
   is_published TINYINT(1)   NOT NULL DEFAULT 1,
   is_popup     TINYINT(1)   NOT NULL DEFAULT 0,
   popup_type   TINYINT      NOT NULL DEFAULT 1,
+  popup_start  DATE         NULL,
+  popup_end    DATE         NULL,
   published_at DATE         NOT NULL,
   created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -1286,6 +1292,8 @@ CREATE TABLE users (
   password_hash VARCHAR(255) NOT NULL,
   email         VARCHAR(190) NOT NULL,
   company       VARCHAR(190) NULL,
+  company_phone   VARCHAR(60)  NULL,
+  company_address VARCHAR(255) NULL,
   job_title     VARCHAR(190) NULL,
   country       VARCHAR(8)   NULL,
   email_consent TINYINT(1)   NOT NULL DEFAULT 0,
@@ -1318,6 +1326,7 @@ INSERT INTO users (login_id, password_hash, email, email_consent, account_type, 
 -- ---------------------------------------------------------------------
 CREATE TABLE inquiries (
   id         BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  category   VARCHAR(40)  NULL,
   name       VARCHAR(190) NOT NULL,
   company    VARCHAR(190) NULL,
   department VARCHAR(190) NULL,
@@ -1376,6 +1385,10 @@ CREATE TABLE service_requests (
   contact_phone    VARCHAR(60)  NOT NULL,
   contact_email    VARCHAR(190) NOT NULL,
   title            VARCHAR(255) NOT NULL,
+  -- 제품 정보(TRCU/GOST 접수 시 필수. 타 서비스는 NULL)
+  product_name     VARCHAR(255) NULL,
+  hs_code          VARCHAR(64)  NULL,
+  product_use      VARCHAR(255) NULL,
   description      TEXT         NOT NULL,
   workflow_step    INT          NOT NULL DEFAULT 0,
   status           VARCHAR(48)  NOT NULL DEFAULT 'REQUESTED',
@@ -1754,6 +1767,54 @@ CREATE TABLE service_document_requirements (
 ALTER TABLE request_files
   ADD CONSTRAINT fk_rf_doc_requirement FOREIGN KEY (service_document_requirement_id)
     REFERENCES service_document_requirements(id) ON DELETE SET NULL;
+
+-- =====================================================================
+-- 관리자 회원 대상 메일 발송: 양식(템플릿) + 발송 로그
+-- =====================================================================
+
+-- 저장해 둔 메일 양식(제목 + 에디터 HTML 본문).
+CREATE TABLE email_templates (
+  id         BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  name       VARCHAR(190) NOT NULL,
+  subject    VARCHAR(255) NOT NULL DEFAULT '',
+  body_html  MEDIUMTEXT   NOT NULL,
+  created_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 발송 1건(캠페인) = 1행. 수신자 목록/성공·실패 수를 함께 보관.
+CREATE TABLE email_logs (
+  id           BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  subject      VARCHAR(255) NOT NULL,
+  body_html    MEDIUMTEXT   NOT NULL,
+  recipients   JSON         NOT NULL,           -- 발송 대상 이메일 배열
+  sent_count   INT          NOT NULL DEFAULT 0,
+  failed_count INT          NOT NULL DEFAULT 0,
+  error        TEXT         NULL,               -- 첫 실패 메시지(요약)
+  sent_by      BIGINT       NULL,               -- users.id (관리자)
+  created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_email_logs_created (created_at),
+  CONSTRAINT fk_email_logs_sent_by FOREIGN KEY (sent_by)
+    REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 사진보고서 생성 결과(Word/zip) 보관. 실제 파일은 private-uploads/photo-reports/ 에 두고
+-- 여기에는 메타만 남긴다. 다운로드는 관리자 전용 API 로만 제공.
+
+CREATE TABLE photo_reports (
+  id            BIGINT       NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  report_type   VARCHAR(48)  NOT NULL,          -- reportForms 의 보고서 id (직접 업로드는 'upload')
+  original_name VARCHAR(255) NOT NULL,
+  stored_name   VARCHAR(255) NOT NULL,
+  storage_path  VARCHAR(512) NOT NULL,
+  mime_type     VARCHAR(190) NOT NULL,
+  file_size     BIGINT       NOT NULL DEFAULT 0,
+  created_by    BIGINT       NULL,              -- users.id (비로그인 생성은 NULL)
+  created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_photo_reports_created (created_at),
+  CONSTRAINT fk_photo_reports_user FOREIGN KEY (created_by)
+    REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================================
 -- 끝.

@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
+import SidePhoto from "@/components/SidePhoto";
 import LocationMap from "@/components/LocationMap";
+import BrochureFlipbook from "@/components/BrochureFlipbook";
 import {
   buildLocalizedPath,
   getAlternateUrls,
@@ -17,6 +19,16 @@ import type { LocaleCode } from "@/src/lib/types";
 interface Props {
   params: Promise<{ locale: string; slug: string }>;
 }
+
+const CHROME: Record<LocaleCode, { about: string; backToAbout: string; contactUs: string }> = {
+  ko: { about: "회사소개", backToAbout: "회사소개로", contactUs: "문의하기" },
+  en: { about: "About", backToAbout: "Back to About", contactUs: "Contact Us" },
+  ja: { about: "会社概要", backToAbout: "会社概要へ戻る", contactUs: "お問い合わせ" },
+  zh: { about: "关于我们", backToAbout: "返回关于我们", contactUs: "联系我们" },
+  ru: { about: "О компании", backToAbout: "Назад к разделу", contactUs: "Связаться с нами" },
+  kk: { about: "Компания туралы", backToAbout: "Компания туралыға оралу", contactUs: "Байланысу" },
+  vi: { about: "Giới thiệu", backToAbout: "Quay lại Giới thiệu", contactUs: "Liên hệ" },
+};
 
 export async function generateStaticParams() {
   const [locales, pages] = await Promise.all([
@@ -55,13 +67,14 @@ export default async function AboutDetailPage({ params }: Props) {
 
   const allAbout = await listPagesByTemplate("about", code);
   const sideNav = allAbout.filter((p) => p.page.slug !== "about");
+  const chrome = CHROME[code];
 
   return (
     <>
       <PageHero
         title={page.translation.title}
         subtitle={page.translation.subtitle}
-        breadcrumb="About"
+        breadcrumb={chrome.about}
         image={page.translation.hero_image}
       />
 
@@ -69,8 +82,8 @@ export default async function AboutDetailPage({ params }: Props) {
         <div className="flex flex-col lg:flex-row gap-10">
           <aside className="lg:w-56 flex-shrink-0">
             <div className="bg-[#f8f9fc] border border-gray-100 rounded-lg overflow-hidden">
-              <div className="px-4 py-3 bg-(--brand)">
-                <span className="text-xs font-bold text-white uppercase tracking-wider">About</span>
+              <div className="px-4 py-3 bg-[#4C4C3C]">
+                <span className="text-xs font-bold text-white uppercase tracking-wider">{chrome.about}</span>
               </div>
               <nav className="py-2">
                 {sideNav.map((item) => (
@@ -92,33 +105,32 @@ export default async function AboutDetailPage({ params }: Props) {
 
           <div className="flex-1 min-w-0">
             {slug === "location" ? (
-              <LocationMap />
+              <LocationMap locale={code} />
             ) : (
-              <div className="space-y-10">
-                {page.translation.content.map((block, i) => (
-                  <div key={i}>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-1 h-6 bg-[#c9a84c] rounded" />
-                      <h2 className="text-xl font-bold text-(--brand)">{block.heading}</h2>
-                    </div>
-                    <p className="text-gray-600 leading-relaxed whitespace-pre-line pl-4">{block.body}</p>
-                  </div>
-                ))}
-              </div>
+              <div
+                className="post-content text-gray-600"
+                dangerouslySetInnerHTML={{ __html: page.translation.content }}
+              />
             )}
+
+            {slug === "about-cerins" && <BrochureFlipbook locale={code} />}
 
             <div className="mt-14 pt-6 border-t border-gray-100 flex items-center justify-between">
               <Link href={buildLocalizedPath(code, "/about")} className="text-sm text-gray-400 hover:text-(--brand) transition flex items-center gap-1">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-                Back to About
+                {chrome.backToAbout}
               </Link>
               <Link href={buildLocalizedPath(code, "/contact")} className="text-sm font-semibold text-white bg-(--brand) px-5 py-2 rounded hover:bg-[#0d2a5a] transition">
-                Contact Us
+                {chrome.contactUs}
               </Link>
             </div>
           </div>
+          <SidePhoto
+            url={page.translation.side_image}
+            alt={page.translation.title}
+          />
         </div>
       </div>
     </>

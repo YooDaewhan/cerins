@@ -35,6 +35,8 @@ export default async function AdminPostEditPage({ params }: Props) {
       is_published: t.is_published,
       is_popup: t.is_popup,
       popup_type: t.popup_type,
+      popup_start: t.popup_start,
+      popup_end: t.popup_end,
       published_at: t.published_at,
     };
   }

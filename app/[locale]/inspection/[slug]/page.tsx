@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
+import SidePhoto from "@/components/SidePhoto";
 import {
   buildLocalizedPath,
   getAlternateUrls,
@@ -77,7 +78,7 @@ export default async function InspectionDetailPage({ params }: Props) {
         <div className="flex flex-col lg:flex-row gap-10">
           <aside className="lg:w-56 flex-shrink-0">
             <div className="bg-[#f8f9fc] border border-gray-100 rounded-lg overflow-hidden">
-              <div className="px-4 py-3 bg-(--brand)">
+              <div className="px-4 py-3 bg-[#4C4C3C]">
                 <span className="text-xs font-bold text-white uppercase tracking-wider">Inspection</span>
               </div>
               <nav className="py-2">
@@ -110,20 +111,8 @@ export default async function InspectionDetailPage({ params }: Props) {
           </aside>
 
           <div className="flex-1 min-w-0">
-            <div className="space-y-10">
-              {page.translation.content.map((block, i) => (
-                <div key={i} className="border-b border-gray-100 pb-8 last:border-0">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-1 h-6 bg-[#c9a84c] rounded" />
-                    <h2 className="text-xl font-bold text-(--brand)">{block.heading}</h2>
-                  </div>
-                  <p className="text-gray-600 leading-relaxed pl-4">{block.body}</p>
-                </div>
-              ))}
-            </div>
-
             {children.length > 0 && (
-              <div className="mt-10">
+              <div className="mb-10">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="w-1 h-6 bg-[#c9a84c] rounded" />
                   <h2 className="text-xl font-bold text-(--brand)">세부 항목</h2>
@@ -167,6 +156,12 @@ export default async function InspectionDetailPage({ params }: Props) {
               </div>
             )}
 
+            <div
+              className="post-content text-gray-600"
+              dangerouslySetInnerHTML={{ __html: page.translation.content }}
+            />
+
+
             <div className="mt-8 pt-6 border-t border-gray-100">
               <Link href={buildLocalizedPath(code, "/inspection")} className="text-sm text-gray-400 hover:text-(--brand) transition flex items-center gap-1">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -176,6 +171,10 @@ export default async function InspectionDetailPage({ params }: Props) {
               </Link>
             </div>
           </div>
+          <SidePhoto
+            url={page.translation.side_image}
+            alt={page.translation.title}
+          />
         </div>
       </div>
     </>

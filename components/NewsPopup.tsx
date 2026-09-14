@@ -68,7 +68,7 @@ interface CardProps {
   onHideForDay: () => void;
 }
 
-function PopupCard({ post, href, onClose, onHideForDay }: CardProps) {
+export function PopupCard({ post, href, onClose, onHideForDay }: CardProps) {
   const type =
     post.popup_type === 2 || post.popup_type === 3 ? post.popup_type : 1;
 

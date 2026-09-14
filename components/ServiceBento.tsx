@@ -258,8 +258,7 @@ function SmallCard({ item, index }: { item: BentoItem; index: number }) {
           <p className="text-xs text-(--ink-muted) leading-snug line-clamp-1">
             {item.description}
           </p>
-          <div className="mt-auto pt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold text-(--brand) group-hover:gap-2.5 transition-all">
-            <span className="tracking-wider uppercase">자세히 보기</span>
+          <div className="mt-auto pt-3 inline-flex items-center text-(--brand) transition-transform group-hover:translate-x-1">
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>

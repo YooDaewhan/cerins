@@ -8,17 +8,16 @@ import FeedbackButton, { type FeedbackUser } from "@/components/FeedbackButton";
 const INTERVAL = 5500;
 const DEFAULT_LOCALE: LocaleCode = "ko";
 
-// ponytail: 히어로 우측 표시용 — 왼쪽 줄은 인증 종류, 오른쪽 줄은 국가.
-// major 는 크게, minor 는 하단에 작게 나열.
-const CERT_MAJOR = ["TRCU", "GOST", "계측기", "방폭", "화재"];
-const CERT_MINOR = ["ISE", "RTN", "위생등록", "의료기기", "기타인증"];
-const COUNTRY_MAJOR = ["RUS", "KAZ", "INDIA"];
-const COUNTRY_MINOR = ["UZB", "AZE", "VNM", "UKR", "KOR"];
+// 왼쪽 큰 글씨 5개는 서버(page.tsx)에서 슬러그별 제목을 채워 fixedCerts prop 으로 전달.
 
 interface HeroSliderProps {
   slides: HeroSlide[];
   locale: LocaleCode;
   tags?: HeroTag[];
+  // 왼쪽 큰 글씨 5개 — 언어판 제목 + 슬러그. 서버에서 채워 전달.
+  fixedCerts?: { title: string; slug: string }[];
+  // 오른쪽 줄 — certification 국가 목록. 서버에서 채워 전달.
+  countries?: { title: string; slug: string }[];
   feedbackUser?: FeedbackUser | null;
   // 우하단 상시 노출 소개 동영상(관리자에서 관리). 비어 있으면 자리표시자만 표시.
   heroVideo?: string;
@@ -29,11 +28,16 @@ function localized(path: string, locale: LocaleCode): string {
   return "/" + locale + path;
 }
 
-export default function HeroSlider({ slides, locale, feedbackUser = null, heroVideo = "" }: HeroSliderProps) {
+export default function HeroSlider({ slides, locale, tags = [], fixedCerts = [], countries = [], feedbackUser = null, heroVideo = "" }: HeroSliderProps) {
   const total = slides.length;
 
   const [current, setCurrent] = useState(0);
+  // 우측 하위요소(인증/검사 항목)를 마운트 후 클라이언트에서만 섞어 하이드레이션 불일치 방지.
+  const [shownTags, setShownTags] = useState<HeroTag[]>(tags);
   const [progress, setProgress] = useState(0);
+  // 우하단 소개 동영상 클릭 시 확대 재생(소리 켜짐). 좌하단 버튼으로 음소거 토글.
+  const [expanded, setExpanded] = useState(false);
+  const [muted, setMuted] = useState(false);
   const rafRef = useRef<number | null>(null);
   const startRef = useRef<number>(0);
 
@@ -76,12 +80,23 @@ export default function HeroSlider({ slides, locale, feedbackUser = null, heroVi
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") return setExpanded(false);
+      if (expanded) return;
       if (e.key === "ArrowLeft") prev();
       if (e.key === "ArrowRight") next();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [prev, next]);
+  }, [prev, next, expanded]);
+
+  useEffect(() => {
+    const a = [...tags];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    setShownTags(a);
+  }, [tags]);
 
   if (total === 0) {
     return (
@@ -173,25 +188,6 @@ export default function HeroSlider({ slides, locale, feedbackUser = null, heroVi
               }}
             >
               <a
-                href={localized("/requests", locale)}
-                className="group inline-flex items-center gap-2 px-7 py-3.5 bg-(--brand) text-white text-sm font-semibold rounded-full hover:bg-(--brand-dark) transition-all duration-300 shadow-[0_8px_24px_rgba(180,18,58,0.35)] hover:shadow-[0_12px_28px_rgba(180,18,58,0.45)] hover:-translate-y-0.5"
-              >
-                Get a Quote
-                <svg
-                  className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </a>
-              <a
                 href={localized("/certification", locale)}
                 className="inline-flex items-center gap-2 px-7 py-3.5 border border-white/50 text-white text-sm font-semibold rounded-full hover:bg-white hover:text-(--brand) hover:border-white transition-all duration-300"
               >
@@ -202,77 +198,84 @@ export default function HeroSlider({ slides, locale, feedbackUser = null, heroVi
             </div>
 
             <div className="hidden lg:flex flex-col gap-7 content-center justify-center lg:mt-28">
-              <div className="grid grid-cols-2 gap-x-12 justify-items-end text-right">
-                {/* 왼쪽 줄: 인증 종류 */}
-                <div className="flex flex-col items-end gap-2">
-                  {CERT_MAJOR.map((label, i) => (
-                    <span
-                      key={label}
-                      className="text-xl font-semibold text-white/90 leading-none whitespace-nowrap"
+              <div className="grid grid-cols-2 gap-x-16 justify-items-end text-right">
+                {/* 왼쪽 줄: 큰 글씨 5개는 고정 슬러그, 작은 줄(좌→우 가로)은 새로고침마다 랜덤. */}
+                <div className="flex flex-col items-end gap-4">
+                  {fixedCerts.map((c, i) => (
+                    <a
+                      key={c.slug}
+                      href={localized(`/certification/russia/${c.slug}`, locale)}
+                      className="text-xl font-semibold text-white/90 leading-none whitespace-nowrap hover:text-white transition-colors"
                       style={{
                         animation: `tagFloat 0.6s cubic-bezier(.2,.7,.2,1) ${0.28 + i * 0.04}s both`,
                       }}
                     >
-                      {label}
-                    </span>
+                      {c.title}
+                    </a>
                   ))}
-                  <span
-                    className="mt-2 max-w-[150px] text-[11px] font-medium leading-relaxed text-white/45"
-                    style={{
-                      animation: `tagFloat 0.6s cubic-bezier(.2,.7,.2,1) ${0.28 + CERT_MAJOR.length * 0.04}s both`,
-                    }}
-                  >
-                    {CERT_MINOR.join(" · ")}
-                  </span>
+                  <div className="mt-4 flex flex-wrap justify-end gap-x-3 gap-y-1 max-w-[240px]">
+                    {shownTags.slice(0, 5).map((t, i) => (
+                      <a
+                        key={t.href}
+                        href={t.href}
+                        className="text-[11px] font-medium leading-none whitespace-nowrap text-white/45 hover:text-white/80 transition-colors"
+                        style={{
+                          animation: `tagFloat 0.6s cubic-bezier(.2,.7,.2,1) ${0.28 + (5 + i) * 0.04}s both`,
+                        }}
+                      >
+                        {t.title}
+                      </a>
+                    ))}
+                  </div>
                 </div>
 
-                {/* 오른쪽 줄: 국가 */}
-                <div className="flex flex-col items-end gap-2">
-                  {COUNTRY_MAJOR.map((label, i) => (
-                    <span
-                      key={label}
-                      className="text-xl font-semibold text-white/90 leading-none whitespace-nowrap"
+                {/* 오른쪽 줄: certification 국가 목록 — 각각 /certification/{slug} 로 이동. */}
+                <div className="flex flex-col items-end gap-4">
+                  {countries.map((c, i) => (
+                    <a
+                      key={c.slug}
+                      href={localized(`/certification/${c.slug}`, locale)}
+                      className="text-xl font-semibold text-white/90 leading-none whitespace-nowrap hover:text-white transition-colors"
                       style={{
                         animation: `tagFloat 0.6s cubic-bezier(.2,.7,.2,1) ${0.32 + i * 0.04}s both`,
                       }}
                     >
-                      {label}
-                    </span>
+                      {c.title}
+                    </a>
                   ))}
-                  <span
-                    className="mt-2 max-w-[150px] text-[11px] font-medium leading-relaxed text-white/45"
-                    style={{
-                      animation: `tagFloat 0.6s cubic-bezier(.2,.7,.2,1) ${0.32 + COUNTRY_MAJOR.length * 0.04}s both`,
-                    }}
-                  >
-                    {COUNTRY_MINOR.join(" · ")}
-                  </span>
                 </div>
               </div>
 
-              {/* 우하단 상시 소개 동영상. 관리자에서 링크/업로드로 관리. 없으면 검은 자리표시자. */}
-              {/* 동영상은 absolute 로 흐름에서 빼내야 원본 크기가 auto 그리드 열 너비를
-                  밀어내지 않고 박스(aspect-video) 크기에 맞춰 들어간다. */}
-              <div
-                className="relative w-full min-w-[360px] ml-auto aspect-video rounded-xl bg-black border border-white/15 overflow-hidden"
+              {/* 상시 소개 동영상 — 우측. 관리자에서 링크/업로드로 관리. 없으면 검은 자리표시자. */}
+              <button
+                type="button"
+                onClick={() => heroVideo && (setMuted(false), setExpanded(true))}
+                className="group relative w-full min-w-[360px] ml-auto aspect-video rounded-xl bg-black border border-white/15 overflow-hidden cursor-pointer"
                 style={{
                   transform: "translateX(30%)",
                   animation: "tagFloat 0.6s cubic-bezier(.2,.7,.2,1) 0.4s both",
                 }}
-                aria-label="동영상 재생 영역"
+                aria-label="소개 동영상 확대 재생"
               >
                 {heroVideo && (
-                  <video
-                    src={heroVideo}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    preload="auto"
-                  />
+                  <>
+                    <video
+                      src={heroVideo}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      preload="auto"
+                    />
+                    <span className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors">
+                      <svg className="w-14 h-14 text-white/0 group-hover:text-white/90 transition-colors" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </span>
+                  </>
                 )}
-              </div>
+              </button>
             </div>
           </div>
         </div>
@@ -358,6 +361,48 @@ export default function HeroSlider({ slides, locale, feedbackUser = null, heroVi
         <div className="w-px h-6 bg-white/30 animate-[scrollHint_1.8s_ease-in-out_infinite]" />
         Scroll
       </div>
+
+      {expanded && heroVideo && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center"
+          onClick={() => setExpanded(false)}
+        >
+          <video
+            src={heroVideo}
+            className="max-w-[92vw] max-h-[88vh]"
+            autoPlay
+            loop
+            playsInline
+            muted={muted}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            type="button"
+            onClick={(e) => (e.stopPropagation(), setMuted((m) => !m))}
+            aria-label={muted ? "소리 켜기" : "음소거"}
+            className="absolute bottom-6 left-6 w-11 h-11 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M4 9v6h4l5 5V4L8 9H4z" />
+              {muted ? (
+                <path d="M16 8l5 5m0-5l-5 5" stroke="currentColor" strokeWidth={2} strokeLinecap="round" fill="none" />
+              ) : (
+                <path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12" stroke="currentColor" strokeWidth={2} strokeLinecap="round" fill="none" />
+              )}
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={() => setExpanded(false)}
+            aria-label="닫기"
+            className="absolute top-5 right-5 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        </div>
+      )}
 
       <style>{`
         @keyframes slideUp {

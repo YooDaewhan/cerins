@@ -1,5 +1,6 @@
 import type { RowDataPacket } from "mysql2";
 import { getPool } from "@/src/lib/db";
+import { pageContentToHtml } from "@/src/lib/pageContent";
 import {
   DEFAULT_LOCALE,
   buildLocalizedPath as buildLocalizedPathImpl,
@@ -92,7 +93,9 @@ export async function getPageTranslation(
     "SELECT * FROM page_translations WHERE page_id = ? AND locale = ?",
     [pageId, locale],
   );
-  return rows.length ? (rows[0] as unknown as PageTranslation) : null;
+  if (!rows.length) return null;
+  const t = rows[0] as unknown as PageTranslation;
+  return { ...t, content: pageContentToHtml(t.content) };
 }
 
 export async function getPageWithTranslation(
@@ -145,7 +148,10 @@ export async function listPagesByTemplate(
     "SELECT * FROM page_translations WHERE page_id IN (?) AND locale IN (?)",
     [ids, [locale, DEFAULT_LOCALE]],
   );
-  const translations = transRows as unknown as PageTranslation[];
+  const translations = (transRows as unknown as PageTranslation[]).map((t) => ({
+    ...t,
+    content: pageContentToHtml(t.content),
+  }));
 
   const transMap = new Map<string, PageTranslation>();
   for (const t of translations) {
@@ -196,7 +202,7 @@ export async function listCertificationCountries(
       slug: page.slug,
       title: translation.title,
       subtitle: translation.subtitle ?? null,
-      content: Array.isArray(translation.content) ? translation.content : [],
+      content: translation.content,
       certifications: certsByParent.get(page.id) ?? [],
     }));
 }
@@ -278,7 +284,8 @@ export async function getMenus(locale: LocaleCode): Promise<MenuNode[]> {
   }
 
   const getHref = (menu: Menu): string => {
-    if (menu.url) return menu.url;
+    // 내부 경로(/로 시작)는 로케일 프리픽스를 붙인다. 외부 링크(http…)는 그대로.
+    if (menu.url) return menu.url.startsWith("/") ? buildLocalizedPathImpl(locale, menu.url) : menu.url;
     if (menu.page_id !== null) {
       const page = pageMap.get(menu.page_id);
       if (page) {
@@ -311,12 +318,13 @@ export async function getPosts(boardCode: string, locale: LocaleCode): Promise<P
 }
 
 // 사이트 진입 팝업으로 지정된(공개 + 팝업 체크) 뉴스. 최신순.
+// 노출기간(popup_start~popup_end)은 비워두면 해당 방향 제한 없음. 서버 날짜 기준.
 export async function getPopupPosts(
   boardCode: string,
   locale: LocaleCode,
 ): Promise<Post[]> {
   const [rows] = await getPool().query<RowDataPacket[]>(
-    "SELECT * FROM posts WHERE board_code = ? AND locale = ? AND is_published = 1 AND is_popup = 1 ORDER BY published_at DESC, id DESC",
+    "SELECT * FROM posts WHERE board_code = ? AND locale = ? AND is_published = 1 AND is_popup = 1 AND (popup_start IS NULL OR popup_start <= CURDATE()) AND (popup_end IS NULL OR popup_end >= CURDATE()) ORDER BY published_at DESC, id DESC",
     [boardCode, locale],
   );
   return rows as unknown as Post[];
@@ -339,7 +347,7 @@ export async function getPostAuthor(postId: number): Promise<string> {
     "SELECT author FROM posts WHERE id = ?",
     [postId],
   );
-  return (rows[0] as unknown as { author?: string })?.author ?? "CERINS Editorial";
+  return (rows[0] as unknown as { author?: string })?.author ?? "CERINS";
 }
 
 // ── Site-wide assets ───────────────────────────────────────────────────────
@@ -505,9 +513,10 @@ interface SearchDoc {
   typeLabel: string;
   title: string;
   href: string;
-  snippet: string | null;
+  fallbackSnippet: string | null; // 매칭 위치가 본문에 없을 때 폴백 (subtitle 등)
   context: string | null;
-  haystack: string; // 소문자 검색 대상 텍스트
+  plain: string; // 원본 대소문자, HTML 제거한 표시용 본문
+  haystack: string; // 소문자 검색 대상 텍스트 (= plain.toLowerCase())
   tokens: string[]; // 소문자 토큰 (~로 시작 판정용)
 }
 
@@ -518,9 +527,43 @@ function toText(v: unknown): string {
   return v == null ? "" : String(v);
 }
 
-function makeHaystack(parts: unknown[]): { haystack: string; tokens: string[] } {
-  const text = parts.map(toText).join(" ").toLowerCase();
-  return { haystack: text, tokens: text.split(/[\s\-_/,.()[\]"']+/).filter(Boolean) };
+// HTML 태그 제거 + 기본 엔티티 복원 + 공백 정리. content가 HTML 문자열이라 필요.
+function stripHtml(s: string): string {
+  return s
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function makeHaystack(parts: unknown[]): {
+  plain: string;
+  haystack: string;
+  tokens: string[];
+} {
+  const plain = stripHtml(parts.map(toText).join(" "));
+  const haystack = plain.toLowerCase();
+  return { plain, haystack, tokens: haystack.split(/[\s\-_/,.()[\]"']+/).filter(Boolean) };
+}
+
+// 매칭된 검색어 주변을 잘라 발췌문 생성. 앞뒤 문맥 포함, 없으면 폴백.
+function makeSnippet(plain: string, terms: string[], fallback: string | null): string | null {
+  const lower = plain.toLowerCase();
+  let pos = -1;
+  for (const t of terms) {
+    const i = lower.indexOf(t.toLowerCase());
+    if (i >= 0 && (pos < 0 || i < pos)) pos = i;
+  }
+  if (pos < 0) return fallback;
+  const before = 60;
+  const start = Math.max(0, pos - before);
+  const end = Math.min(plain.length, pos + 140);
+  return (start > 0 ? "… " : "") + plain.slice(start, end).trim() + (end < plain.length ? " …" : "");
 }
 
 function inScope(doc: SearchDoc, scope: SearchScope): boolean {
@@ -594,7 +637,7 @@ export async function searchSite(opts: {
       const t = transByPage.get(p.id);
       if (!t) continue;
       const parentSlug = p.parent_id != null ? slugById.get(p.parent_id) ?? null : null;
-      const { haystack, tokens } = makeHaystack([
+      const { plain, haystack, tokens } = makeHaystack([
         t.title,
         t.subtitle,
         t.meta_title,
@@ -607,8 +650,9 @@ export async function searchSite(opts: {
         typeLabel: TEMPLATE_LABEL[p.template],
         title: t.title,
         href: pathForPage(p, locale, parentSlug),
-        snippet: t.subtitle || t.meta_description || null,
+        fallbackSnippet: t.subtitle || t.meta_description || null,
         context: parentSlug,
+        plain,
         haystack,
         tokens,
       });
@@ -628,20 +672,22 @@ export async function searchSite(opts: {
       summary: string;
       content: string;
     }>) {
-      const { haystack, tokens } = makeHaystack([r.title, r.summary, r.content]);
+      const { plain, haystack, tokens } = makeHaystack([r.title, r.summary, r.content]);
       docs.push({
         scopeKey: "post",
         typeLabel: r.board_code === "faq" ? "FAQ" : "뉴스",
         title: r.title,
         href: buildLocalizedPathImpl(locale, `/${r.board_code}/${r.slug}`),
-        snippet: r.summary || null,
+        fallbackSnippet: r.summary || null,
         context: null,
+        plain,
         haystack,
         tokens,
       });
     }
   }
 
+  const terms = conditions.filter((c) => c.op !== "not").map((c) => c.text.trim()).filter(Boolean);
   return docs
     .filter((doc) => matchDoc(doc, conditions))
     .slice(0, 100) // ponytail: 상한
@@ -649,8 +695,9 @@ export async function searchSite(opts: {
       type: doc.typeLabel,
       title: doc.title,
       href: doc.href,
-      snippet: doc.snippet,
+      snippet: makeSnippet(doc.plain, terms, doc.fallbackSnippet),
       context: doc.context,
+      terms,
     }));
 }
 

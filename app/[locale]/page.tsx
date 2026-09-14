@@ -17,6 +17,7 @@ import {
   listHeroTags,
   listPartners,
 } from "@/src/lib/mockRepository";
+import { htmlToPlainText } from "@/src/lib/pageContent";
 import { mapCountriesForSlug } from "@/components/worldGeo";
 import { isLocale } from "@/src/lib/i18n";
 import { getCurrentUser } from "@/src/lib/auth";
@@ -58,6 +59,20 @@ export default async function HomePage({ params }: Props) {
       getCurrentUser(),
     ]);
 
+  const fixedCertSlugs = [
+    "russia-trcu",
+    "russia-gost-r",
+    "russia-metrology",
+    "russia-trcu-ex",
+    "russia-fire-safety",
+  ];
+  const fixedCerts = await Promise.all(
+    fixedCertSlugs.map(async (slug) => {
+      const p = await getPageWithTranslation(slug, code);
+      return { slug, title: p?.translation.title ?? slug };
+    }),
+  );
+
   const feedbackUser = currentUser
     ? {
         login_id: currentUser.login_id,
@@ -69,16 +84,19 @@ export default async function HomePage({ params }: Props) {
     : null;
 
   const certSteps: Step[] | undefined = certCountries.length
-    ? certCountries.map((c, i) => ({
-        n: String(i + 1).padStart(2, "0"),
-        tag: c.subtitle ?? c.title,
-        title: c.title,
-        overview: c.content[0]?.body ?? c.subtitle ?? "",
-        desc: c.content[1]?.body ?? c.content[0]?.body ?? "",
-        certifications: c.certifications,
-        mapCountries: mapCountriesForSlug(c.slug),
-        slug: c.slug,
-      }))
+    ? certCountries.map((c, i) => {
+        const text = htmlToPlainText(c.content);
+        return {
+          n: String(i + 1).padStart(2, "0"),
+          tag: c.subtitle ?? c.title,
+          title: c.title,
+          overview: c.subtitle ?? text.slice(0, 120),
+          desc: text.slice(0, 240) || c.subtitle || "",
+          certifications: c.certifications,
+          mapCountries: mapCountriesForSlug(c.slug),
+          slug: c.slug,
+        };
+      })
     : undefined;
 
   const snapFull =
@@ -87,7 +105,20 @@ export default async function HomePage({ params }: Props) {
   return (
     <>
       <div className={snapFull}>
-        <HeroSlider slides={slides} locale={code} tags={heroTags} feedbackUser={feedbackUser} heroVideo={heroVideo} />
+        <HeroSlider
+          slides={slides}
+          locale={code}
+          tags={heroTags}
+          fixedCerts={fixedCerts}
+          // ponytail: 왼쪽 줄(5개)과 높이를 맞추려고 5개까지만.
+          countries={certCountries.slice(0, 5).map((c) => ({
+            // ponytail: 국가명만 남기려고 꼬리의 "인증/Certification"만 제거. 다른 언어는 제목 그대로.
+            title: c.title.replace(/\s*(인증|certification)\s*$/i, ""),
+            slug: c.slug,
+          }))}
+          feedbackUser={feedbackUser}
+          heroVideo={heroVideo}
+        />
       </div>
       <div className={snapFull}>
         <ServiceBento />

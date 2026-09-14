@@ -76,14 +76,22 @@ export async function POST(req: Request) {
     contact_phone: str(form, "contact_phone"),
     contact_email: str(form, "contact_email"),
     title: str(form, "title"),
+    product_name: str(form, "product_name"),
+    hs_code: str(form, "hs_code"),
+    product_use: str(form, "product_use"),
     description: str(form, "description"),
   };
-  for (const [k, label] of [
+  const required: ReadonlyArray<readonly [keyof typeof input, string]> = [
     ["company_name", "회사명"], ["contact_name", "담당자 이름"],
     ["contact_phone", "연락처"], ["contact_email", "이메일"],
     ["title", "의뢰 제목"], ["description", "의뢰 내용"],
-  ] as const) {
-    if (!input[k as keyof typeof input]) {
+    // 제품명은 TRCU/GOST·제품검사 의뢰서에만 있는 항목. HS코드·용도는 선택 입력.
+    ...(serviceType === "TRCU_GOST" || serviceType === "PRODUCT_INSPECTION"
+      ? ([["product_name", "제품명"]] as const)
+      : []),
+  ];
+  for (const [k, label] of required) {
+    if (!input[k]) {
       return NextResponse.json({ error: `${label}은(는) 필수입니다.` }, { status: 400 });
     }
   }
@@ -114,17 +122,16 @@ export async function POST(req: Request) {
   // 스크랩 India 는 파일 대신 검사 요청 일정/장소 검증(검사 요청일 없이 신청 불가).
   if (isScrap) {
     const reqStart = str(form, "requested_start_date");
-    const reqEnd = str(form, "requested_end_date");
     const reqLocation = str(form, "requested_location");
     const dateRe = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRe.test(reqStart) || !dateRe.test(reqEnd)) {
-      return NextResponse.json({ error: "검사 요청 시작일/종료일은 필수입니다." }, { status: 400 });
-    }
-    if (reqEnd < reqStart) {
-      return NextResponse.json({ error: "검사 요청 종료일은 시작일보다 빠를 수 없습니다." }, { status: 400 });
+    if (!dateRe.test(reqStart)) {
+      return NextResponse.json({ error: "검사 요청일은 필수입니다." }, { status: 400 });
     }
     if (!reqLocation) {
       return NextResponse.json({ error: "검사 장소는 필수입니다." }, { status: 400 });
+    }
+    if (!str(form, "site_contact_name") || !str(form, "site_contact_phone")) {
+      return NextResponse.json({ error: "현장 담당자명과 연락처는 필수입니다." }, { status: 400 });
     }
   }
 

@@ -106,6 +106,9 @@ export interface SubmitRequestInput {
   contact_phone: string;
   contact_email: string;
   title: string;
+  product_name?: string | null;
+  hs_code?: string | null;
+  product_use?: string | null;
   description: string;
 }
 
@@ -144,9 +147,10 @@ export async function submitRequest(
     const [res] = await conn.execute(
       `INSERT INTO service_requests
          (request_number, customer_user_id, assignee_user_id, category, service_type,
-          company_name, contact_name, contact_phone, contact_email, title, description,
+          company_name, contact_name, contact_phone, contact_email, title,
+          product_name, hs_code, product_use, description,
           workflow_step, status, submitted_at)
-       VALUES (NULL, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, NOW())`,
+       VALUES (NULL, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, NOW())`,
       [
         actor?.id ?? null,
         input.category,
@@ -156,6 +160,9 @@ export async function submitRequest(
         input.contact_phone,
         input.contact_email,
         input.title,
+        input.product_name || null,
+        input.hs_code || null,
+        input.product_use || null,
         input.description,
         initialStatus,
       ],

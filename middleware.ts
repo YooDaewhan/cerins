@@ -13,7 +13,7 @@ function hasLocalePrefix(pathname: string): boolean {
 }
 
 // Standalone pages that live outside the localized [locale] tree.
-const STANDALONE_PREFIXES = ["/process"];
+const STANDALONE_PREFIXES = ["/process", "/photo-report"];
 
 function isStandalone(pathname: string): boolean {
   return STANDALONE_PREFIXES.some(

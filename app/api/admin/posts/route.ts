@@ -12,6 +12,7 @@ import type { LocaleCode } from "@/src/lib/types";
 
 const BOARD_CODE = "news";
 const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 interface CreateBody {
   slug?: string;
@@ -34,10 +35,26 @@ function validateTranslation(
     return { ok: false, error: `${locale}: 제목은 255자 이내여야 합니다.` };
   if (!summary)
     return { ok: false, error: `${locale}: 요약을 입력하세요.` };
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(published_at))
+  if (!DATE_RE.test(published_at))
     return {
       ok: false,
       error: `${locale}: 발행일은 YYYY-MM-DD 형식이어야 합니다.`,
+    };
+
+  const popup_start = (t.popup_start ?? "").trim() || null;
+  const popup_end = (t.popup_end ?? "").trim() || null;
+  if (
+    (popup_start && !DATE_RE.test(popup_start)) ||
+    (popup_end && !DATE_RE.test(popup_end))
+  )
+    return {
+      ok: false,
+      error: `${locale}: 팝업 노출기간은 YYYY-MM-DD 형식이어야 합니다.`,
+    };
+  if (popup_start && popup_end && popup_start > popup_end)
+    return {
+      ok: false,
+      error: `${locale}: 팝업 노출 종료일이 시작일보다 빠릅니다.`,
     };
 
   return {
@@ -51,6 +68,8 @@ function validateTranslation(
       is_published: t.is_published !== false,
       is_popup: t.is_popup === true,
       popup_type: t.popup_type ?? 1,
+      popup_start,
+      popup_end,
       published_at,
     },
   };

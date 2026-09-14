@@ -3,7 +3,15 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import MediaInput from "@/components/admin/MediaInput";
+import type { LocaleCode } from "@/src/lib/types";
+import { pageEditorLabels, common } from "@/src/lib/adminMessages";
+
+const TiptapEditor = dynamic(
+  () => import("@/components/admin/TiptapEditor"),
+  { ssr: false },
+);
 
 type Template =
   | "home"
@@ -36,17 +44,13 @@ interface AllPagesEntry {
   translation_locales: string[];
 }
 
-interface ContentBlock {
-  heading: string;
-  body: string;
-}
-
 interface PageTranslation {
   locale: string;
   title: string;
   subtitle: string | null;
   hero_image: string | null;
-  content: ContentBlock[];
+  side_image: string | null;
+  content: string;
   meta_title: string;
   meta_description: string;
   meta_keywords: string[];
@@ -63,7 +67,8 @@ function emptyTranslation(locale: string): PageTranslation {
     title: "",
     subtitle: null,
     hero_image: null,
-    content: [],
+    side_image: null,
+    content: "",
     meta_title: "",
     meta_description: "",
     meta_keywords: [],
@@ -195,27 +200,6 @@ export default function PageEditorClient({
     patchDraft({ meta_keywords: draft.meta_keywords.filter((_, i) => i !== idx) });
   }
 
-  function patchBlock(idx: number, patch: Partial<ContentBlock>) {
-    const next = draft.content.map((b, i) => (i === idx ? { ...b, ...patch } : b));
-    patchDraft({ content: next });
-  }
-
-  function moveBlock(idx: number, dir: -1 | 1) {
-    const j = idx + dir;
-    if (j < 0 || j >= draft.content.length) return;
-    const next = [...draft.content];
-    [next[idx], next[j]] = [next[j], next[idx]];
-    patchDraft({ content: next });
-  }
-
-  function removeBlock(idx: number) {
-    patchDraft({ content: draft.content.filter((_, i) => i !== idx) });
-  }
-
-  function addBlock() {
-    patchDraft({ content: [...draft.content, { heading: "", body: "" }] });
-  }
-
   async function saveMeta() {
     if (!meta || !isPrimary) return;
     setSavingMeta(true);
@@ -265,6 +249,7 @@ export default function PageEditorClient({
             title: draft.title,
             subtitle: draft.subtitle,
             hero_image: draft.hero_image,
+            side_image: draft.side_image,
             content: draft.content,
             meta_title: draft.meta_title,
             meta_description: draft.meta_description,
@@ -357,7 +342,7 @@ export default function PageEditorClient({
     }
   }
 
-  if (loading) return <p className="text-sm text-gray-500">불러오는 중...</p>;
+  if (loading) return <p className="text-sm text-gray-500">{common(activeLocale as LocaleCode).loading}</p>;
   if (!data || !meta) {
     return (
       <div>
@@ -368,7 +353,7 @@ export default function PageEditorClient({
           ← 페이지 목록
         </Link>
         <p className="mt-4 text-sm text-red-600">
-          {error ?? "페이지를 불러올 수 없습니다."}
+          {error ?? common(activeLocale as LocaleCode).loadError}
         </p>
       </div>
     );
@@ -404,7 +389,7 @@ export default function PageEditorClient({
           <h3 className="text-sm font-semibold text-gray-800">
             페이지 메타{" "}
             <span className="text-[11px] font-normal text-gray-400">
-              (구조는 한국어 관리자 전용 · 읽기 전용)
+              {pageEditorLabels(activeLocale as LocaleCode).metaReadonly}
             </span>
           </h3>
           <dl className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
@@ -575,7 +560,7 @@ export default function PageEditorClient({
                     href={`${adminBase}/pages/${c.id}`}
                     className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-50"
                   >
-                    {isPrimary ? "편집" : "수정"}
+                    {common(activeLocale as LocaleCode).edit}
                   </Link>
                 </li>
               ))}
@@ -590,7 +575,7 @@ export default function PageEditorClient({
             {activeLocale}
           </span>
           <span className="text-sm font-semibold text-gray-700">
-            언어판 편집
+            {pageEditorLabels(activeLocale as LocaleCode).editHeading}
           </span>
           {!hasTranslation && (
             <span className="text-[11px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">
@@ -625,6 +610,14 @@ export default function PageEditorClient({
                 onChange={(v) => patchDraft({ hero_image: v || null })}
                 accept="image/*"
                 helpText="이미지 업로드 또는 외부 URL. 비우면 사이트 기본 히어로 이미지가 사용됩니다."
+              />
+            </Field>
+            <Field label="본문 오른쪽 사진">
+              <MediaInput
+                url={draft.side_image ?? ""}
+                onChange={(v) => patchDraft({ side_image: v || null })}
+                accept="image/*"
+                helpText="회사소개 상세 본문 오른쪽에 붙는 사진. 비우면 본문이 전체 폭을 씁니다."
               />
             </Field>
             <Field label="메타 제목 (Meta Title)">
@@ -685,80 +678,14 @@ export default function PageEditorClient({
           </div>
 
           <div className="border-t border-gray-100 pt-4">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-sm font-semibold text-gray-800">
-                본문 블록 ({draft.content.length})
-              </h4>
-              <button
-                type="button"
-                onClick={addBlock}
-                className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-50"
-              >
-                + 블록 추가
-              </button>
-            </div>
-
-            {draft.content.length === 0 && (
-              <p className="text-xs text-gray-400 py-3">
-                본문 블록이 없습니다. 위 버튼으로 추가하세요.
-              </p>
-            )}
-
-            <ul className="space-y-3">
-              {draft.content.map((block, idx) => (
-                <li
-                  key={idx}
-                  className="rounded border border-gray-200 bg-gray-50 p-3 space-y-2"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[11px] font-mono text-gray-500">
-                      블록 #{idx + 1}
-                    </span>
-                    <div className="flex gap-1">
-                      <button
-                        type="button"
-                        onClick={() => moveBlock(idx, -1)}
-                        disabled={idx === 0}
-                        className="rounded border border-gray-300 px-2 py-0.5 text-[11px] hover:bg-gray-50 disabled:opacity-40"
-                        aria-label="위로"
-                      >
-                        ↑
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => moveBlock(idx, 1)}
-                        disabled={idx === draft.content.length - 1}
-                        className="rounded border border-gray-300 px-2 py-0.5 text-[11px] hover:bg-gray-50 disabled:opacity-40"
-                        aria-label="아래로"
-                      >
-                        ↓
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeBlock(idx)}
-                        className="rounded border border-red-300 text-red-600 px-2 py-0.5 text-[11px] hover:bg-red-50"
-                      >
-                        삭제
-                      </button>
-                    </div>
-                  </div>
-                  <input
-                    type="text"
-                    value={block.heading}
-                    onChange={(e) => patchBlock(idx, { heading: e.target.value })}
-                    placeholder="Heading (소제목)"
-                    className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm font-semibold bg-white"
-                  />
-                  <textarea
-                    value={block.body}
-                    onChange={(e) => patchBlock(idx, { body: e.target.value })}
-                    rows={4}
-                    placeholder="Body (본문 — 줄바꿈 그대로 표시됩니다)"
-                    className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm bg-white"
-                  />
-                </li>
-              ))}
-            </ul>
+            <label className="block text-sm font-semibold text-gray-800 mb-2">
+              본문
+            </label>
+            <TiptapEditor
+              value={draft.content}
+              onChange={(html) => patchDraft({ content: html })}
+              placeholder="본문을 입력하세요… (사진·표·목록 지원)"
+            />
           </div>
 
           <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">

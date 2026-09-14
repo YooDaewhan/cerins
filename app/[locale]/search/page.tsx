@@ -37,6 +37,30 @@ function asMode(v: unknown): SearchMode {
 
 const OP_LABEL: Record<SearchOp, string> = { and: "그리고", or: "또는", not: "제외" };
 
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// 발췌문에서 검색어를 <mark>로 강조. 대소문자 무시, 겹치는 단어 분해.
+function highlight(text: string, terms: string[]) {
+  const words = terms
+    .flatMap((t) => t.split(/\s+/))
+    .map((w) => w.trim())
+    .filter(Boolean);
+  if (!words.length) return text;
+  const wordSet = new Set(words.map((w) => w.toLowerCase()));
+  const re = new RegExp(`(${words.map(escapeRegExp).join("|")})`, "gi");
+  return text.split(re).map((part, i) =>
+    wordSet.has(part.toLowerCase()) ? (
+      <mark key={i} className="bg-(--brand)/20 text-(--brand) font-semibold rounded-sm px-0.5">
+        {part}
+      </mark>
+    ) : (
+      part
+    ),
+  );
+}
+
 // terms(JSON 조건 배열) 우선, 없으면 단순 q 로 폴백.
 function parseConditions(terms: string, q: string): SearchCondition[] {
   if (terms) {
@@ -82,6 +106,22 @@ export default async function SearchPage({ params, searchParams }: Props) {
     ? await searchSite({ conditions, locale: code })
     : [];
 
+  const PER_PAGE = 5;
+  const pageCount = Math.max(1, Math.ceil(hits.length / PER_PAGE));
+  const cur = Math.min(pageCount, Math.max(1, Number(one(sp.page)) || 1));
+  const pageHits = hits.slice((cur - 1) * PER_PAGE, cur * PER_PAGE);
+
+  // 현재 검색 조건을 유지한 채 page 만 교체.
+  const base = new URLSearchParams();
+  if (one(sp.terms)) base.set("terms", one(sp.terms));
+  if (one(sp.q)) base.set("q", one(sp.q));
+  const pageHref = (p: number) => {
+    const params = new URLSearchParams(base);
+    if (p > 1) params.set("page", String(p));
+    const qs = params.toString();
+    return qs ? `?${qs}` : "?";
+  };
+
   return (
     <>
       <PageHero
@@ -105,35 +145,60 @@ export default async function SearchPage({ params, searchParams }: Props) {
             </p>
           </div>
         ) : (
-          <ul className="space-y-3">
-            {hits.map((hit, i) => (
-              <li key={`${hit.href}-${i}`}>
+          <>
+          <ul className="divide-y divide-gray-100">
+            {pageHits.map((hit, i) => (
+              <li key={`${hit.href}-${i}`} className="py-5">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-(--brand) bg-(--brand)/10 rounded px-2 py-0.5">
+                    {hit.type}
+                  </span>
+                  {hit.context && (
+                    <span className="text-xs text-gray-400">{hit.context}</span>
+                  )}
+                </div>
                 <Link
                   href={hit.href}
-                  className="group block rounded-lg border border-gray-200 bg-white px-5 py-4 hover:border-(--brand) hover:shadow-sm transition-all"
+                  className="text-lg font-bold text-gray-900 hover:text-(--brand) hover:underline transition-colors"
                 >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[11px] font-bold uppercase tracking-wide text-(--brand) bg-(--brand)/10 rounded px-2 py-0.5">
-                      {hit.type}
-                    </span>
-                    {hit.context && (
-                      <span className="text-xs text-gray-400">
-                        {hit.context}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-base font-bold text-gray-900 group-hover:text-(--brand) transition-colors">
-                    {hit.title}
-                  </p>
-                  {hit.snippet && (
-                    <p className="mt-1 text-sm text-gray-500 line-clamp-2">
-                      {hit.snippet}
-                    </p>
-                  )}
+                  {highlight(hit.title, hit.terms)}
                 </Link>
+                {hit.snippet && (
+                  <p className="mt-1.5 text-sm leading-relaxed text-gray-600">
+                    {highlight(hit.snippet, hit.terms)}
+                  </p>
+                )}
               </li>
             ))}
           </ul>
+          {pageCount > 1 && (
+            <nav className="mt-10 flex items-center justify-center gap-1">
+              {cur > 1 && (
+                <Link href={pageHref(cur - 1)} className="px-3 py-2 text-sm text-gray-500 hover:text-(--brand)">
+                  이전
+                </Link>
+              )}
+              {Array.from({ length: pageCount }, (_, i) => i + 1).map((p) => (
+                <Link
+                  key={p}
+                  href={pageHref(p)}
+                  className={
+                    p === cur
+                      ? "min-w-9 rounded-md bg-(--brand) px-3 py-2 text-center text-sm font-bold text-white"
+                      : "min-w-9 rounded-md px-3 py-2 text-center text-sm text-gray-600 hover:bg-gray-100"
+                  }
+                >
+                  {p}
+                </Link>
+              ))}
+              {cur < pageCount && (
+                <Link href={pageHref(cur + 1)} className="px-3 py-2 text-sm text-gray-500 hover:text-(--brand)">
+                  다음
+                </Link>
+              )}
+            </nav>
+          )}
+          </>
         )}
       </div>
     </>

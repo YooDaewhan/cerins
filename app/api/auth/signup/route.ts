@@ -13,6 +13,8 @@ interface SignupBody {
   password?: string;
   email?: string;
   company?: string;
+  company_phone?: string;
+  company_address?: string;
   job_title?: string;
   country?: string;
   email_consent?: boolean;
@@ -34,6 +36,8 @@ export async function POST(req: Request) {
   const password = body.password ?? "";
   const email = (body.email ?? "").trim().toLowerCase();
   const company = (body.company ?? "").trim() || null;
+  const company_phone = (body.company_phone ?? "").trim() || null;
+  const company_address = (body.company_address ?? "").trim() || null;
   const job_title = (body.job_title ?? "").trim() || null;
   const country = (body.country ?? "").trim() || null;
   const email_consent = body.email_consent === true ? 1 : 0;
@@ -54,15 +58,21 @@ export async function POST(req: Request) {
   if (!EMAIL_RE.test(email) || email.length > 190) {
     return NextResponse.json({ error: "이메일 형식이 올바르지 않습니다." }, { status: 400 });
   }
-  if (!company || !job_title || !country) {
+  if (!company || !job_title || !country || !company_phone || !company_address) {
     return NextResponse.json(
-      { error: "국가·회사명·직위는 필수 입력 항목입니다." },
+      { error: "국가·회사명·회사 전화번호·회사 주소·직위는 필수 입력 항목입니다." },
       { status: 400 },
     );
   }
   if (company.length > 190 || job_title.length > 190) {
     return NextResponse.json(
       { error: "회사명/직위는 190자 이내여야 합니다." },
+      { status: 400 },
+    );
+  }
+  if (company_phone.length > 60 || company_address.length > 255) {
+    return NextResponse.json(
+      { error: "회사 전화번호는 60자, 회사 주소는 255자 이내여야 합니다." },
       { status: 400 },
     );
   }
@@ -98,13 +108,15 @@ export async function POST(req: Request) {
 
   try {
     const [result] = await pool.execute(
-      `INSERT INTO users (login_id, password_hash, email, company, job_title, country, email_consent, account_type, user_level)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO users (login_id, password_hash, email, company, company_phone, company_address, job_title, country, email_consent, account_type, user_level)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         login_id,
         password_hash,
         email,
         company,
+        company_phone,
+        company_address,
         job_title,
         country,
         email_consent,

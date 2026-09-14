@@ -1,7 +1,7 @@
 // Shape mirrors the planned MySQL schema. When the real DB lands, these
 // interfaces stay; only src/lib/mockRepository.ts changes.
 
-export type LocaleCode = "ko" | "en" | "ja" | "zh" | "ru";
+export type LocaleCode = "ko" | "en" | "ja" | "zh" | "ru" | "kk" | "vi";
 
 export type PageTemplate =
   | "home"
@@ -24,6 +24,7 @@ export interface SearchHit {
   href: string;
   snippet: string | null;
   context: string | null; // 상위 분류명 등 브레드크럼
+  terms: string[]; // 강조할 검색어 (NOT 조건 제외)
 }
 
 export interface Locale {
@@ -34,6 +35,8 @@ export interface Locale {
   sort_order: number;
 }
 
+// 구(舊) 블록 구조. content는 이제 HTML 문자열이지만, 과거 데이터 변환을 위해
+// 타입은 남겨둔다. → src/lib/pageContent.ts 의 pageContentToHtml 참조.
 export interface PageContentBlock {
   heading: string;
   body: string;
@@ -58,8 +61,10 @@ export interface PageTranslation {
   title: string;
   subtitle?: string;
   hero_image?: string;
-  // MySQL: JSON column
-  content: PageContentBlock[];
+  // 본문 오른쪽 열에 붙는 사진. 비우면 본문이 전체 폭을 쓴다.
+  side_image?: string | null;
+  // MySQL: JSON column. HTML 문자열(포스트 본문과 동일). 구 데이터는 읽을 때 변환.
+  content: string;
   meta_title: string;
   meta_description: string;
   meta_keywords?: string[]; // 검색용 태그(JSON 배열). DB는 항상 반환, mock 시드는 생략 가능.
@@ -104,6 +109,9 @@ export interface Post {
   // 사이트 진입 팝업 노출 여부 + 팝업 레이아웃 타입(1~3).
   is_popup: boolean;
   popup_type: number;
+  // 팝업 노출기간(YYYY-MM-DD). null = 제한 없음.
+  popup_start: string | null;
+  popup_end: string | null;
   published_at: string;
   created_at: string;
   updated_at: string;
@@ -129,7 +137,7 @@ export interface CertificationCountry {
   slug: string;
   title: string;
   subtitle: string | null;
-  content: PageContentBlock[];
+  content: string;
   certifications: CertificationLink[];
 }
 
@@ -183,6 +191,9 @@ export interface User {
   login_id: string;
   email: string;
   company: string | null;
+  // 2026-08-26 이후 가입자는 필수. 그 이전 가입자는 NULL 일 수 있다.
+  company_phone: string | null;
+  company_address: string | null;
   job_title: string | null;
   country: string | null;
   email_consent: boolean;

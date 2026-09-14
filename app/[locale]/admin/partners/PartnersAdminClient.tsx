@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import MediaInput from "@/components/admin/MediaInput";
+import { common, confirmDelete } from "@/src/lib/adminMessages";
+import { useAdminLocale } from "@/src/lib/useAdminLocale";
 
 interface AdminPartner {
   id: number;
@@ -25,6 +27,7 @@ function emptyDraft(sort: number): DraftState {
 }
 
 export default function PartnersAdminClient() {
+  const loc = useAdminLocale();
   const [partners, setPartners] = useState<AdminPartner[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -144,7 +147,7 @@ export default function PartnersAdminClient() {
   }
 
   async function removePartner(p: AdminPartner) {
-    if (!confirm(`'${p.name}' 파트너를 삭제할까요?`)) return;
+    if (!confirm(confirmDelete(loc, p.name))) return;
     setBusy(true);
     setError(null);
     try {
@@ -164,7 +167,7 @@ export default function PartnersAdminClient() {
     }
   }
 
-  if (loading) return <p className="text-sm text-gray-500">불러오는 중...</p>;
+  if (loading) return <p className="text-sm text-gray-500">{common(loc).loading}</p>;
 
   return (
     <div className="space-y-4">
@@ -263,14 +266,14 @@ export default function PartnersAdminClient() {
                   onClick={() => startEdit(p)}
                   className="rounded border border-gray-300 px-2.5 py-1 text-xs hover:bg-gray-50"
                 >
-                  수정
+                  {common(loc).edit}
                 </button>
                 <button
                   type="button"
                   onClick={() => removePartner(p)}
                   className="rounded border border-red-300 text-red-600 px-2.5 py-1 text-xs hover:bg-red-50"
                 >
-                  삭제
+                  {common(loc).delete}
                 </button>
               </div>
             </div>
@@ -313,6 +316,7 @@ function PartnerForm({
   busy,
   inline = false,
 }: PartnerFormProps) {
+  const t = common(useAdminLocale());
   function patch<K extends keyof DraftState>(key: K, value: DraftState[K]) {
     onChange({ ...draft, [key]: value });
   }
@@ -381,7 +385,7 @@ function PartnerForm({
           onClick={onCancel}
           className="rounded border border-gray-300 px-3 py-1.5 text-xs hover:bg-gray-50"
         >
-          취소
+          {t.cancel}
         </button>
         <button
           type="button"
@@ -389,7 +393,7 @@ function PartnerForm({
           disabled={busy}
           className="rounded bg-(--brand) text-white px-4 py-1.5 text-xs font-semibold hover:opacity-90 disabled:opacity-60"
         >
-          {busy ? "저장 중..." : "저장"}
+          {busy ? t.saving : t.save}
         </button>
       </div>
     </div>

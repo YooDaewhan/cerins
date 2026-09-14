@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { PopupCard } from "@/components/NewsPopup";
+import type { Post, LocaleCode } from "@/src/lib/types";
+import { postsNotice } from "@/src/lib/adminMessages";
 
 const TiptapEditor = dynamic(() => import("./TiptapEditor"), { ssr: false });
 
@@ -16,6 +19,8 @@ interface FormState {
   is_published: boolean;
   is_popup: boolean;
   popup_type: number;
+  popup_start: string;
+  popup_end: string;
   published_at: string;
 }
 
@@ -29,6 +34,8 @@ function emptyForm(): FormState {
     is_published: true,
     is_popup: false,
     popup_type: 1,
+    popup_start: "",
+    popup_end: "",
     published_at: todayIso(),
   };
 }
@@ -50,6 +57,8 @@ interface InitialTranslation {
   is_published: boolean;
   is_popup?: boolean;
   popup_type?: number;
+  popup_start?: string | null;
+  popup_end?: string | null;
   published_at: string;
 }
 
@@ -98,6 +107,8 @@ export default function PostEditorClient({
         is_published: t.is_published,
         is_popup: t.is_popup ?? false,
         popup_type: t.popup_type ?? 1,
+        popup_start: t.popup_start ?? "",
+        popup_end: t.popup_end ?? "",
         published_at: t.published_at,
       };
     }
@@ -105,6 +116,8 @@ export default function PostEditorClient({
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 라디오 숫자를 누르면 해당 타입의 팝업 미리보기를 띄운다.
+  const [previewType, setPreviewType] = useState<number | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -260,15 +273,19 @@ export default function PostEditorClient({
         </div>
       </div>
 
-      {!isPrimary && (
-        <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-gray-700">
-          <p className="font-semibold mb-1">{localeName} 언어판 편집</p>
-          <ul className="list-disc list-inside space-y-0.5 text-gray-600">
-            <li>글 생성·삭제·slug는 한국어 관리자가 관리합니다.</li>
-            <li>여기서는 이 글의 <b>{localeName}</b> 언어판만 입력·수정합니다.</li>
-          </ul>
-        </div>
-      )}
+      {!isPrimary && (() => {
+        const notice = postsNotice(locale as LocaleCode);
+        return (
+          <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-gray-700">
+            <p className="font-semibold mb-1">{notice.title}</p>
+            <ul className="list-disc list-inside space-y-0.5 text-gray-600">
+              {notice.bullets.map((b, i) => (
+                <li key={i}>{b}</li>
+              ))}
+            </ul>
+          </div>
+        );
+      })()}
 
       {error && (
         <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
@@ -317,7 +334,7 @@ export default function PostEditorClient({
               type="text"
               value={form.author}
               onChange={(e) => update({ author: e.target.value })}
-              placeholder="비우면 'CERINS Editorial' 표시"
+              placeholder="비우면 'CERINS' 표시"
               className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
             />
           </Field>
@@ -363,7 +380,11 @@ export default function PostEditorClient({
                           type="radio"
                           name="popup_type"
                           checked={form.popup_type === n}
-                          onChange={() => update({ popup_type: n })}
+                          onChange={() => {
+                            update({ popup_type: n });
+                            setPreviewType(n);
+                          }}
+                          onClick={() => setPreviewType(n)}
                           className="h-4 w-4 accent-(--brand)"
                         />
                         <span>{n}</span>
@@ -373,12 +394,57 @@ export default function PostEditorClient({
                 )}
               </div>
               {form.is_popup && (
-                <p className="text-[11px] text-gray-400 mt-1">
-                  사이트 진입 시 왼쪽에 팝업으로 노출됩니다. 타입 1=컬러 헤더,
-                  2=이미지 히어로, 3=사이드 강조.
-                </p>
+                <>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                    <span className="text-xs text-gray-600">노출기간</span>
+                    <input
+                      type="date"
+                      value={form.popup_start}
+                      max={form.popup_end || undefined}
+                      onChange={(e) => update({ popup_start: e.target.value })}
+                      className="rounded border border-gray-300 px-2 py-1 text-sm"
+                    />
+                    <span className="text-gray-400">~</span>
+                    <input
+                      type="date"
+                      value={form.popup_end}
+                      min={form.popup_start || undefined}
+                      onChange={(e) => update({ popup_end: e.target.value })}
+                      className="rounded border border-gray-300 px-2 py-1 text-sm"
+                    />
+                  </div>
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    사이트 진입 시 왼쪽에 팝업으로 노출됩니다. 타입 1=컬러 헤더,
+                    2=이미지 히어로, 3=사이드 강조. 노출기간은 비워두면 제한
+                    없음(시작·종료일 포함).
+                  </p>
+                </>
               )}
             </Field>
+          )}
+          {previewType !== null && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+              onClick={() => setPreviewType(null)}
+            >
+              <div onClick={(e) => e.stopPropagation()}>
+                <PopupCard
+                  post={
+                    {
+                      slug: slug || "preview",
+                      title: form.title || "제목 미리보기",
+                      summary: form.summary,
+                      content: form.content,
+                      thumbnail: form.thumbnail,
+                      popup_type: previewType,
+                    } as unknown as Post
+                  }
+                  href="#"
+                  onClose={() => setPreviewType(null)}
+                  onHideForDay={() => setPreviewType(null)}
+                />
+              </div>
+            </div>
           )}
           <Field label="썸네일 이미지 URL (선택)" className="sm:col-span-2">
             <input
@@ -424,6 +490,8 @@ function serialize(f: FormState) {
     is_published: f.is_published,
     is_popup: f.is_popup,
     popup_type: f.popup_type,
+    popup_start: f.popup_start || null,
+    popup_end: f.popup_end || null,
     published_at: f.published_at,
   };
 }

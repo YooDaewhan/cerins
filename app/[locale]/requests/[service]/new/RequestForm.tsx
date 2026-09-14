@@ -25,6 +25,9 @@ export default function RequestForm({
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState(defaults.contact_email);
   const [title, setTitle] = useState("");
+  const [productName, setProductName] = useState("");
+  const [hsCode, setHsCode] = useState("");
+  const [productUse, setProductUse] = useState("");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<Record<RequestFileType, File[]>>(
     () =>
@@ -60,6 +63,9 @@ export default function RequestForm({
       fd.set("contact_phone", phone);
       fd.set("contact_email", email);
       fd.set("title", title);
+      fd.set("product_name", productName);
+      fd.set("hs_code", hsCode);
+      fd.set("product_use", productUse);
       fd.set("description", description);
       for (const t of REQUEST_FILE_TYPES) {
         for (const f of files[t]) fd.append(`files_${t}`, f);
@@ -103,6 +109,15 @@ export default function RequestForm({
         <Field label="의뢰 제목" required>
           <input className={inputCls} value={title} onChange={(e) => setTitle(e.target.value)} required />
         </Field>
+        <Field label="제품명" required>
+          <input className={inputCls} value={productName} onChange={(e) => setProductName(e.target.value)} required />
+        </Field>
+        <Field label="HS코드">
+          <input className={inputCls} value={hsCode} onChange={(e) => setHsCode(e.target.value)} placeholder="예: 8501.10" />
+        </Field>
+        <Field label="제품 용도">
+          <input className={inputCls} value={productUse} onChange={(e) => setProductUse(e.target.value)} />
+        </Field>
         <Field label="의뢰 내용" required>
           <textarea className={`${inputCls} min-h-32`} value={description} onChange={(e) => setDescription(e.target.value)} required />
         </Field>
@@ -134,7 +149,7 @@ export default function RequestForm({
           })}
         </div>
         <p className="text-[11px] text-gray-400">
-          * 메뉴얼, 도면은 필수입니다. 각 항목은 여러 파일을 올릴 수 있습니다.
+          * 첨부파일은 모두 선택 사항입니다. 각 항목은 여러 파일을 올릴 수 있습니다.
         </p>
       </section>
 

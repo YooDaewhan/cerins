@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import PageHero from "@/components/PageHero";
+import SidePhoto from "@/components/SidePhoto";
 import {
   buildLocalizedPath,
   getAlternateUrls,
@@ -16,6 +17,13 @@ import type { LocaleCode } from "@/src/lib/types";
 interface Props {
   params: Promise<{ locale: string; country: string }>;
 }
+
+// ponytail: 인증 항목 slug → 인증 마크. 마크 있는 항목만 등록하면 된다.
+const CERT_MARKS: Record<string, string> = {
+  "russia-trcu": "/marks/eac.jpg",
+  "russia-trcu-ex": "/marks/eac.jpg",
+  "russia-gost-r": "/marks/gost-r.jpg",
+};
 
 export async function generateStaticParams() {
   const [locales, pages] = await Promise.all([
@@ -77,7 +85,7 @@ export default async function CertificationDetailPage({ params }: Props) {
         <div className="flex flex-col lg:flex-row gap-10">
           <aside className="lg:w-56 flex-shrink-0">
             <div className="bg-[#f8f9fc] border border-gray-100 rounded-lg overflow-hidden">
-              <div className="px-4 py-3 bg-(--brand)">
+              <div className="px-4 py-3 bg-[#4C4C3C]">
                 <span className="text-xs font-bold text-white uppercase tracking-wider">Certification</span>
               </div>
               <nav className="py-2">
@@ -105,20 +113,8 @@ export default async function CertificationDetailPage({ params }: Props) {
               </p>
             </div>
 
-            <div className="space-y-10">
-              {page.translation.content.map((block, i) => (
-                <div key={i}>
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-1 h-6 bg-[#c9a84c] rounded" />
-                    <h2 className="text-xl font-bold text-(--brand)">{block.heading}</h2>
-                  </div>
-                  <p className="text-gray-600 leading-relaxed pl-4">{block.body}</p>
-                </div>
-              ))}
-            </div>
-
             {children.length > 0 && (
-              <div className="mt-12">
+              <div className="mb-10">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="w-1 h-6 bg-[#c9a84c] rounded" />
                   <h2 className="text-xl font-bold text-(--brand)">인증 항목</h2>
@@ -143,24 +139,40 @@ export default async function CertificationDetailPage({ params }: Props) {
                           </p>
                         )}
                       </div>
-                      <svg
-                        className="w-4 h-4 text-gray-300 flex-shrink-0 mt-1 group-hover:text-(--brand) transition-colors"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {CERT_MARKS[c.page.slug] && (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
+                            src={CERT_MARKS[c.page.slug]}
+                            alt=""
+                            className="h-11 w-11 object-contain"
+                          />
+                        )}
+                        <svg
+                          className="w-4 h-4 text-gray-300 group-hover:text-(--brand) transition-colors"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </div>
                     </Link>
                   ))}
                 </div>
               </div>
             )}
+
+            <div
+              className="post-content text-gray-600"
+              dangerouslySetInnerHTML={{ __html: page.translation.content }}
+            />
+
 
             <div className="mt-12 bg-(--brand) rounded-lg p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
@@ -184,6 +196,10 @@ export default async function CertificationDetailPage({ params }: Props) {
               </Link>
             </div>
           </div>
+          <SidePhoto
+            url={page.translation.side_image}
+            alt={page.translation.title}
+          />
         </div>
       </div>
     </>

@@ -1,0 +1,283 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+
+// 캔버스 실물 크기(px). 화면 크기와 무관하게 결과 PNG 해상도를 고정한다.
+// 폰에서 손가락으로 쓰기 편하도록 세로를 넉넉히 준다. 내보낼 땐 그린 부분만 잘라내므로
+// 여기가 커진다고 Word 의 서명 그림이 커지지는 않는다.
+const W = 1200;
+const H = 800;
+
+/** 잘라낸 서명 둘레 여백(px). */
+const CROP_PAD = 24;
+/** 내보낼 그림의 최대 세로/가로 비. Word 서명 칸이 지나치게 높아지는 걸 막는다. */
+const MAX_H_OVER_W = 0.5;
+
+type Point = { x: number; y: number };
+
+/**
+ * 서명 입력. 폼에는 미리보기만 두고, 실제 서명은 전체화면 팝업에서 받는다.
+ * 폰에서 좁은 칸에 손가락으로 그리는 걸 피하고, 확인을 누르기 전엔 값이 바뀌지 않아
+ * 잘못 그려도 취소하면 원래 서명이 그대로 남는다.
+ */
+export default function SignaturePad({
+  value,
+  onChange,
+  t,
+}: {
+  value: string;
+  onChange: (dataUrl: string) => void;
+  t: (s: string) => string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      {value ? (
+        <div className="flex items-center gap-2">
+          {/* eslint-disable-next-line @next/next/no-img-element -- data URL 이라 최적화 대상이 아니다 */}
+          <img
+            src={value}
+            alt={t('Signature')}
+            className="h-16 flex-1 min-w-0 rounded-lg border border-gray-200 bg-white object-contain"
+          />
+          <div className="flex shrink-0 flex-col gap-1">
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50"
+            >
+              {t('Re-sign')}
+            </button>
+            <button
+              type="button"
+              onClick={() => onChange('')}
+              className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50"
+            >
+              {t('Clear signature')}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="w-full rounded-lg border border-dashed border-gray-300 bg-white py-6 text-sm font-semibold text-gray-500 hover:border-blue-400 hover:text-blue-600"
+        >
+          {t('Tap to sign')}
+        </button>
+      )}
+
+      {open && (
+        <SignatureModal
+          t={t}
+          onCancel={() => setOpen(false)}
+          onDone={dataUrl => {
+            onChange(dataUrl);
+            setOpen(false);
+          }}
+        />
+      )}
+    </>
+  );
+}
+
+/** 전체화면 서명 팝업. 획 단위로 기록해 한 획씩 되돌릴 수 있다. */
+function SignatureModal({
+  onCancel,
+  onDone,
+  t,
+}: {
+  onCancel: () => void;
+  onDone: (dataUrl: string) => void;
+  t: (s: string) => string;
+}) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const strokes = useRef<Point[][]>([]);
+  const drawing = useRef(false);
+  // 되돌리기·확인 버튼 상태를 갱신하려고 획 수를 상태로도 들고 있는다.
+  const [count, setCount] = useState(0);
+
+  // 팝업이 떠 있는 동안 뒤 페이지가 움직이지 않게 한다. Esc 로 닫는다.
+  useEffect(() => {
+    // iOS 사파리는 overflow:hidden 만으로는 스크롤이 막히지 않는다. 본문을 아예 고정하고
+    // 닫을 때 원래 위치로 돌려놓는다.
+    const y = window.scrollY;
+    const s = document.body.style;
+    const prev = { position: s.position, top: s.top, width: s.width, overflow: s.overflow };
+    s.position = 'fixed';
+    s.top = `-${y}px`;
+    s.width = '100%';
+    s.overflow = 'hidden';
+
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel(); };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      Object.assign(s, prev);
+      window.scrollTo(0, y);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [onCancel]);
+
+  // touch-action:none 을 무시하고 스크롤하는 브라우저가 있어, 캔버스 위 터치는 직접 막는다.
+  // React 의 onTouchMove 는 passive 라 preventDefault 가 통하지 않는다.
+  useEffect(() => {
+    const c = ref.current;
+    if (!c) return;
+    const stop = (e: TouchEvent) => e.preventDefault();
+    c.addEventListener('touchmove', stop, { passive: false });
+    return () => c.removeEventListener('touchmove', stop);
+  }, []);
+
+  function ctx() {
+    const c = ref.current?.getContext('2d');
+    if (c) {
+      c.lineWidth = 5;
+      c.lineCap = 'round';
+      c.lineJoin = 'round';
+      c.strokeStyle = '#111827';
+    }
+    return c;
+  }
+
+  /** 기록해 둔 획을 처음부터 다시 그린다(되돌리기·전체 지우기용). */
+  function redraw() {
+    const c = ctx();
+    if (!c) return;
+    c.clearRect(0, 0, W, H);
+    for (const s of strokes.current) {
+      c.beginPath();
+      c.moveTo(s[0].x, s[0].y);
+      // 점 하나만 찍힌 획도 보이도록 아주 짧은 선을 긋는다.
+      if (s.length === 1) c.lineTo(s[0].x + 0.1, s[0].y);
+      else for (const p of s.slice(1)) c.lineTo(p.x, p.y);
+      c.stroke();
+    }
+  }
+
+  /** 화면 좌표 → 캔버스 좌표. CSS 크기가 달라도 맞도록 비율로 환산한다. */
+  function pos(e: React.PointerEvent<HTMLCanvasElement>): Point {
+    const r = e.currentTarget.getBoundingClientRect();
+    return { x: ((e.clientX - r.left) / r.width) * W, y: ((e.clientY - r.top) / r.height) * H };
+  }
+
+  function down(e: React.PointerEvent<HTMLCanvasElement>) {
+    // 캔버스 밖으로 손가락이 나가도 계속 그려지게 잡아둔다.
+    // 브라우저에 따라 예외가 나는데, 잡지 못해도 그리기는 되어야 한다.
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* 무시 */ }
+    drawing.current = true;
+    const p = pos(e);
+    strokes.current.push([p]);
+    const c = ctx();
+    c?.beginPath();
+    c?.moveTo(p.x, p.y);
+  }
+
+  function move(e: React.PointerEvent<HTMLCanvasElement>) {
+    if (!drawing.current) return;
+    const p = pos(e);
+    strokes.current[strokes.current.length - 1].push(p);
+    const c = ctx();
+    c?.lineTo(p.x, p.y);
+    c?.stroke();
+  }
+
+  function up() {
+    if (!drawing.current) return;
+    drawing.current = false;
+    setCount(strokes.current.length);
+  }
+
+  /** 그린 부분만 잘라 PNG 로 내보낸다. 넓은 패드 구석에 작게 써도 서명이 제 크기로 들어간다. */
+  function exportSignature(): string | null {
+    const canvas = ref.current;
+    const pts = strokes.current.flat();
+    if (!canvas || pts.length === 0) return null;
+
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const p of pts) {
+      if (p.x < x0) x0 = p.x;
+      if (p.x > x1) x1 = p.x;
+      if (p.y < y0) y0 = p.y;
+      if (p.y > y1) y1 = p.y;
+    }
+    x0 -= CROP_PAD; y0 -= CROP_PAD; x1 += CROP_PAD; y1 += CROP_PAD;
+
+    let w = x1 - x0;
+    const h = y1 - y0;
+    // 세로로 긴 서명은 잘라내지 않고 좌우를 넓혀 비율만 맞춘다.
+    if (h / w > MAX_H_OVER_W) {
+      const wide = h / MAX_H_OVER_W;
+      x0 -= (wide - w) / 2;
+      w = wide;
+    }
+
+    const out = document.createElement('canvas');
+    out.width = Math.round(w);
+    out.height = Math.round(h);
+    // 캔버스 밖 영역은 투명하게 채워진다.
+    out.getContext('2d')?.drawImage(canvas, x0, y0, w, h, 0, 0, out.width, out.height);
+    return out.toDataURL('image/png');
+  }
+
+  function undo() {
+    strokes.current.pop();
+    redraw();
+    setCount(strokes.current.length);
+  }
+
+  function clear() {
+    strokes.current = [];
+    redraw();
+    setCount(0);
+  }
+
+  const btn = 'flex-1 rounded-xl py-3 text-sm font-semibold disabled:opacity-40';
+
+  return (
+    // 팝업 전체에 touch-none 을 걸어, 캔버스 밖을 끌어도 화면이 밀리지 않게 한다.
+    <div className="fixed inset-0 z-50 flex touch-none flex-col justify-center gap-3 overscroll-none bg-black/60 p-4">
+      <div className="mx-auto w-full max-w-2xl rounded-2xl bg-white p-4 shadow-xl">
+        <p className="mb-2 text-center text-sm font-medium text-gray-600">
+          {t('Sign here with your mouse or finger.')}
+        </p>
+        {/* touch-action:none 이라야 손가락으로 그을 때 화면이 스크롤되지 않는다. */}
+        <canvas
+          ref={ref}
+          width={W}
+          height={H}
+          onPointerDown={down}
+          onPointerMove={move}
+          onPointerUp={up}
+          onPointerLeave={up}
+          onPointerCancel={up}
+          className="aspect-[3/2] w-full touch-none rounded-xl border border-dashed border-gray-300 bg-white"
+        />
+        <div className="mt-3 flex gap-2">
+          <button type="button" onClick={undo} disabled={count === 0} className={`${btn} border border-gray-300 text-gray-600`}>
+            {t('Undo')}
+          </button>
+          <button type="button" onClick={clear} disabled={count === 0} className={`${btn} border border-gray-300 text-gray-600`}>
+            {t('Erase all')}
+          </button>
+        </div>
+        <div className="mt-2 flex gap-2">
+          <button type="button" onClick={onCancel} className={`${btn} border border-gray-300 text-gray-600`}>
+            {t('Cancel')}
+          </button>
+          <button
+            type="button"
+            disabled={count === 0}
+            onClick={() => {
+              const png = exportSignature();
+              if (png) onDone(png);
+            }}
+            className={`${btn} bg-blue-600 text-white`}
+          >
+            {t('Use this signature')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -3,12 +3,12 @@ import { revalidatePath } from "next/cache";
 import type { RowDataPacket } from "mysql2/promise";
 import { getPool } from "@/src/lib/db";
 import { requireAdmin } from "@/src/lib/auth";
-import type { PageContentBlock } from "@/src/lib/types";
 
 interface PutBody {
   title?: string;
   subtitle?: string | null;
   hero_image?: string | null;
+  side_image?: string | null;
   content?: unknown;
   meta_title?: string;
   meta_description?: string;
@@ -30,17 +30,9 @@ function normalizeNullableString(v: unknown): string | null {
   return t.length === 0 ? null : t;
 }
 
-function normalizeContent(raw: unknown): PageContentBlock[] | null {
-  if (!Array.isArray(raw)) return null;
-  const out: PageContentBlock[] = [];
-  for (const item of raw) {
-    if (!item || typeof item !== "object") return null;
-    const heading = (item as { heading?: unknown }).heading;
-    const body = (item as { body?: unknown }).body;
-    if (typeof heading !== "string" || typeof body !== "string") return null;
-    out.push({ heading, body });
-  }
-  return out;
+// content는 에디터가 만든 HTML 문자열. JSON 컬럼에 문자열로 저장한다.
+function normalizeContent(raw: unknown): string {
+  return typeof raw === "string" ? raw : "";
 }
 
 // 검색용 태그: 문자열 배열로 정규화(공백제거·빈값제거·중복제거, 최대 30개).
@@ -88,10 +80,11 @@ export async function PUT(req: Request, ctx: RouteContext) {
   }
   const subtitle = normalizeNullableString(body.subtitle);
   const hero_image = normalizeNullableString(body.hero_image);
+  const side_image = normalizeNullableString(body.side_image);
   const meta_title = (body.meta_title ?? "").trim() || title;
   const meta_description = (body.meta_description ?? "").trim();
   const meta_keywords = normalizeKeywords(body.meta_keywords);
-  const content = normalizeContent(body.content) ?? [];
+  const content = normalizeContent(body.content);
 
   const pool = getPool();
   const conn = await pool.getConnection();
@@ -118,13 +111,14 @@ export async function PUT(req: Request, ctx: RouteContext) {
     if (existing.length > 0) {
       await conn.execute(
         `UPDATE page_translations
-            SET title = ?, subtitle = ?, hero_image = ?, content = ?,
+            SET title = ?, subtitle = ?, hero_image = ?, side_image = ?, content = ?,
                 meta_title = ?, meta_description = ?, meta_keywords = ?
           WHERE page_id = ? AND locale = ?`,
         [
           title,
           subtitle,
           hero_image,
+          side_image,
           JSON.stringify(content),
           meta_title,
           meta_description,
@@ -140,8 +134,8 @@ export async function PUT(req: Request, ctx: RouteContext) {
       const newId = Number((maxRow[0] as { next_id: number }).next_id);
       await conn.execute(
         `INSERT INTO page_translations
-           (id, page_id, locale, title, subtitle, hero_image, content, meta_title, meta_description, meta_keywords)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           (id, page_id, locale, title, subtitle, hero_image, side_image, content, meta_title, meta_description, meta_keywords)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           newId,
           id,
@@ -149,6 +143,7 @@ export async function PUT(req: Request, ctx: RouteContext) {
           title,
           subtitle,
           hero_image,
+          side_image,
           JSON.stringify(content),
           meta_title,
           meta_description,

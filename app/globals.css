@@ -124,6 +124,32 @@ body {
   display: block;
   width: 100%;
 }
+/* 이미지 드래그 리사이즈 핸들 (에디터 전용) */
+.tiptap-prose [data-resize-container] {
+  max-width: 100%;
+}
+.tiptap-prose [data-resize-handle] {
+  width: 10px;
+  height: 10px;
+  margin: -5px;
+  background: var(--brand);
+  border: 1px solid #fff;
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.tiptap-prose [data-resize-wrapper]:hover [data-resize-handle],
+.tiptap-prose .ProseMirror-selectednode [data-resize-handle] {
+  opacity: 1;
+}
+.tiptap-prose [data-resize-handle="top-left"],
+.tiptap-prose [data-resize-handle="bottom-right"] {
+  cursor: nwse-resize;
+}
+.tiptap-prose [data-resize-handle="top-right"],
+.tiptap-prose [data-resize-handle="bottom-left"] {
+  cursor: nesw-resize;
+}
 .tiptap-prose code,
 .post-content code {
   background: #f4f4f6;
@@ -145,6 +171,40 @@ body {
   border: none;
   border-top: 1px solid #e5e7eb;
   margin: 1.4em 0;
+}
+.tiptap-prose table,
+.post-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.9em 0;
+  table-layout: fixed;
+  overflow: hidden;
+}
+.tiptap-prose th,
+.post-content th,
+.tiptap-prose td,
+.post-content td {
+  border: 1px solid #d1d5db;
+  padding: 0.5em 0.7em;
+  vertical-align: top;
+  text-align: left;
+}
+.tiptap-prose th,
+.post-content th {
+  background: #f4f4f6;
+  font-weight: 700;
+}
+/* 편집 중 셀 선택 하이라이트 */
+.tiptap-prose .selectedCell:after {
+  background: rgba(37, 99, 235, 0.1);
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.tiptap-prose td,
+.tiptap-prose th {
+  position: relative;
 }
 .tiptap-prose .is-editor-empty:first-child::before {
   color: #9ca3af;

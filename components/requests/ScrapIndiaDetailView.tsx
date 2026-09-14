@@ -116,7 +116,7 @@ export default function ScrapIndiaDetailView({ bundle }: Props) {
         <Card title="검사 일정 / 장소">
           <dl className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3 text-sm">
             <Info label="요청 시작일" value={inspection.requested_start_date ?? "-"} />
-            <Info label="요청 종료일" value={inspection.requested_end_date ?? "-"} />
+            {inspection.requested_end_date && <Info label="요청 종료일" value={inspection.requested_end_date} />}
             <Info label="요청 시간" value={timeRange(inspection.requested_start_time, inspection.requested_end_time)} />
             {inspection.requested_location && <Info label="요청 장소" value={inspection.requested_location} />}
             {inspection.requested_location_detail && <Info label="상세 주소" value={inspection.requested_location_detail} />}

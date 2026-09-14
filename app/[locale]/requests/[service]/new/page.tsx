@@ -47,8 +47,8 @@ export default async function NewRequestPage({ params }: Props) {
             {SERVICE_TYPE_LABELS[serviceType]} 의뢰서
           </p>
           <h1 className="text-2xl font-bold text-(--brand)">의뢰서 작성</h1>
-          <p className="text-sm text-gray-500 mt-2">
-            기본 정보와 의뢰 내용을 입력하고 필수 파일을 첨부하세요.
+          <p className="text-sm text-gray-400 mt-2">
+            보다 자세하고 신속 정확한 안내를 위해, 관련 서류를 첨부해주세요.
           </p>
         </header>
         {serviceType === "CEC_INDIA" ? (

@@ -43,7 +43,7 @@ export default async function NewsDetailPage({ params }: Props) {
   const idx = allPosts.findIndex((p) => p.id === item.id);
   const prev = allPosts[idx + 1] ?? null;
   const next = allPosts[idx - 1] ?? null;
-  const author = item.author ?? "CERINS Editorial";
+  const author = item.author ?? "CERINS";
 
   return (
     <>

@@ -17,7 +17,7 @@ interface HeaderProps {
 
 const DEFAULT_LOCALE: LocaleCode = "ko";
 
-const LOGOS = ["/cerins-logo-color.jpg", "/cerins-logo-white.jpg"] as const;
+const LOGOS = ["/cerins_red.png", "/cerins_white.png"] as const;
 const LOGO_SWEEP_INTERVAL_MS = 10000;
 
 function buildLocalizedHref(target: LocaleCode, currentPathname: string, enabled: LocaleCode[]): string {
@@ -90,6 +90,19 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
     return () => document.removeEventListener("keydown", onKey);
   }, [openMenu]);
 
+  // 언어 드롭다운: 바깥 클릭/ESC로 닫기 (버튼·메뉴는 stopPropagation 하므로 여기 오면 바깥).
+  useEffect(() => {
+    if (!langOpen) return;
+    const close = () => setLangOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
+    document.addEventListener("click", close);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("click", close);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [langOpen]);
+
   const isActive = (path: string) =>
     pathname === path || pathname.startsWith(path + "/");
 
@@ -152,8 +165,9 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
               {menus.map((item, idx) => {
                 const isOpen = openMenu === item.label;
                 const active = isActive(item.href);
-                // 마우스가 올라간 항목이 있으면 그 항목만, 없으면 활성/열린 항목만 배경 표시 → 배경은 항상 한 개.
-                const filled = hovered ? hovered === item.label : isOpen || active;
+                // 채움 우선순위: 호버 > 열린 드롭다운 > 현재 페이지 → 배경은 항상 한 개.
+                // 드롭다운이 열려 있으면 현재 페이지 채움을 잠시 감춘다 (배경 두 개로 보인다는 컴플레인).
+                const filled = hovered ? hovered === item.label : openMenu ? isOpen : active;
                 const divider = idx > 0 ? (
                   <span key={`divider-${item.id}`} className="w-px h-5 bg-black" aria-hidden />
                 ) : null;
@@ -172,7 +186,7 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                       >
                         {/* 왼쪽에서 오른쪽으로 채워지는 배경 */}
                         <span
-                          className={`pointer-events-none absolute inset-0 bg-(--brand) origin-left transition-transform duration-300 ease-out ${
+                          className={`pointer-events-none absolute inset-0 bg-[#4C4C3C] origin-left transition-transform duration-300 ease-out ${
                             filled ? "scale-x-100" : "scale-x-0"
                           }`}
                         />
@@ -205,7 +219,7 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                     >
                       {/* 왼쪽에서 오른쪽으로 채워지는 배경 */}
                       <span
-                        className={`pointer-events-none absolute inset-0 bg-(--brand) origin-left transition-transform duration-300 ease-out ${
+                        className={`pointer-events-none absolute inset-0 bg-[#4C4C3C] origin-left transition-transform duration-300 ease-out ${
                           filled ? "scale-x-100" : "scale-x-0"
                         }`}
                       />
@@ -229,9 +243,9 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                             href={child.href}
                             onClick={() => setOpenMenu(null)}
                             style={{ animation: `ddItemIn .3s cubic-bezier(.2,.7,.2,1) ${0.04 + ci * 0.04}s both` }}
-                            className="group flex items-center gap-2.5 whitespace-nowrap px-6 py-4 text-sm font-semibold tracking-wide uppercase text-gray-600 transition-colors duration-200 hover:bg-[#fff5f6] hover:text-(--brand)"
+                            className="group flex items-center gap-2.5 whitespace-nowrap px-6 py-4 text-sm font-semibold tracking-wide uppercase text-gray-600 transition-colors duration-200 hover:bg-[#f1f1ec] hover:text-[#4C4C3C]"
                           >
-                            <span className="h-1 w-1 shrink-0 rounded-full bg-gray-300 transition-all duration-300 group-hover:w-4 group-hover:bg-(--brand)" />
+                            <span className="h-1 w-1 shrink-0 rounded-full bg-gray-300 transition-all duration-300 group-hover:w-4 group-hover:bg-[#4C4C3C]" />
                             {child.label}
                           </Link>
                         ))}
@@ -254,7 +268,7 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                     e.stopPropagation();
                     setLangOpen((v) => !v);
                   }}
-                  className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-gray-700 hover:text-(--brand) border border-gray-300 rounded-full hover:border-(--brand) transition-colors"
+                  className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold text-gray-700 hover:text-[#4C4C3C] border border-gray-300 rounded-full hover:border-[#4C4C3C] transition-colors"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18M12 3a15 15 0 000 18" />
@@ -305,7 +319,7 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                   type="button"
                   aria-label="Advanced search"
                   onClick={() => setAdvOpen(true)}
-                  className="flex items-center gap-1 px-2.5 py-1 mr-1 text-xs font-bold text-gray-600 hover:text-(--brand) border border-gray-300 rounded-full hover:border-(--brand) transition-colors whitespace-nowrap"
+                  className="flex items-center gap-1 px-2.5 py-1 mr-1 text-xs font-bold text-gray-600 hover:text-[#4C4C3C] border border-gray-300 rounded-full hover:border-[#4C4C3C] transition-colors whitespace-nowrap"
                 >
                   <span className="text-sm leading-none">+</span>
                   Advanced
@@ -313,7 +327,7 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                 <button
                   type="submit"
                   aria-label="검색"
-                  className="w-7 h-7 mr-1 flex items-center justify-center rounded-full text-gray-500 hover:text-(--brand) transition-colors duration-300"
+                  className="w-7 h-7 mr-1 flex items-center justify-center rounded-full text-gray-500 hover:text-[#4C4C3C] transition-colors duration-300"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
@@ -331,7 +345,7 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
             {/* 모바일 햄버거 */}
             <button
               type="button"
-              className="lg:hidden relative w-9 h-9 flex items-center justify-center text-gray-700 hover:text-(--brand) transition-colors"
+              className="lg:hidden relative w-9 h-9 flex items-center justify-center text-gray-700 hover:text-[#4C4C3C] transition-colors"
               aria-label="Toggle menu"
               onClick={() => setMobileOpen((v) => !v)}
             >
@@ -381,7 +395,7 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                       <Link
                         key={child.id}
                         href={child.href}
-                        className="flex items-center gap-2.5 pl-8 pr-5 py-3 text-sm text-gray-600 hover:text-(--brand) border-b border-gray-100 last:border-0 transition-colors"
+                        className="flex items-center gap-2.5 pl-8 pr-5 py-3 text-sm text-gray-600 hover:text-[#4C4C3C] border-b border-gray-100 last:border-0 transition-colors"
                         onClick={() => setMobileOpen(false)}
                       >
                         <span className="w-1.5 h-1.5 rounded-full bg-(--brand)" />

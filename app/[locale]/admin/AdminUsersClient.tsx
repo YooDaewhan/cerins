@@ -11,6 +11,8 @@ import {
 } from "@/src/lib/userTypes";
 import { locales } from "@/src/mocks/locales";
 import type { User } from "@/src/lib/types";
+import { common, confirmDelete } from "@/src/lib/adminMessages";
+import { useAdminLocale } from "@/src/lib/useAdminLocale";
 
 interface Props {
   currentUserId: number;
@@ -39,6 +41,31 @@ function countryLabel(code: string | null): string {
   return COUNTRY_LABEL[code] ?? code.toUpperCase();
 }
 
+// 관리자가 로그인해 둔 웹메일에서 "작성" 창을 열고 받는사람을 채워 준다.
+// - 아웃룩: 웹 작성 딥링크로 받는사람(to) 자동입력.
+// - 한비로: 해시 라우팅 SPA라 URL로 받는사람 자동입력이 어려움 → 주소를 클립보드에 복사한 뒤
+//   작성창을 열어 붙여넣기(Ctrl+V) 하게 한다.
+const HANBIRO_COMPOSE_URL = "https://cerins.hanbiro.net/ngw/app/#/mail/writeIn/all/";
+
+function sendVia(provider: "hanbiro" | "outlook", emails: string[]): void {
+  if (emails.length === 0) return;
+  // 받는사람은 항상 클립보드에 복사 → URL이 브라우저 상한(~2000자)을 넘어도 붙여넣기로 커버.
+  void navigator.clipboard?.writeText(emails.join(", "));
+
+  const base =
+    provider === "outlook"
+      ? "https://outlook.office.com/mail/deeplink/compose"
+      : HANBIRO_COMPOSE_URL;
+  const to = encodeURIComponent(emails.join(provider === "outlook" ? ";" : ","));
+  const withTo = `${base}?to=${to}`;
+  // 자동입력은 URL이 상한 안에 들 때만. 넘으면 빈 작성창 + 클립보드 붙여넣기.
+  window.open(withTo.length > 1900 ? base : withTo, "_blank", "noopener");
+}
+
+function dateOnly(s: string | null): string {
+  return s ? s.slice(0, 10) : "-";
+}
+
 type SortKey =
   | "id"
   | "login_id"
@@ -51,6 +78,7 @@ type SortKey =
 type SortDir = "asc" | "desc";
 
 export default function AdminUsersClient({ currentUserId }: Props) {
+  const loc = useAdminLocale();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,6 +86,7 @@ export default function AdminUsersClient({ currentUserId }: Props) {
   const [editState, setEditState] = useState<EditState | null>(null);
   const [savingId, setSavingId] = useState<number | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
 
   // 검색 / 필터 / 정렬
   const [query, setQuery] = useState("");
@@ -112,6 +141,8 @@ export default function AdminUsersClient({ currentUserId }: Props) {
           u.login_id,
           u.email,
           u.company ?? "",
+          u.company_phone ?? "",
+          u.company_address ?? "",
           u.job_title ?? "",
           u.country ?? "",
           countryLabel(u.country),
@@ -152,6 +183,43 @@ export default function AdminUsersClient({ currentUserId }: Props) {
     });
     return list;
   }, [users, query, fAccount, fLevel, fConsent, sortKey, sortDir]);
+
+  // 발송 대상 선택은 이메일 수신 동의 회원만 가능.
+  const selectableIds = useMemo(
+    () => view.filter((u) => u.email_consent).map((u) => u.id),
+    [view],
+  );
+  const allSelected =
+    selectableIds.length > 0 && selectableIds.every((id) => selected.has(id));
+
+  function toggleSelect(id: number) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allSelected) selectableIds.forEach((id) => next.delete(id));
+      else selectableIds.forEach((id) => next.add(id));
+      return next;
+    });
+  }
+
+  function sendBulk(provider: "hanbiro" | "outlook") {
+    const emails = users
+      .filter((u) => selected.has(u.id) && u.email_consent)
+      .map((u) => u.email);
+    if (emails.length === 0) {
+      setError("선택된 수신 동의 회원이 없습니다.");
+      return;
+    }
+    sendVia(provider, emails);
+  }
 
   function startEdit(u: User) {
     setEditingId(u.id);
@@ -202,7 +270,7 @@ export default function AdminUsersClient({ currentUserId }: Props) {
 
   async function removeUser(u: User) {
     if (u.id === currentUserId) return;
-    if (!confirm(`'${u.login_id}' 사용자를 삭제하시겠습니까?`)) return;
+    if (!confirm(confirmDelete(loc, u.login_id))) return;
     setError(null);
     try {
       const res = await fetch(`/api/admin/users/${u.id}`, { method: "DELETE" });
@@ -312,6 +380,11 @@ export default function AdminUsersClient({ currentUserId }: Props) {
         </p>
       )}
 
+      <p className="text-xs text-gray-400">
+        한비로 · 아웃룩 버튼은 작성창을 열며 받는사람을 자동 입력합니다. 받는사람이 많아
+        자동 입력이 안 되면, 클립보드에 복사된 주소를 받는사람 칸에 붙여넣기(Ctrl+V) 하세요.
+      </p>
+
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         <div className="px-5 py-3 border-b border-gray-200 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-gray-700">
@@ -361,29 +434,61 @@ export default function AdminUsersClient({ currentUserId }: Props) {
                   {...{ sortKey, sortDir, toggleSort }}
                 />
                 <SortTh
-                  k="email_consent"
-                  label="이메일 수신"
-                  {...{ sortKey, sortDir, toggleSort }}
-                />
-                <SortTh
                   k="created_at"
                   label="가입일"
                   {...{ sortKey, sortDir, toggleSort }}
                 />
                 <Th className="text-right pr-5">작업</Th>
+                <Th>
+                  <div className="flex flex-col items-center gap-0.5">
+                    <span>이메일 수신</span>
+                    <label className="inline-flex items-center gap-1 text-[10px] font-normal normal-case text-gray-500">
+                      <input
+                        type="checkbox"
+                        checked={allSelected}
+                        onChange={toggleSelectAll}
+                        className="h-3.5 w-3.5 accent-(--brand)"
+                      />
+                      전체
+                    </label>
+                  </div>
+                </Th>
+                <Th>
+                  <div className="flex flex-col items-center gap-0.5">
+                    <span>이메일 발송</span>
+                    <span className="inline-flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => sendBulk("hanbiro")}
+                        className="rounded border border-gray-300 px-1.5 py-0.5 text-[10px] font-normal normal-case hover:bg-gray-50"
+                        title="선택한 사람들에게 한비로로 발송(BCC)"
+                      >
+                        한비로
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => sendBulk("outlook")}
+                        className="rounded border border-gray-300 px-1.5 py-0.5 text-[10px] font-normal normal-case hover:bg-gray-50"
+                        title="선택한 사람들에게 아웃룩으로 발송(BCC)"
+                      >
+                        아웃룩
+                      </button>
+                    </span>
+                  </div>
+                </Th>
               </tr>
             </thead>
             <tbody>
               {loading && (
                 <tr>
-                  <td colSpan={9} className="text-center py-6 text-gray-400">
-                    불러오는 중...
+                  <td colSpan={10} className="text-center py-6 text-gray-400">
+                    {common(loc).loading}
                   </td>
                 </tr>
               )}
               {!loading && view.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="text-center py-6 text-gray-400">
+                  <td colSpan={10} className="text-center py-6 text-gray-400">
                     {users.length === 0
                       ? "사용자가 없습니다."
                       : "조건에 맞는 사용자가 없습니다."}
@@ -465,27 +570,8 @@ export default function AdminUsersClient({ currentUserId }: Props) {
                         </span>
                       )}
                     </Td>
-                    <Td>
-                      {isEditing && editState ? (
-                        <input
-                          type="checkbox"
-                          checked={editState.email_consent}
-                          onChange={(e) =>
-                            setEditState({
-                              ...editState,
-                              email_consent: e.target.checked,
-                            })
-                          }
-                          className="h-4 w-4 accent-(--brand)"
-                        />
-                      ) : (
-                        <span className="text-gray-700">
-                          {u.email_consent ? "동의" : "-"}
-                        </span>
-                      )}
-                    </Td>
-                    <Td className="text-gray-500 text-xs">
-                      {u.created_at}
+                    <Td className="text-gray-500 text-xs whitespace-nowrap">
+                      {dateOnly(u.created_at)}
                       {isEditing && editState && (
                         <div className="mt-2">
                           <input
@@ -509,14 +595,14 @@ export default function AdminUsersClient({ currentUserId }: Props) {
                             onClick={() => saveEdit(u.id)}
                             className="rounded bg-(--brand) text-white px-3 py-1 text-xs font-semibold hover:opacity-90 disabled:opacity-60"
                           >
-                            {isSaving ? "저장 중..." : "저장"}
+                            {isSaving ? common(loc).saving : common(loc).save}
                           </button>
                           <button
                             type="button"
                             onClick={cancelEdit}
                             className="rounded border border-gray-300 px-3 py-1 text-xs hover:bg-gray-50"
                           >
-                            취소
+                            {common(loc).cancel}
                           </button>
                         </div>
                       ) : (
@@ -526,7 +612,7 @@ export default function AdminUsersClient({ currentUserId }: Props) {
                             onClick={() => startEdit(u)}
                             className="rounded border border-gray-300 px-3 py-1 text-xs hover:bg-gray-50"
                           >
-                            수정
+                            {common(loc).edit}
                           </button>
                           <button
                             type="button"
@@ -534,9 +620,57 @@ export default function AdminUsersClient({ currentUserId }: Props) {
                             onClick={() => removeUser(u)}
                             className="rounded border border-red-300 text-red-600 px-3 py-1 text-xs hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            삭제
+                            {common(loc).delete}
                           </button>
                         </div>
+                      )}
+                    </Td>
+                    <Td className="text-center">
+                      {isEditing && editState ? (
+                        <input
+                          type="checkbox"
+                          checked={editState.email_consent}
+                          onChange={(e) =>
+                            setEditState({
+                              ...editState,
+                              email_consent: e.target.checked,
+                            })
+                          }
+                          className="h-4 w-4 accent-(--brand)"
+                          title="이메일 수신 동의 (수정)"
+                        />
+                      ) : u.email_consent ? (
+                        <input
+                          type="checkbox"
+                          checked={selected.has(u.id)}
+                          onChange={() => toggleSelect(u.id)}
+                          className="h-4 w-4 accent-(--brand)"
+                          title="발송 대상 선택"
+                        />
+                      ) : (
+                        <span className="text-gray-300">–</span>
+                      )}
+                    </Td>
+                    <Td className="text-center whitespace-nowrap">
+                      {u.email_consent ? (
+                        <div className="inline-flex gap-1">
+                          <button
+                            type="button"
+                            onClick={() => sendVia("hanbiro", [u.email])}
+                            className="rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                          >
+                            한비로
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => sendVia("outlook", [u.email])}
+                            className="rounded border border-gray-300 px-2 py-1 text-xs hover:bg-gray-50"
+                          >
+                            아웃룩
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-gray-300 text-xs">수신 미동의</span>
                       )}
                     </Td>
                   </tr>
@@ -566,6 +700,7 @@ interface CreatePanelProps {
 }
 
 function CreateUserPanel({ onCreated, onCancel, onError }: CreatePanelProps) {
+  const t = common(useAdminLocale());
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
@@ -682,14 +817,14 @@ function CreateUserPanel({ onCreated, onCancel, onError }: CreatePanelProps) {
             onClick={onCancel}
             className="rounded-md border border-gray-300 text-sm px-4 py-2 hover:bg-gray-50"
           >
-            취소
+            {t.cancel}
           </button>
           <button
             type="submit"
             disabled={submitting}
             className="rounded-md bg-(--brand) text-white text-sm font-semibold px-5 py-2 hover:opacity-90 disabled:opacity-60"
           >
-            {submitting ? "추가 중..." : "추가"}
+            {submitting ? `${t.add}…` : t.add}
           </button>
         </div>
       </form>

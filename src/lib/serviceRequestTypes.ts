@@ -13,12 +13,14 @@ import { isScrapStatus, scrapStatusLabel, scrapCustomerStatusLabel } from "@/src
 /* ------------------------------------------------------------------ */
 
 // 대분류. 새 분류 추가 시 여기 + CATEGORY_LABELS + SERVICE_TYPES 만 수정.
-export const CATEGORIES = ["CERTIFICATION", "INSPECTION"] as const;
+export const CATEGORIES = ["CERTIFICATION", "INSPECTION", "CONSULTING", "LOGISTICS"] as const;
 export type Category = (typeof CATEGORIES)[number];
 
 export const CATEGORY_LABELS: Record<Category, string> = {
   CERTIFICATION: "인증",
   INSPECTION: "검사",
+  CONSULTING: "컨설팅",
+  LOGISTICS: "물류",
 };
 
 // 세부 서비스 종류.
@@ -41,6 +43,9 @@ export const SERVICE_TYPE_LABELS: Record<ServiceType, string> = {
 export const CATEGORY_SERVICES: Record<Category, ServiceType[]> = {
   CERTIFICATION: ["TRCU_GOST", "CEC_INDIA"],
   INSPECTION: ["PRODUCT_INSPECTION", "SCRAP_INDIA"],
+  // 세부 서비스 미정 → /requests 에서 "준비 중" 으로만 노출(클릭 불가).
+  CONSULTING: [],
+  LOGISTICS: [],
 };
 
 // URL 슬러그(소문자, 하이픈) ↔ ServiceType 매핑. 라우팅에 사용.
@@ -54,6 +59,8 @@ export const SERVICE_TYPE_SLUGS: Record<ServiceType, string> = {
 export const CATEGORY_SLUGS: Record<Category, string> = {
   CERTIFICATION: "certification",
   INSPECTION: "inspection",
+  CONSULTING: "consulting",
+  LOGISTICS: "logistics",
 };
 
 // 이번 범위에서 프로세스가 완전히 구현된 서비스. 나머지는 "준비 중" 처리.
@@ -185,9 +192,6 @@ export const REQUEST_FILE_TYPES = [
   "MANUAL",
   "DRAWING",
   "EXISTING_CERTIFICATE",
-  "TEST_REPORT",
-  "AUTHORIZATION",
-  "JOS",
   "OTHER",
 ] as const;
 export type RequestFileType = (typeof REQUEST_FILE_TYPES)[number];
@@ -196,13 +200,17 @@ export const REQUEST_FILE_META: Record<
   RequestFileType,
   { label: string; required: boolean }
 > = {
-  MANUAL: { label: "메뉴얼", required: true },
-  DRAWING: { label: "도면", required: true },
-  EXISTING_CERTIFICATE: { label: "기 발급 인증서", required: false },
-  TEST_REPORT: { label: "테스트 리포트", required: false },
-  AUTHORIZATION: { label: "권한위임계약서", required: false },
-  JOS: { label: "JOS", required: false },
-  OTHER: { label: "기타 자료", required: false },
+  MANUAL: { label: "매뉴얼", required: false },
+  DRAWING: { label: "도면 또는 사진", required: false },
+  EXISTING_CERTIFICATE: { label: "기 발급 인증서 (ex: CE, KC 등)", required: false },
+  OTHER: { label: "기타", required: false },
+};
+
+// 더 이상 접수받지 않지만 과거 의뢰에 남아 있는 파일 종류(라벨 표시·조회용).
+const LEGACY_REQUEST_FILE_LABELS: Record<string, string> = {
+  TEST_REPORT: "테스트 리포트",
+  AUTHORIZATION: "권한위임계약서",
+  JOS: "JOS",
 };
 
 // Step 0 제출 시 반드시 있어야 하는 파일 종류.
@@ -239,6 +247,7 @@ export type FileType =
 
 export const ALL_FILE_TYPES: string[] = [
   ...REQUEST_FILE_TYPES,
+  ...Object.keys(LEGACY_REQUEST_FILE_LABELS),
   ...QUOTATION_FILE_TYPES,
   FINAL_FILE_TYPE,
   "CUSTOMER_SUPPLEMENT",
@@ -246,6 +255,7 @@ export const ALL_FILE_TYPES: string[] = [
 ];
 
 export const FILE_TYPE_LABELS: Record<string, string> = {
+  ...LEGACY_REQUEST_FILE_LABELS,
   ...Object.fromEntries(
     (Object.keys(REQUEST_FILE_META) as RequestFileType[]).map((t) => [
       t,
@@ -358,6 +368,10 @@ export interface ServiceRequest {
   contact_phone: string;
   contact_email: string;
   title: string;
+  // 제품 정보: TRCU/GOST 접수 시 필수, 타 서비스·과거 접수분은 null.
+  product_name: string | null;
+  hs_code: string | null;
+  product_use: string | null;
   description: string;
   workflow_step: number;
   status: RequestStatus;
