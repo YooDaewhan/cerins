@@ -40,14 +40,14 @@ export default async function RequestsIndexPage({ params }: Props) {
           </p>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
           {(CATEGORIES as readonly Category[]).map((cat) => (
-            <section key={cat} className="bg-white border border-gray-200 rounded-xl p-6">
+            <section key={cat} className="bg-white border border-gray-200 rounded-xl p-6 aspect-square flex flex-col">
               <h2 className="text-lg font-bold text-(--brand) mb-4">{CATEGORY_LABELS[cat]}</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 flex-1 content-center">
                 {CATEGORY_SERVICES[cat].length === 0 && (
                   <div
-                    className="sm:col-span-2 flex items-center justify-between rounded-lg border border-dashed border-gray-200 bg-gray-50 px-5 py-4 cursor-not-allowed"
+                    className="flex items-center justify-between rounded-lg border border-dashed border-gray-200 bg-gray-50 px-5 py-4 cursor-not-allowed"
                     title="온라인 의뢰 준비 중"
                   >
                     <span className="text-base font-semibold text-gray-400">
