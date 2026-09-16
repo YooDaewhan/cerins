@@ -181,7 +181,13 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
               className="hidden lg:flex flex-1 min-w-0 justify-center py-2"
               onMouseLeave={() => setHovered(null)}
             >
-              <div className="flex flex-wrap items-center justify-center gap-x-1">
+              {/* 최대 2줄(아이템 56px × 2)까지만 노출하고 넘치는 줄은 잘라낸다.
+                  드롭다운이 열렸을 때는 패널이 같이 잘리므로 클리핑을 잠시 푼다. */}
+              <div
+                className={`flex flex-wrap items-center justify-center gap-x-1 max-h-28 ${
+                  openMenu ? "" : "overflow-hidden"
+                }`}
+              >
               {menus.map((item, idx) => {
                 const isOpen = openMenu === item.label;
                 const active = isActive(item.href);
