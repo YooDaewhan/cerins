@@ -44,6 +44,7 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
   const [query, setQuery] = useState("");
   const [advOpen, setAdvOpen] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
   const router = useRouter();
   const [logoTick, setLogoTick] = useState(0);
@@ -66,6 +67,24 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
 
   const logoOutIndex = logoTick === 0 ? 0 : (logoTick - 1) % LOGOS.length;
   const logoInIndex = logoTick % LOGOS.length;
+
+  // 메뉴가 2줄로 감기면 헤더가 높아진다. 실제 높이를 본문 상단 여백(--header-h)에 반영.
+  useEffect(() => {
+    const row = rowRef.current;
+    if (!row) return;
+    const apply = () =>
+      document.documentElement.style.setProperty("--header-h", `${row.offsetHeight}px`);
+    apply();
+    document.fonts?.ready.then(apply); // 웹폰트 적용 후 라벨 폭이 바뀐다
+    window.addEventListener("resize", apply);
+    // 창 크기 외의 변화(스크롤바 등장 등)도 잡는다
+    const ro = new ResizeObserver(apply);
+    ro.observe(row);
+    return () => {
+      window.removeEventListener("resize", apply);
+      ro.disconnect();
+    };
+  }, [menus]);
 
   useEffect(() => {
     function onScroll() {
@@ -118,12 +137,12 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
             : "bg-white"
         } border-b border-gray-200/60`}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative flex items-center justify-center h-20">
-            {/* 로고 — 다른 요소처럼 flex 흐름에 포함, 최소 너비만 지정하고 오른쪽 여백만 유지 */}
+        {/* 헤더는 max-w 제한 없이 화면 폭을 그대로 쓴다 (메뉴가 긴 로케일의 여유 확보) */}
+        <div ref={rowRef} className="flex items-center gap-x-6 px-4 sm:px-6 min-h-20">
+            {/* 로고 — 항상 맨 앞. 폭 경쟁에서 밀리지 않도록 shrink-0 */}
             <Link
               href={locale === DEFAULT_LOCALE ? "/" : `/${locale}`}
-              className="flex items-center h-12 min-w-32 mr-6 shrink-0"
+              className="flex items-center shrink-0"
               onClick={() => setOpenMenu(null)}
             >
               <div className="relative h-14 w-[140px] overflow-hidden">
@@ -157,11 +176,12 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
               </div>
             </Link>
 
-            {/* 데스크톱 네비 */}
+            {/* 데스크톱 네비 — 로고/유틸이 자리를 먼저 차지하고, 남은 폭에서 메뉴가 스스로 감긴다 */}
             <nav
-              className="hidden lg:flex items-center gap-1"
+              className="hidden lg:flex flex-1 min-w-0 justify-center py-2"
               onMouseLeave={() => setHovered(null)}
             >
+              <div className="flex flex-wrap items-center justify-center gap-x-1">
               {menus.map((item, idx) => {
                 const isOpen = openMenu === item.label;
                 const active = isActive(item.href);
@@ -179,7 +199,7 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                       <Link
                         href={item.href}
                         onMouseEnter={() => setHovered(item.label)}
-                        className={`group relative overflow-hidden whitespace-nowrap px-6 py-6 text-base font-bold tracking-wider uppercase transition-colors duration-300 ${
+                        className={`group relative flex items-center overflow-hidden whitespace-nowrap px-6 py-4 text-base font-bold tracking-wider uppercase transition-colors duration-300 ${
                           filled ? "text-white" : "text-gray-700"
                         }`}
                         onClick={() => setOpenMenu(null)}
@@ -213,7 +233,7 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                         setHovered(item.label);
                         if (openMenu) setOpenMenu(item.label);
                       }}
-                      className={`group relative overflow-hidden whitespace-nowrap px-6 py-6 text-base font-bold tracking-wider uppercase transition-colors duration-300 ${
+                      className={`group relative flex items-center overflow-hidden whitespace-nowrap px-6 py-4 text-base font-bold tracking-wider uppercase transition-colors duration-300 ${
                         filled ? "text-white" : "text-gray-700"
                       }`}
                     >
@@ -254,14 +274,48 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                   </div>
                 );
               })}
-
-              {/* 우측: 사용자 메뉴 */}
-              <div className="ml-3">
-                <UserMenu user={currentUser} locale={locale} />
               </div>
+            </nav>
 
-              {/* 우측: 언어 선택 */}
-              <div className="ml-2 relative">
+            {/* 우측 유틸 — 검색 / 계정 / 언어. 2줄일 때는 로고와 같은 줄에 남는다 */}
+            <div
+              className="hidden lg:flex items-center gap-2 shrink-0"
+            >
+              <form onSubmit={handleSearch}>
+                <div className="relative flex items-center w-69 rounded-full bg-gray-100 border border-gray-200 focus-within:border-(--brand) focus-within:bg-white transition-all duration-300">
+                  <input
+                    type="search"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="인증·국가 검색"
+                    aria-label="인증 검색"
+                    className="flex-1 min-w-0 bg-transparent pl-4 pr-1 py-1.5 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    aria-label="Advanced search"
+                    onClick={() => setAdvOpen(true)}
+                    className="flex items-center gap-1 px-2.5 py-1 mr-1 text-xs font-bold text-gray-600 hover:text-[#4C4C3C] border border-gray-300 rounded-full hover:border-[#4C4C3C] transition-colors whitespace-nowrap"
+                  >
+                    <span className="text-sm leading-none">+</span>
+                    Advanced
+                  </button>
+                  <button
+                    type="submit"
+                    aria-label="검색"
+                    className="w-7 h-7 mr-1 flex items-center justify-center rounded-full text-gray-500 hover:text-[#4C4C3C] transition-colors duration-300"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
+                    </svg>
+                  </button>
+                </div>
+              </form>
+
+              <UserMenu user={currentUser} locale={locale} />
+
+              {/* 언어 선택 */}
+              <div className="relative">
                 <button
                   type="button"
                   onClick={(e) => {
@@ -302,39 +356,7 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
                   </div>
                 )}
               </div>
-            </nav>
-
-            {/* 검색 (헤더 우측 끝, 네비와 분리) */}
-            <form onSubmit={handleSearch} className="hidden lg:block shrink-0 ml-4">
-              <div className="relative flex items-center w-69 rounded-full bg-gray-100 border border-gray-200 focus-within:border-(--brand) focus-within:bg-white transition-all duration-300">
-                <input
-                  type="search"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="인증·국가 검색"
-                  aria-label="인증 검색"
-                  className="flex-1 min-w-0 bg-transparent pl-4 pr-1 py-1.5 text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
-                />
-                <button
-                  type="button"
-                  aria-label="Advanced search"
-                  onClick={() => setAdvOpen(true)}
-                  className="flex items-center gap-1 px-2.5 py-1 mr-1 text-xs font-bold text-gray-600 hover:text-[#4C4C3C] border border-gray-300 rounded-full hover:border-[#4C4C3C] transition-colors whitespace-nowrap"
-                >
-                  <span className="text-sm leading-none">+</span>
-                  Advanced
-                </button>
-                <button
-                  type="submit"
-                  aria-label="검색"
-                  className="w-7 h-7 mr-1 flex items-center justify-center rounded-full text-gray-500 hover:text-[#4C4C3C] transition-colors duration-300"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
-                  </svg>
-                </button>
-              </div>
-            </form>
+            </div>
 
             <AdvancedSearchModal
               locale={locale}
@@ -345,7 +367,7 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
             {/* 모바일 햄버거 */}
             <button
               type="button"
-              className="lg:hidden relative w-9 h-9 flex items-center justify-center text-gray-700 hover:text-[#4C4C3C] transition-colors"
+              className="lg:hidden ml-auto relative w-9 h-9 flex items-center justify-center text-gray-700 hover:text-[#4C4C3C] transition-colors"
               aria-label="Toggle menu"
               onClick={() => setMobileOpen((v) => !v)}
             >
@@ -354,7 +376,6 @@ export default function Header({ menus, locale, enabledLocales, currentUser }: H
               <span className={`absolute block h-0.5 w-5 bg-current transition-all duration-300 ${mobileOpen ? "-rotate-45 translate-y-0" : "translate-y-1.5"}`} />
             </button>
           </div>
-        </div>
 
         {/* ── 모바일 메뉴 ── */}
         <div className={`lg:hidden overflow-hidden transition-all duration-300 ${mobileOpen ? "max-h-[80vh]" : "max-h-0"}`}>

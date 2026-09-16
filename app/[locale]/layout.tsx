@@ -51,7 +51,7 @@ export default async function LocaleLayout({
         enabledLocales={enabledLocales}
         currentUser={headerUser}
       />
-      <main className="flex-1 pt-20">{children}</main>
+      <main className="flex-1 pt-[var(--header-h,5rem)]">{children}</main>
       <NewsPopup posts={popupPosts} locale={code} />
       <Footer
         menus={menus}
