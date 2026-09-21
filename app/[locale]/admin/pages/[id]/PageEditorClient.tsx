@@ -100,7 +100,7 @@ export default function PageEditorClient({
   const [tagInput, setTagInput] = useState("");
 
   const load = useCallback(async () => {
-    setLoading(true);
+    // 재조회는 로딩 화면으로 갈아끼우지 않는다. 화면이 통째로 사라지면 스크롤이 튄다.
     setError(null);
     try {
       const [pageRes, listRes] = await Promise.all([

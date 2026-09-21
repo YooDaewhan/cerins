@@ -100,7 +100,7 @@ export default async function HomePage({ params }: Props) {
     : undefined;
 
   const snapFull =
-    "snap-start snap-always h-[calc(100dvh-4rem)] flex flex-col justify-center overflow-hidden";
+    "snap-page snap-start snap-always h-[calc(100dvh-4rem)] flex flex-col justify-center overflow-hidden";
 
   return (
     <>

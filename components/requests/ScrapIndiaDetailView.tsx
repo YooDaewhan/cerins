@@ -1,6 +1,7 @@
 "use client";
 
-import { forwardRef, useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { PAYMENT_STATUS_LABELS, MESSAGE_TYPE_LABELS } from "@/src/lib/serviceRequestTypes";
 import {
   SCRAP_STATUS_LABELS,
@@ -28,12 +29,16 @@ export default function ScrapIndiaDetailView({ bundle }: Props) {
   const { request: r, role, files, inspection, dgft, quotation, quotationItems, payments, messages, histories, documentRequirements, block, billing, bank, actions } = bundle;
   const isInternal = role === "STAFF" || role === "ADMIN";
 
-  const [busy, setBusy] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  // 새로고침이 끝날 때까지 버튼을 잠가 중복 제출을 막는다.
+  const busy = saving || isPending;
   const [error, setError] = useState<string | null>(null);
   const [openForm, setOpenForm] = useState<string | null>(null);
+  const router = useRouter();
 
   async function runAction(body: Record<string, unknown>): Promise<boolean> {
-    setBusy(true);
+    setSaving(true);
     setError(null);
     try {
       const res = await fetch(`/api/requests/${r.id}/transition`, {
@@ -43,11 +48,12 @@ export default function ScrapIndiaDetailView({ bundle }: Props) {
       });
       const data = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok || !data.ok) { setError(data.error ?? "처리에 실패했습니다."); return false; }
-      window.location.reload();
+      setOpenForm(null);
+      startTransition(() => router.refresh());
       return true;
     } catch {
       setError("네트워크 오류가 발생했습니다."); return false;
-    } finally { setBusy(false); }
+    } finally { setSaving(false); }
   }
 
   const activeMilestone = SCRAP_MILESTONES.findIndex((m) => m.statuses.includes(r.status as ScrapStatus));

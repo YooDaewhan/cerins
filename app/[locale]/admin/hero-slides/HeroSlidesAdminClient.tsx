@@ -62,7 +62,7 @@ export default function HeroSlidesAdminClient({
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
-    setLoading(true);
+    // 재조회는 로딩 화면으로 갈아끼우지 않는다. 화면이 통째로 사라지면 스크롤이 튄다.
     setError(null);
     try {
       const res = await fetch("/api/admin/hero-slides", { cache: "no-store" });

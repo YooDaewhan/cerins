@@ -26,8 +26,14 @@
 
 html {
   scroll-behavior: smooth;
+  /* 헤더는 메뉴가 두 줄이면 높아진다. 고정 4rem이면 앵커가 헤더 뒤로 숨는다. */
+  scroll-padding-top: var(--header-h, 4rem);
+}
+
+/* 풀스크린 스냅은 홈에서만. 전역으로 두면 다른 페이지에서는 유일한 스냅 대상인
+   Footer로 화면이 끌려간다 - 저장 등으로 높이가 바뀔 때마다 재스냅이 걸린다. */
+html:has(.snap-page) {
   scroll-snap-type: y proximity;
-  scroll-padding-top: 4rem;
 }
 
 @keyframes popup-in {

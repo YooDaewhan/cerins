@@ -1,6 +1,7 @@
 "use client";
 
-import { forwardRef, useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   PAYMENT_STATUS_LABELS,
   MESSAGE_TYPE_LABELS,
@@ -66,9 +67,13 @@ export default function CecRequestDetailView({ bundle }: Props) {
     (f) => f.file_type === "CEC_FINAL_CERTIFICATE",
   );
 
-  const [busy, setBusy] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  // 새로고침이 끝날 때까지 버튼을 잠가 중복 제출을 막는다.
+  const busy = saving || isPending;
   const [error, setError] = useState<string | null>(null);
   const [openForm, setOpenForm] = useState<string | null>(null);
+  const router = useRouter();
 
   function money(
     v: string | number | null | undefined,
@@ -80,7 +85,7 @@ export default function CecRequestDetailView({ bundle }: Props) {
   }
 
   async function runAction(body: Record<string, unknown>): Promise<boolean> {
-    setBusy(true);
+    setSaving(true);
     setError(null);
     try {
       const res = await fetch(`/api/requests/${r.id}/transition`, {
@@ -93,13 +98,14 @@ export default function CecRequestDetailView({ bundle }: Props) {
         setError(data.error ?? "처리에 실패했습니다.");
         return false;
       }
-      window.location.reload();
+      setOpenForm(null);
+      startTransition(() => router.refresh());
       return true;
     } catch {
       setError("네트워크 오류가 발생했습니다.");
       return false;
     } finally {
-      setBusy(false);
+      setSaving(false);
     }
   }
 

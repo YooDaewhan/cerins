@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
   SERVICE_TYPE_LABELS,
   STATUS_LABELS,
@@ -79,9 +80,13 @@ export default function RequestDetailView({ bundle }: Props) {
   const finalCerts = files.filter((f) => f.file_type === FINAL_FILE_TYPE);
   const otherFiles = files.filter((f) => f.file_type !== FINAL_FILE_TYPE);
 
-  const [busy, setBusy] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  // 새로고침이 끝날 때까지 버튼을 잠가 중복 제출을 막는다.
+  const busy = saving || isPending;
   const [error, setError] = useState<string | null>(null);
   const [openForm, setOpenForm] = useState<string | null>(null);
+  const router = useRouter();
 
   function money(v: string | null | undefined): string {
     if (v == null) return "-";
@@ -92,7 +97,7 @@ export default function RequestDetailView({ bundle }: Props) {
   }
 
   async function runAction(body: Record<string, unknown>) {
-    setBusy(true);
+    setSaving(true);
     setError(null);
     try {
       const res = await fetch(`/api/requests/${r.id}/transition`, {
@@ -105,13 +110,14 @@ export default function RequestDetailView({ bundle }: Props) {
         setError(data.error ?? "처리에 실패했습니다.");
         return false;
       }
-      window.location.reload();
+      setOpenForm(null);
+      startTransition(() => router.refresh());
       return true;
     } catch {
       setError("네트워크 오류가 발생했습니다.");
       return false;
     } finally {
-      setBusy(false);
+      setSaving(false);
     }
   }
 
@@ -468,6 +474,7 @@ function ActionPanel(props: {
     requestId,
     status,
   } = props;
+  const router = useRouter();
   const [reason, setReason] = useState("");
   const [staff, setStaff] = useState<StaffCandidate[]>([]);
   const [assignee, setAssignee] = useState<number | "">("");
@@ -729,7 +736,7 @@ function ActionPanel(props: {
           busy={busy}
           requestId={requestId}
           onError={props.setError}
-          onDone={() => window.location.reload()}
+          onDone={() => { setOpenForm(null); router.refresh(); }}
         />
       )}
       {openForm === "final" && (
