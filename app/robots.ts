@@ -5,7 +5,7 @@ import { CANONICAL_HOST, isCanonicalHost } from "@/src/lib/site";
 // Phase switch for getting the bare-IP URLs out of Google.
 //
 // false (now): non-canonical hosts stay crawlable so Googlebot can read the
-//   "X-Robots-Tag: noindex" header from middleware.ts and drop them. A
+//   "X-Robots-Tag: noindex" header from proxy.ts and drop them. A
 //   "Disallow: /" here would block that crawl and freeze them in the index.
 // true (after "site:<ip>" returns nothing): flip to hard-block the crawl.
 //

@@ -21,7 +21,7 @@ function isStandalone(pathname: string): boolean {
   );
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (hasLocalePrefix(pathname) || isStandalone(pathname)) {

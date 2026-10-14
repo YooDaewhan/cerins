@@ -2,9 +2,9 @@ import type { NextConfig } from "next";
 import { CANONICAL_HOST } from "./src/lib/site";
 
 // Keep every non-canonical host (bare IP, staging) out of search results.
-// Lives here rather than in middleware.ts because next.config headers are
+// Lives here rather than in proxy.ts because next.config headers are
 // applied before the filesystem, so they also cover /public files (brochures,
-// uploads) and sitemap.xml — paths the middleware matcher deliberately skips.
+// uploads) and sitemap.xml — paths the proxy matcher deliberately skips.
 // `missing` inverts the match: the header is set only when host is NOT canonical.
 // No canonical host configured yet → noindex everything, everywhere.
 const noindexNonCanonical = {

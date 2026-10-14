@@ -98,7 +98,7 @@ for (const def of REPORTS) {
       } else if (f.t === "radio") {
         values[f.k] = f.opts[0].v;
         if (f.opts[0].cb !== undefined) radioCount++;
-        if (f.opts[0].cell) expected.push({ cell: f.opts[0].cell, value: "X" });
+        if (f.opts[0].cell) expected.push({ cell: f.opts[0].cell, value: f.opts[0].value ?? "X" });
       } else if (f.t === "checks") {
         values[f.k] = f.opts.map(o => o.v);
         checkCount += f.opts.length;
