@@ -137,6 +137,16 @@ const ADMIN_TABS: [string, string, string][] = [
   ["언어 관리", "/admin/locales", "편집 언어 전환기의 ‘언어 추가’ 링크로 진입. 언어 추가·활성화."],
 ];
 
+// [템플릿, 관리자 표시명, 사이트 주소, 용도]
+const TEMPLATES: [string, string, string, string][] = [
+  ["simple", "독립", "/{slug}", "상위 없이 단독으로 쓰는 페이지 (예: /privacy)"],
+  ["about", "소개", "/about/{slug}", "회사소개 하위 페이지. slug가 about이면 /about"],
+  ["certification", "인증", "/certification/{slug} · /certification/{국가}/{slug}", "국가(상위) → 인증 항목(하위) 2단계"],
+  ["inspection", "검사", "/inspection/{slug} · /inspection/{분류}/{slug}", "인증과 같은 2단계 구조"],
+  ["services", "서비스", "/services/{slug}", "서비스 소개 페이지"],
+  ["home · news_list · contact", "홈 · 뉴스 · 문의", "/ · /news · /contact", "사이트에 하나씩만 있는 고정 페이지. 새로 만들 일 없음"],
+];
+
 const TOC: [string, string][] = [
   ["start", "시작하기"],
   ["account", "회원가입 · 로그인"],
@@ -144,6 +154,7 @@ const TOC: [string, string][] = [
   ["flows", "서비스별 진행 단계"],
   ["staff", "직원 업무"],
   ["admin", "관리자 페이지"],
+  ["admin-guide", "관리자 실전 가이드"],
   ["photo-report", "검사 보고서 생성"],
   ["etc", "기타 기능"],
 ];
@@ -373,6 +384,217 @@ export default async function ManualPage({ params }: Props) {
                 "이후 [담당자 변경]으로 바꿀 수 있으며, 변경해도 진행 단계는 그대로입니다.",
               ]}
             />
+          </Section>
+
+          <Section id="admin-guide" title="관리자 실전 가이드">
+            <p>
+              처음 관리하는 분을 위한 단계별 안내입니다. 아래 작업은 모두 <b>한국어 관리자 화면</b>(편집 언어 KO)에서
+              합니다. 다른 언어 화면에서는 번역만 할 수 있고 추가·삭제·순서 변경은 할 수 없습니다.
+            </p>
+
+            <h3 className="font-bold text-gray-900 pt-2">1. 먼저 알아둘 개념</h3>
+            <ul className="list-disc pl-5 space-y-2">
+              <li>
+                <b>페이지</b>는 실제 내용(제목·본문·이미지)이 들어 있는 화면입니다. <b>메뉴</b>는 헤더에 보이는 링크일
+                뿐이라, 페이지를 만들어도 메뉴에 연결하지 않으면 헤더에 나타나지 않습니다.
+              </li>
+              <li>
+                <b>슬러그(slug)</b>는 주소에 들어가는 영문 이름입니다. 예: 슬러그가 <Path>fire-safety</Path>인 인증
+                페이지 → <Path>/certification/fire-safety</Path>. <b>영어 소문자·숫자·하이픈(-)</b>만 쓸 수 있고 첫
+                글자는 소문자나 숫자여야 합니다. 띄어쓰기·한글·대문자·밑줄(_)은 안 됩니다. 사이트 전체에서 중복될 수
+                없습니다.
+              </li>
+              <li>
+                <b>템플릿</b>은 페이지의 종류이며, 템플릿에 따라 주소 앞부분이 정해집니다.
+              </li>
+              <li>
+                <b>정렬 순서</b>는 숫자가 <b>작을수록 앞(왼쪽·위)</b>에 표시됩니다. 메뉴·페이지·히어로 슬라이드·파트너
+                모두 같은 규칙입니다.
+              </li>
+            </ul>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm border border-gray-200 rounded-lg overflow-hidden">
+                <thead className="bg-(--surface-2) text-gray-800">
+                  <tr>
+                    <th className="px-3 py-2 font-semibold">템플릿</th>
+                    <th className="px-3 py-2 font-semibold">사이트 주소</th>
+                    <th className="px-3 py-2 font-semibold">용도</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {TEMPLATES.map(([t, label, url, use]) => (
+                    <tr key={t} className="border-t border-gray-200 align-top">
+                      <td className="px-3 py-2 whitespace-nowrap">
+                        <b>{label}</b> <span className="text-xs text-gray-400">{t}</span>
+                      </td>
+                      <td className="px-3 py-2 font-mono text-xs text-(--brand)">{url}</td>
+                      <td className="px-3 py-2">{use}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <h3 className="font-bold text-gray-900 pt-2">2. 새 페이지를 만들어 메뉴에 올리기 (기본 순서)</h3>
+            <p>
+              순서가 중요합니다. <b>페이지 생성 → 내용 작성 → 메뉴 연결 → 번역</b> 순으로 진행하세요. 메뉴를 먼저 만들면
+              연결할 페이지가 목록에 없습니다.
+            </p>
+            <Steps
+              items={[
+                <>관리자 페이지 → <b>페이지</b> 탭 → 오른쪽 위 <b>[+ 새 페이지]</b>를 누릅니다.</>,
+                <>
+                  <b>Slug</b>를 입력합니다 (예: <Path>about-team</Path>). <b>템플릿</b>을 고르면 옆 설명에 실제 주소가
+                  표시됩니다. 인증·검사 템플릿이면 <b>상위 페이지</b>도 고를 수 있습니다(아래 3번 참고).
+                </>,
+                <>
+                  <b>정렬 순서</b>를 넣고 <b>사이트에 공개</b> 체크 여부를 정한 뒤 [추가]를 누릅니다. 내용을 다 쓰기 전에
+                  노출되는 게 싫으면 공개 체크를 빼 두세요.
+                </>,
+                <>목록에서 방금 만든 페이지의 <b>[수정]</b>을 누릅니다.</>,
+                <>
+                  아래 <b>KO 편집</b> 영역에 <b>제목(필수)</b>, 부제, 히어로 이미지, 본문을 입력하고 <b>[KO 만들기]</b>를
+                  누릅니다. 이 버튼을 눌러야 실제 내용이 저장됩니다. 이후에는 버튼 이름이 [KO 저장]으로 바뀝니다.
+                </>,
+                <>
+                  필요하면 메타 제목·메타 설명(검색엔진용)과 메타 태그(사이트 상세검색 키워드)를 채웁니다. 메타 제목을
+                  비우면 제목이 그대로 쓰입니다.
+                </>,
+                <>사이트에서 주소를 직접 열어 확인합니다. 비공개로 만들었다면 위쪽 <b>페이지 메타</b>에서 공개로 바꾸고 [메타 저장].</>,
+                <>
+                  <b>메뉴</b> 탭으로 이동합니다. 상위 메뉴 아래에 넣으려면 해당 메뉴의 <b>[+ 하위]</b>, 헤더 맨 윗줄에
+                  새로 넣으려면 <b>[+ 최상위 메뉴 추가]</b>를 누릅니다.
+                </>,
+                <>
+                  <b>연결할 페이지</b>에서 방금 만든 페이지를 고르고, <b>한국어 라벨</b>(헤더에 보일 이름)을 입력한 뒤
+                  [저장]합니다. 이때 <b>‘또는 직접 URL’ 칸은 비워 두세요.</b>
+                </>,
+                <>사이트를 새로고침해 헤더에 메뉴가 보이는지 확인합니다.</>,
+              ]}
+            />
+            <Note>
+              메뉴의 <b>직접 URL</b>은 페이지 연결보다 <b>우선</b>합니다. 둘 다 채워 두면 페이지가 아닌 URL로 이동합니다.
+              페이지 연결을 쓰면 나중에 슬러그를 바꿔도 메뉴 링크가 자동으로 따라가므로, 사이트 안의 페이지는 되도록
+              ‘연결할 페이지’로 지정하세요. 직접 URL은 외부 사이트(<Path>https://…</Path>)나 의뢰서 같은 고정 화면
+              (<Path>/requests</Path>)에만 씁니다. 사이트 내부 주소는 언어 코드 없이 <Path>/requests</Path> 처럼 적으면
+              언어별로 알아서 붙습니다.
+            </Note>
+
+            <h3 className="font-bold text-gray-900 pt-2">3. 인증·검사 하위 페이지 만들기 (국가 → 항목)</h3>
+            <p>
+              인증·검사는 <b>섹션 인덱스 → 상위(국가·분류) → 하위(항목)</b> 3층 구조입니다. 예:{" "}
+              <Path>/certification</Path> → <Path>/certification/russia</Path> →{" "}
+              <Path>/certification/russia/gost-r</Path>. 페이지 목록에서 ‘인덱스’ 표시가 붙은 행이 섹션 인덱스이고,
+              <span className="font-mono text-gray-400"> └─ </span>로 들여쓴 행이 하위 페이지입니다.
+            </p>
+            <Steps
+              items={[
+                <>
+                  <b>새 국가·분류</b>가 필요하면: [+ 새 페이지] → 템플릿 ‘인증’(또는 ‘검사’) → 상위 페이지는 비워 둠(최상위)
+                  → slug 예: <Path>russia</Path>.
+                </>,
+                <>
+                  <b>항목 추가</b>: 페이지 목록에서 국가 행의 <b>[+ 하위]</b>를 누르고 slug(예: <Path>gost-r</Path>)를
+                  입력합니다. 바로 공개 상태로 만들어지고 편집 화면으로 이동하니, 제목·본문을 쓰고 [KO 만들기]를 누르세요.
+                </>,
+                "국가 페이지 편집 화면 아래 ‘하위 페이지’ 목록에서도 [+ 하위 추가]로 같은 작업을 할 수 있습니다.",
+                "필요하면 메뉴의 해당 상위 메뉴 아래 [+ 하위]로 이 항목을 연결합니다.",
+              ]}
+            />
+            <Note>
+              하위의 하위(3단계)는 만들 수 없습니다. 하위 페이지를 다른 국가로 옮기려면 그 하위 페이지의 편집 화면 →
+              페이지 메타 → 상위 페이지를 바꾸고 [메타 저장]. 이미 하위 페이지를 가진 국가 페이지는 다른 상위로 옮길 수
+              없습니다.
+            </Note>
+
+            <h3 className="font-bold text-gray-900 pt-2">4. 순서 바꾸기</h3>
+            <p>
+              드래그 기능은 없고 <b>정렬 순서 숫자</b>로 정합니다. 같은 단계(같은 상위 아래)끼리 숫자를 비교해 작은
+              것부터 표시합니다.
+            </p>
+            <Steps
+              items={[
+                "메뉴 탭(또는 페이지 탭)에서 각 행의 ‘sort 숫자’ / ‘정렬’ 칸을 보고 현재 순서를 확인합니다.",
+                "옮길 항목의 [수정]을 눌러 정렬 순서를 원하는 위치의 숫자로 바꾸고 저장합니다. 페이지는 [메타 저장]입니다.",
+                "새로고침해 순서를 확인합니다.",
+              ]}
+            />
+            <p>
+              예: 메뉴가 <b>회사소개 10 · 인증 20 · 검사 30</b>일 때 검사를 맨 앞으로 보내려면 검사를 <b>5</b>로 바꿉니다.
+              인증과 검사 사이에 새 메뉴를 넣으려면 <b>25</b>를 씁니다.
+            </p>
+            <Note>
+              숫자를 <b>10, 20, 30…</b>처럼 10 단위로 띄워 두면 사이에 끼워 넣을 때 다른 항목을 건드릴 필요가 없습니다.
+              새 메뉴를 추가하면 마지막 항목 + 10이 자동으로 들어갑니다. 같은 숫자를 두 개 쓰면 순서가 보장되지 않으니 피하세요.
+            </Note>
+
+            <h3 className="font-bold text-gray-900 pt-2">5. 다른 언어로 번역하기</h3>
+            <Steps
+              items={[
+                "관리자 페이지 상단 언어 전환기에서 편집할 언어(예: EN)를 고릅니다.",
+                <>
+                  <b>메뉴</b>: 각 메뉴의 [수정] → 그 언어 라벨 입력 → [저장]. ‘미번역’ 표시가 붙은 메뉴가 아직 번역되지
+                  않은 것입니다. 비워 두면 한국어 라벨이 그대로 보입니다.
+                </>,
+                <>
+                  <b>페이지</b>: [수정] → 그 언어의 제목·본문 입력 → <b>[EN 만들기]</b>. 번역이 없으면 사이트에는 한국어
+                  내용이 대신 표시됩니다.
+                </>,
+                "목록에 없는 언어를 추가하려면 언어 전환기의 ‘언어 추가’ 링크(언어 관리)에서 추가·활성화합니다.",
+              ]}
+            />
+
+            <h3 className="font-bold text-gray-900 pt-2">6. 숨기기 · 삭제할 때 주의</h3>
+            <ul className="list-disc pl-5 space-y-2">
+              <li>
+                잠시 내리고 싶을 때는 <b>삭제 대신 숨기세요.</b> 메뉴는 ‘사이트에 표시’ 체크 해제, 페이지는 ‘사이트에
+                공개’ 체크 해제. 언제든 다시 켤 수 있습니다.
+              </li>
+              <li>
+                <b>상위 메뉴를 삭제하면 그 아래 하위 메뉴도 모두 삭제</b>됩니다. 메뉴를 지워도 연결된 페이지는 남아
+                있습니다.
+              </li>
+              <li>
+                <b>페이지를 삭제하면 모든 언어판과 하위 페이지까지 함께 삭제</b>되며 되돌릴 수 없습니다. 그 페이지에 연결된
+                메뉴는 남지만 ‘링크 없음’ 상태가 되므로 메뉴도 정리하세요.
+              </li>
+              <li>
+                페이지 편집 화면의 <b>[이 언어판 삭제]</b>는 현재 편집 중인 언어의 내용만 지웁니다.
+              </li>
+              <li>
+                <b>슬러그를 바꾸면 주소가 바뀝니다.</b> 메뉴(페이지 연결)는 자동으로 따라가지만, 외부에 공유된 링크·직접
+                URL로 넣은 메뉴·본문 안 링크는 깨지니 꼭 필요할 때만 바꾸세요.
+              </li>
+            </ul>
+
+            <h3 className="font-bold text-gray-900 pt-2">7. 이럴 땐 이렇게</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm border border-gray-200 rounded-lg overflow-hidden">
+                <thead className="bg-(--surface-2) text-gray-800">
+                  <tr>
+                    <th className="px-3 py-2 font-semibold">증상</th>
+                    <th className="px-3 py-2 font-semibold">확인할 것</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    ["‘slug은 소문자/숫자/-만 가능합니다’", "대문자·띄어쓰기·한글·밑줄이 들어갔는지 확인. 예: About Team → about-team"],
+                    ["‘이미 사용 중인 slug 입니다’", "다른 페이지가 같은 slug를 씁니다. 템플릿이 달라도 중복 불가. russia-gost 처럼 구분되게 바꾸세요."],
+                    ["페이지 주소가 404", "공개 체크가 꺼져 있거나, [KO 만들기]를 누르지 않아 한국어 내용이 없는 경우입니다."],
+                    ["헤더에 메뉴가 안 보임", "메뉴의 ‘사이트에 표시’ 체크, 상위 메뉴가 숨김 상태인지 확인. 새로고침도 해 보세요."],
+                    ["메뉴를 눌렀는데 엉뚱한 곳으로 감", "메뉴 수정에서 ‘직접 URL’ 칸이 채워져 있으면 그게 우선합니다. 비우고 저장하세요."],
+                    ["메뉴 아래 ‘(링크 없음)’", "연결된 페이지가 삭제된 경우입니다. 다른 페이지를 연결하거나 메뉴를 삭제하세요."],
+                    ["드롭다운이 아니라 단일 링크로 나옴", "하위 메뉴가 하나도 없거나 모두 숨김이면 단일 링크로 표시됩니다."],
+                    ["추가·삭제 버튼이 안 보임", "편집 언어가 한국어(KO)가 아닙니다. 상단 언어 전환기에서 KO로 바꾸세요."],
+                  ].map(([q, a]) => (
+                    <tr key={q} className="border-t border-gray-200 align-top">
+                      <td className="px-3 py-2 font-medium">{q}</td>
+                      <td className="px-3 py-2">{a}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </Section>
 
           <Section id="photo-report" title="검사 보고서 생성">
