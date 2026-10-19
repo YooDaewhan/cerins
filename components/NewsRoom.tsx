@@ -30,7 +30,7 @@ export default function NewsRoom({ posts, locale }: NewsRoomProps) {
       />
       <div aria-hidden className="absolute inset-0 bg-black/55" />
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-10 gap-4">
+        <div className="reveal flex flex-col sm:flex-row sm:items-end sm:justify-between mb-10 gap-4">
           <div>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-8 h-0.5 bg-(--brand)" />
@@ -54,10 +54,10 @@ export default function NewsRoom({ posts, locale }: NewsRoomProps) {
             <Link
               key={item.id}
               href={localized(`/news/${item.slug}`, locale)}
-              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-5 group"
+              className="reveal flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-5 group"
             >
               <div>
-                <h3 className="text-sm font-semibold text-white group-hover:text-white/80 transition-colors">
+                <h3 className="text-sm font-semibold text-white group-hover:text-white/80 group-hover:translate-x-1 transition duration-500 ease-out">
                   {item.title}
                 </h3>
                 <p className="text-xs text-white/50 mt-1">{item.summary}</p>

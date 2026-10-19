@@ -12,11 +12,11 @@ export default async function PageHero({ title, subtitle, breadcrumb, image }: P
 
   return (
     <div
-      className="relative flex items-center"
+      className="relative flex items-center overflow-hidden"
       style={{ height: "20vh", minHeight: "140px" }}
     >
       <div
-        className="absolute inset-0 bg-cover bg-center"
+        className="hero-zoom absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url('${bg}')` }}
       />
       <div className="absolute inset-0 bg-gradient-to-r from-(--brand)/95 via-(--brand)/60 to-(--brand)/15" />
@@ -24,13 +24,13 @@ export default async function PageHero({ title, subtitle, breadcrumb, image }: P
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         {breadcrumb && (
-          <p className="text-xs text-(--brand) tracking-widest uppercase font-bold mb-2 flex items-center gap-2">
-            <span className="w-5 h-0.5 bg-(--brand) inline-block" />
+          <p className="rise-in text-xs text-(--brand) tracking-widest uppercase font-bold mb-2 flex items-center gap-2">
+            <span className="line-grow w-5 h-0.5 bg-(--brand) inline-block" style={{ animationDelay: "0.3s" }} />
             {breadcrumb}
           </p>
         )}
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white">{title}</h1>
-        {subtitle && <p className="text-gray-300 text-sm mt-2">{subtitle}</p>}
+        <h1 className="rise-in text-2xl sm:text-3xl lg:text-4xl font-bold text-white" style={{ animationDelay: "0.15s" }}>{title}</h1>
+        {subtitle && <p className="rise-in text-gray-300 text-sm mt-2" style={{ animationDelay: "0.3s" }}>{subtitle}</p>}
       </div>
     </div>
   );
