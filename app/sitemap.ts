@@ -23,7 +23,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const pageEntries: MetadataRoute.Sitemap = pages.flatMap((p) =>
     locales.map((l) => ({
       url: SITE_URL + urlForPage(p, l.code, parentSlugOf(p)),
-      lastModified: p.updated_at,
+      lastModified: new Date(p.updated_at),
       alternates: {
         languages: Object.fromEntries(
           locales.map((alt) => [alt.code, SITE_URL + urlForPage(p, alt.code, parentSlugOf(p))]),
@@ -35,7 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const postEntries: MetadataRoute.Sitemap = koreanPosts.flatMap((post) =>
     localeCodes.map((code) => ({
       url: SITE_URL + buildLocalizedPath(code, `/news/${post.slug}`),
-      lastModified: post.updated_at,
+      lastModified: new Date(post.updated_at),
     })),
   );
 
