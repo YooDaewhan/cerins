@@ -6,8 +6,7 @@ import {
   urlForPage,
 } from "@/src/lib/mockRepository";
 import { buildLocalizedPath } from "@/src/lib/i18n";
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://cerins.example.com";
+import { SITE_URL } from "@/src/lib/site";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [locales, pages, koreanPosts] = await Promise.all([

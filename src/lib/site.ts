@@ -1,9 +1,8 @@
-// The one host allowed in search results, e.g. "www.cerins.net".
-// null until NEXT_PUBLIC_SITE_URL is set — which means no host is indexable.
-export const CANONICAL_HOST = process.env.NEXT_PUBLIC_SITE_URL
-  ? new URL(process.env.NEXT_PUBLIC_SITE_URL).host
-  : null;
+// The one host allowed in search results. NEXT_PUBLIC_SITE_URL overrides it
+// (e.g. for staging); everything else — bare IP, cerins.net — gets noindex.
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.cerins.net";
+export const CANONICAL_HOST = new URL(SITE_URL).host;
 
 export function isCanonicalHost(host: string | null): boolean {
-  return CANONICAL_HOST != null && host === CANONICAL_HOST;
+  return host === CANONICAL_HOST;
 }

@@ -6,17 +6,21 @@ import { CANONICAL_HOST } from "./src/lib/site";
 // applied before the filesystem, so they also cover /public files (brochures,
 // uploads) and sitemap.xml — paths the proxy matcher deliberately skips.
 // `missing` inverts the match: the header is set only when host is NOT canonical.
-// No canonical host configured yet → noindex everything, everywhere.
 const noindexNonCanonical = {
   source: "/:path*",
-  missing: CANONICAL_HOST
-    ? [{ type: "host" as const, value: CANONICAL_HOST.replaceAll(".", "\\.") }]
-    : undefined,
+  missing: [{ type: "host" as const, value: CANONICAL_HOST.replaceAll(".", "\\.") }],
   headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
 };
 
 const nextConfig: NextConfig = {
   headers: async () => [noindexNonCanonical],
+  // Old PHP-site URLs (e.g. /main?mc_code=1010) still sit in Google's index →
+  // send them home instead of a 404.
+  // ponytail: no per-mc_code mapping; add one if a specific old page needs its own target.
+  redirects: async () => [
+    { source: "/main", destination: "/", permanent: true },
+    { source: "/main/:path*", destination: "/", permanent: true },
+  ],
   serverExternalPackages: ["pizzip", "sharp"],
   allowedDevOrigins: ["192.168.20.232", "172.30.1.35"],
   images: {
