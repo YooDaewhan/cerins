@@ -20,6 +20,9 @@ const nextConfig: NextConfig = {
   redirects: async () => [
     { source: "/main", destination: "/", permanent: true },
     { source: "/main/:path*", destination: "/", permanent: true },
+    // Google Ads final URL is https://cerins.net/en_main/ — must not 404 or ads get disapproved.
+    { source: "/en_main", destination: "/en", permanent: true },
+    { source: "/en_main/:path*", destination: "/en", permanent: true },
   ],
   serverExternalPackages: ["pizzip", "sharp"],
   allowedDevOrigins: ["192.168.20.232", "172.30.1.35"],
